@@ -1,0 +1,180 @@
+-- 1. Tạo cơ sở dữ liệu
+CREATE DATABASE IF NOT EXISTS HeThongTuyenDung
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+USE HeThongTuyenDung;
+
+-- 2. Bảng Tài Khoản
+CREATE TABLE TaiKhoan (
+    MaTK INT AUTO_INCREMENT PRIMARY KEY,
+    Email VARCHAR(100) NOT NULL UNIQUE,
+    MatKhau VARCHAR(255) NOT NULL,
+    LoaiTaiKhoan ENUM('UngVien', 'NhaTuyenDung') NOT NULL,
+    TrangThai ENUM('HoatDong', 'BiKhoa') NOT NULL DEFAULT 'HoatDong',
+    NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) COMMENT 'Thông tin tài khoản ứng viên và nhà tuyển dụng';
+
+-- 3. Bảng Quản Trị Viên
+CREATE TABLE QuanTriVien (
+    MaQTV INT AUTO_INCREMENT PRIMARY KEY,
+    Email VARCHAR(100) NOT NULL UNIQUE,
+    MatKhau VARCHAR(255) NOT NULL,
+    HoTen VARCHAR(100) NOT NULL,
+    TrangThai ENUM('HoatDong', 'BiKhoa') NOT NULL DEFAULT 'HoatDong',
+    NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) COMMENT 'Thông tin quản trị viên';
+
+-- 4. Bảng Danh Mục Nghề
+CREATE TABLE DanhMucNghe (
+    MaDanhMuc INT AUTO_INCREMENT PRIMARY KEY,
+    TenDanhMuc VARCHAR(100) NOT NULL
+) COMMENT 'Danh mục ngành nghề';
+
+-- 5. Bảng Ứng Viên
+CREATE TABLE UngVien (
+    MaUngVien INT AUTO_INCREMENT PRIMARY KEY,
+    MaTK INT NOT NULL UNIQUE,
+    HoTen VARCHAR(100) NOT NULL,
+    SoDienThoai CHAR(10),
+    AnhCV VARCHAR(255),
+    KyNang TEXT,
+    KinhNghiem TEXT,
+    MaDanhMuc INT,
+    FOREIGN KEY (MaTK) REFERENCES TaiKhoan(MaTK) ON DELETE CASCADE,
+    FOREIGN KEY (MaDanhMuc) REFERENCES DanhMucNghe(MaDanhMuc) ON DELETE SET NULL
+) COMMENT 'Thông tin ứng viên';
+
+-- 6. Bảng Nhà Tuyển Dụng
+CREATE TABLE NhaTuyenDung (
+    MaNTD INT AUTO_INCREMENT PRIMARY KEY,
+    MaTK INT NOT NULL UNIQUE,
+    TenCongTy VARCHAR(150) NOT NULL,
+    SoDienThoai CHAR(10),
+    DiaChi VARCHAR(255),
+    ThongTinCongTy TEXT,
+    MaDanhMuc INT,
+    FOREIGN KEY (MaTK) REFERENCES TaiKhoan(MaTK) ON DELETE CASCADE,
+    FOREIGN KEY (MaDanhMuc) REFERENCES DanhMucNghe(MaDanhMuc) ON DELETE SET NULL
+) COMMENT 'Thông tin nhà tuyển dụng';
+
+-- 7. Bảng Tin Tuyển Dụng
+CREATE TABLE TinTuyenDung (
+    MaTin INT AUTO_INCREMENT PRIMARY KEY,
+    MaNTD INT NOT NULL,
+    MaDanhMuc INT,
+    ChucDanh VARCHAR(150) NOT NULL,
+    MoTaCongViec TEXT,
+    YeuCau TEXT,
+    MucLuong VARCHAR(50),
+    DiaDiemLamViec VARCHAR(150),
+    NgayDang DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    TrangThai ENUM('ChoDuyet', 'DaDuyet', 'TuChoi') NOT NULL DEFAULT 'ChoDuyet',
+    FOREIGN KEY (MaNTD) REFERENCES NhaTuyenDung(MaNTD) ON DELETE CASCADE,
+    FOREIGN KEY (MaDanhMuc) REFERENCES DanhMucNghe(MaDanhMuc) ON DELETE SET NULL
+) COMMENT 'Thông tin tin tuyển dụng';
+
+-- 8. Bảng Ứng Tuyển
+CREATE TABLE UngTuyen (
+    MaUngTuyen INT AUTO_INCREMENT PRIMARY KEY,
+    MaTin INT NOT NULL,
+    MaUngVien INT NOT NULL,
+    NgayUngTuyen DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    TrangThai ENUM('DangXet', 'MoiPhongVan', 'TuChoi') NOT NULL DEFAULT 'DangXet',
+    UNIQUE (MaTin, MaUngVien),
+    FOREIGN KEY (MaTin) REFERENCES TinTuyenDung(MaTin) ON DELETE CASCADE,
+    FOREIGN KEY (MaUngVien) REFERENCES UngVien(MaUngVien) ON DELETE CASCADE
+) COMMENT 'Thông tin ứng tuyển';
+
+-- 9. Bảng Lịch Phỏng Vấn
+CREATE TABLE LichPhongVan (
+    MaLichPV INT AUTO_INCREMENT PRIMARY KEY,
+    MaUngTuyen INT NOT NULL,
+    NgayGioPhongVan DATETIME NOT NULL,
+    HinhThuc ENUM('Online', 'Offline') NOT NULL DEFAULT 'Online',
+    TrangThai ENUM('DaLenLich', 'HoanThanh', 'Huy') NOT NULL DEFAULT 'DaLenLich',
+    GhiChu TEXT,
+    FOREIGN KEY (MaUngTuyen) REFERENCES UngTuyen(MaUngTuyen) ON DELETE CASCADE
+) COMMENT 'Thông tin lịch phỏng vấn';
+
+-- 10. Bảng Tin Nhắn
+CREATE TABLE TinNhan (
+    MaTinNhan INT AUTO_INCREMENT PRIMARY KEY,
+    MaNguoiGui INT NOT NULL,
+    MaNguoiNhan INT NOT NULL,
+    NoiDung TEXT NOT NULL,
+    NgayGui DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (MaNguoiGui) REFERENCES TaiKhoan(MaTK) ON DELETE CASCADE,
+    FOREIGN KEY (MaNguoiNhan) REFERENCES TaiKhoan(MaTK) ON DELETE CASCADE
+) COMMENT 'Tin nhắn giữa các tài khoản';
+
+-- 11. Bảng Thông Báo
+CREATE TABLE ThongBao (
+    MaTB INT AUTO_INCREMENT PRIMARY KEY,
+    MaNguoiNhan INT NOT NULL,
+    LoaiThongBao ENUM('TinTuyenDung', 'UngTuyen', 'TinNhan', 'PhongVan') NOT NULL,
+    NoiDung TEXT NOT NULL,
+    DaXem BOOLEAN NOT NULL DEFAULT FALSE,
+    NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (MaNguoiNhan) REFERENCES TaiKhoan(MaTK) ON DELETE CASCADE
+) COMMENT 'Thông tin thông báo';
+
+
+------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------
+
+-- 1. Chèn dữ liệu vào bảng DanhMucNghe
+INSERT INTO DanhMucNghe (TenDanhMuc) VALUES
+('Công nghệ thông tin'),
+('Kế toán'),
+('Marketing'),
+('Nhân sự');
+
+-- 2. Chèn dữ liệu vào bảng TaiKhoan
+INSERT INTO TaiKhoan (Email, MatKhau, LoaiTaiKhoan, TrangThai, NgayTao) VALUES
+('ungvien1@example.com', 'hashed_password_1', 'UngVien', 'HoatDong', '2025-08-01 10:00:00'),
+('ungvien2@example.com', 'hashed_password_2', 'UngVien', 'HoatDong', '2025-08-02 12:00:00'),
+('nhatuyendung1@example.com', 'hashed_password_3', 'NhaTuyenDung', 'HoatDong', '2025-08-01 09:00:00'),
+('nhatuyendung2@example.com', 'hashed_password_4', 'NhaTuyenDung', 'HoatDong', '2025-08-03 15:00:00');
+
+-- 3. Chèn dữ liệu vào bảng QuanTriVien
+INSERT INTO QuanTriVien (Email, MatKhau, HoTen, TrangThai, NgayTao) VALUES
+('admin1@example.com', 'hashed_password_admin1', 'Nguyen Van Admin', 'HoatDong', '2025-08-01 08:00:00'),
+('admin2@example.com', 'hashed_password_admin2', 'Tran Thi Admin', 'HoatDong', '2025-08-02 09:00:00');
+
+-- 4. Chèn dữ liệu vào bảng UngVien
+INSERT INTO UngVien (MaTK, HoTen, SoDienThoai, AnhCV, KyNang, KinhNghiem, MaDanhMuc) VALUES
+(1, 'Nguyen Van A', '0912345678', '/cv/ungvien1.pdf', 'Java, Python, SQL', '2 năm làm việc tại công ty XYZ', 1),
+(2, 'Tran Thi B', '0987654321', '/cv/ungvien2.pdf', 'SEO, Content Marketing', '1 năm kinh nghiệm tại agency ABC', 3);
+
+-- 5. Chèn dữ liệu vào bảng NhaTuyenDung
+INSERT INTO NhaTuyenDung (MaTK, TenCongTy, SoDienThoai, DiaChi, ThongTinCongTy, MaDanhMuc) VALUES
+(3, 'Công ty TNHH TechVN', '0901234567', '123 Đường Láng, Hà Nội', 'Công ty công nghệ hàng đầu', 1),
+(4, 'Công ty CP MarketingPro', '0909876543', '456 Nguyễn Huệ, TP.HCM', 'Chuyên về marketing số', 3);
+
+-- 6. Chèn dữ liệu vào bảng TinTuyenDung
+INSERT INTO TinTuyenDung (MaNTD, MaDanhMuc, ChucDanh, MoTaCongViec, YeuCau, MucLuong, DiaDiemLamViec, NgayDang, TrangThai) VALUES
+(1, 1, 'Lập trình viên Java', 'Phát triển ứng dụng web', 'Tốt nghiệp CNTT, biết Java, Spring', '20-30 triệu', 'Hà Nội', '2025-08-10 10:00:00', 'DaDuyet'),
+(2, 3, 'Chuyên viên Marketing', 'Quản lý chiến dịch quảng cáo', '1 năm kinh nghiệm, biết SEO', '15-25 triệu', 'TP.HCM', '2025-08-12 14:00:00', 'ChoDuyet');
+
+-- 7. Chèn dữ liệu vào bảng UngTuyen
+INSERT INTO UngTuyen (MaTin, MaUngVien, NgayUngTuyen, TrangThai) VALUES
+(1, 1, '2025-08-11 09:00:00', 'DangXet'),
+(2, 2, '2025-08-13 11:00:00', 'MoiPhongVan');
+
+-- 8. Chèn dữ liệu vào bảng LichPhongVan
+INSERT INTO LichPhongVan (MaUngTuyen, NgayGioPhongVan, HinhThuc, TrangThai, GhiChu) VALUES
+(2, '2025-08-15 10:00:00', 'Online', 'DaLenLich', 'Phỏng vấn qua Zoom');
+
+-- 9. Chèn dữ liệu vào bảng TinNhan
+INSERT INTO TinNhan (MaNguoiGui, MaNguoiNhan, NoiDung, NgayGui) VALUES
+(1, 3, 'Chào anh/chị, em muốn hỏi thêm về vị trí lập trình viên Java.', '2025-08-11 10:30:00'),
+(3, 1, 'Chào bạn, bạn có thể gửi CV để chúng tôi xem xét.', '2025-08-11 11:00:00');
+
+-- 10. Chèn dữ liệu vào bảng ThongBao
+INSERT INTO ThongBao (MaNguoiNhan, LoaiThongBao, NoiDung, DaXem, NgayTao) VALUES
+(1, 'UngTuyen', 'Bạn đã ứng tuyển thành công vào vị trí Lập trình viên Java.', FALSE, '2025-08-11 09:05:00'),
+(2, 'PhongVan', 'Bạn được mời phỏng vấn cho vị trí Chuyên viên Marketing.', FALSE, '2025-08-13 11:30:00');

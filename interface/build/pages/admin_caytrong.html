@@ -1,0 +1,279 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="apple-touch-icon"
+      sizes="76x76"
+      href="../assets/img/apple-icon.png"
+    />
+    <link rel="icon" type="image/png" href="../assets/img/favicon.png" />
+    <title>Quản trị cây trồng</title>
+    <!--     Fonts and icons     -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome Icons -->
+    <script
+      src="https://kit.fontawesome.com/42d5adcbca.js"
+      crossorigin="anonymous"
+    ></script>
+    <!-- Nucleo Icons -->
+    <link href="../assets/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="../assets/css/nucleo-svg.css" rel="stylesheet" />
+    <!-- Main Styling -->
+    <link
+      href="../assets/css/argon-dashboard-tailwind.css?v=1.0.1"
+      rel="stylesheet"
+    />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  </head>
+
+  <body
+    class="m-0 font-sans antialiased font-normal bg-white text-start text-base leading-default text-slate-500"
+  >
+    <div class="container sticky top-0 z-sticky">
+      <div class="flex flex-wrap -mx-3">
+      </div>
+    </div>
+    <main class="mt-0 transition-all duration-200 ease-in-out">
+      <section>
+        <div
+          class="relative flex items-center min-h-screen p-0 overflow-hidden bg-center bg-cover"
+        >
+          <div class="container z-1">
+            <div class="flex flex-wrap -mx-3">
+              <div
+                class="flex flex-col w-full max-w-full px-3 mx-auto lg:mx-0 shrink-0 md:flex-0 md:w-7/12 lg:w-5/12 xl:w-4/12"
+              >
+                <div
+                  class="relative flex flex-col min-w-0 break-words bg-transparent border-0 shadow-none lg:py4 dark:bg-gray-950 rounded-2xl bg-clip-border"
+                >
+                  <div class="p-6 pb-0 mb-0">
+                    <h4 class="font-bold">Quản trị cây trồng</h4>
+                    <p class="mb-0">Nhập thông tin</p>
+                  </div>
+                  <div class="flex-auto p-6">
+                    <form role="form">
+                      <div class="mb-4">
+                        <input
+                          type="text"
+                          placeholder="Mã cây"
+                          class="txtmacay focus:shadow-primary-outline dark:bg-gray-950 dark:placeholder:text-white/80 dark:text-white/80 text-sm leading-5.6 ease block w-full appearance-none rounded-lg border border-solid border-gray-300 bg-white bg-clip-padding p-3 font-normal text-gray-700 outline-none transition-all placeholder:text-gray-500 focus:border-fuchsia-300 focus:outline-none"
+                        />
+                      </div>
+                      <div class="mb-4">
+                        <input
+                          type="text"
+                          placeholder="Giống cây"
+                          class="txtgiongcay focus:shadow-primary-outline dark:bg-gray-950 dark:placeholder:text-white/80 dark:text-white/80 text-sm leading-5.6 ease block w-full appearance-none rounded-lg border border-solid border-gray-300 bg-white bg-clip-padding p-3 font-normal text-gray-700 outline-none transition-all placeholder:text-gray-500 focus:border-fuchsia-300 focus:outline-none"
+                        />
+                      </div>
+                       </div>
+                      <div class="mb-4">
+                        <input
+                          type="date"
+                          placeholder="Ngày trồng"
+                          class="txtngaytrong focus:shadow-primary-outline dark:bg-gray-950 dark:placeholder:text-white/80 dark:text-white/80 text-sm leading-5.6 ease block w-full appearance-none rounded-lg border border-solid border-gray-300 bg-white bg-clip-padding p-3 font-normal text-gray-700 outline-none transition-all placeholder:text-gray-500 focus:border-fuchsia-300 focus:outline-none"
+                        />
+                      </div>
+                       </div>
+<div class="mb-4">
+  <textarea
+    placeholder="Tình trạng"
+    rows="4"
+    class="txttinhtrang block w-full rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-700 placeholder-gray-500 outline-none transition-all focus:border-blue-400 focus:shadow-lg"
+  ></textarea>
+</div>
+
+<!-- Nút thêm -->
+<div class="text-center mb-4">
+  <button
+    type="button"
+    class="btnthemcay w-full rounded-lg bg-blue-500 px-6 py-3 font-bold text-white transition-all hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-md active:opacity-85"
+  >
+    Thêm cây
+  </button>
+</div>
+
+<!-- Nút xóa -->
+<div class="text-center mb-4">
+  <button
+    type="button"
+    class="btnxoacay w-full rounded-lg bg-blue-500 px-6 py-3 font-bold text-white transition-all hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-md active:opacity-85"
+  >
+    Xóa cây
+  </button>
+</div>
+
+<!-- Nút sửa -->
+<div class="text-center">
+  <button
+    type="button"
+    class="btnsuacay w-full rounded-lg bg-blue-500 px-6 py-3 font-bold text-white transition-all hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-md active:opacity-85"
+  >
+    Sửa cây
+  </button>
+</div>
+
+              <div class="absolute top-0 right-0 flex-col justify-center hidden w-6/12 h-full max-w-full px-3 pr-0 my-auto text-center flex-0 lg:flex">
+  <div class="relative flex flex-col min-w-0 mb-6 break-words bg-white border-0 border-transparent border-solid shadow-xl dark:bg-slate-850 dark:shadow-dark-xl rounded-2xl bg-clip-border">
+    <div class="p-6 pb-0 mb-0 border-b-0 border-b-solid rounded-t-2xl border-b-transparent">
+      <h6 class="dark:text-white">Danh sách các cây trồng</h6>
+    </div>
+    <div class="flex-auto px-0 pt-0 pb-2">
+      <div class="p-0 overflow-x-auto ps">
+        <table class="items-center justify-center w-full mb-0 align-top border-collapse dark:border-white/40 text-slate-500">
+          <thead class="align-bottom">
+            <tr>
+              <th class="px-6 py-3 font-bold text-left uppercase align-middle bg-transparent border-b shadow-none dark:border-white/40 dark:text-white text-xxs tracking-none whitespace-nowrap text-slate-400 opacity-70">Mã cây</th>
+              <th class="px-6 py-3 pl-2 font-bold text-left uppercase align-middle bg-transparent border-b shadow-none dark:border-white/40 dark:text-white text-xxs tracking-none whitespace-nowrap text-slate-400 opacity-70">Tên cây</th>
+              <th class="px-6 py-3 pl-2 font-bold text-left uppercase align-middle bg-transparent border-b shadow-none dark:border-white/40 dark:text-white text-xxs tracking-none whitespace-nowrap text-slate-400 opacity-70">Ngày trồng</th>
+              <th class="px-6 py-3 pl-2 font-bold text-center uppercase align-middle bg-transparent border-b shadow-none dark:border-white/40 dark:text-white text-xxs tracking-none whitespace-nowrap text-slate-400 opacity-70">Tình trạng</th>
+            </tr>
+          </thead>
+          <tbody class="border-t addListCayTrong">
+            <!-- JS sẽ append dữ liệu tại đây -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+    <footer class="py-12">
+        </div>
+  <!-- plugin for scrollbar  -->
+  <script src="../assets/js/plugins/perfect-scrollbar.min.js" async></script>
+  <!-- main script file  -->
+  <script src="../assets/js/argon-dashboard-tailwind.js?v=1.0.1" async></script>
+  <script>
+
+$(document).ready(function () {
+    // show
+    function showdata() {
+    $.ajax({
+        url: "http://localhost:8888/Trongcay/php/api_get_Cay.php",
+        type: "GET",
+        dataType: "json",
+        success: function(res) {
+            var html = "";
+            if (res.success && res.data.length > 0) {
+                res.data.forEach(function(cay) {
+                    html += `
+                        <tr>
+                            <td class="px-6 py-3">${cay.MaCay}</td>
+                            <td class="px-6 py-3">${cay.GiongCay}</td>
+                            <td class="px-6 py-3">${cay.NgayTrong}</td>
+                            <td class="px-6 py-3 text-center">${cay.TinhTrang}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                html = `<tr><td colspan="5" class="text-center py-3">Không có dữ liệu</td></tr>`;
+            }
+            $(".addListCayTrong").html(html);
+        }
+    });
+}
+
+    // Gọi lần đầu khi trang load
+    showdata();
+console.log("ok")
+    // Thêm
+    $('.btnthemcay').click(function () {
+        var MaCay = $(".txtmacay").val();
+        var GiongCay = $(".txtgiongcay").val();
+        var NgayTrong = $(".txtngaytrong").val();
+        var TinhTrang = $(".txttinhtrang").val();
+
+        if (!MaCay || !GiongCay || !NgayTrong || !TinhTrang) {
+            alert("Vui lòng điền đầy đủ thông tin!");
+            return;
+        }
+
+        $.ajax({
+            url: "http://localhost:8888/Trongcay/php/api_insert_Cay.php",
+            type: "POST",
+            data: { MaCay, GiongCay, NgayTrong, TinhTrang },
+            dataType: "json",
+            success: function (res) {
+                if (res.success) {
+                    alert(res.message);
+                    $(".txtmacay, .txtgiongcay, .txtngaytrong, .txttinhtrang").val("");
+                    showdata(); // load lại
+                } else {
+                    alert("Lỗi: " + res.message);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("Đã xảy ra lỗi khi gửi yêu cầu: " + error);
+            }
+        });
+    });
+
+    // Xóa
+    $('.btnxoacay').click(function () {
+        var MaCay = $(".txtmacay").val();
+        if (!MaCay) {
+            alert("Vui lòng nhập mã cây!");
+            return;
+        }
+
+        $.ajax({
+            url: "http://localhost:8888/Trongcay/php/api_delete_Cay.php",
+            type: "POST",
+            data: { macay: MaCay },
+            dataType: "json",
+            success: function (res) {
+                if (res.success) {
+                    alert(res.message);
+                    $(".txtmacay").val("");
+                    showdata(); // load lại
+                } else {
+                    alert("Lỗi: " + res.message);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("Đã xảy ra lỗi khi gửi yêu cầu: " + error);
+            }
+        });
+    });
+
+    // Sửa
+    $('.btnsuacay').click(function () {
+        var MaCay = $(".txtmacay").val();
+        var GiongCay = $(".txtgiongcay").val();
+        var NgayTrong = $(".txtngaytrong").val();
+        var TinhTrang = $(".txttinhtrang").val();
+
+        if (!MaCay || !GiongCay || !NgayTrong || !TinhTrang) {
+            alert("Vui lòng điền đầy đủ thông tin!");
+            return;
+        }
+
+        $.ajax({
+            url: "http://localhost:8888/Trongcay/php/api_update_Cay.php",
+            type: "POST",
+            data: { MaCay, GiongCay, NgayTrong, TinhTrang },
+            dataType: "json",
+            success: function (res) {
+                if (res.success) {
+                    alert(res.message);
+                    showdata(); // load lại
+                } else {
+                    alert("Lỗi: " + res.message);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert("Đã xảy ra lỗi khi gửi yêu cầu: " + error);
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>

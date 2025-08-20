@@ -1,0 +1,40 @@
+🧑‍💼 1. Ứng viên (Candidate)
+Chức năng:
+
+Tạo và cập nhật hồ sơ cá nhân (CV)
+
+Tìm kiếm việc làm
+
+Ứng tuyển công việc
+
+Lên lịch phỏng vấn
+
+phỏng vấn online(face time)
+
+Chat với nhà tuyển dụng 
+
+🏢 2. Nhà tuyển dụng (Employer / Recruiter)
+Chức năng:
+
+Đăng tin tuyển dụng
+
+Quản lý tài khoản nhà tuyển dụng
+
+Quản lý danh sách tin tuyển dụng
+
+xem thông tin ứng viên ứng tuyển
+
+Mời ứng viên phỏng vấn
+
+LÊn lịch phỏng vấn
+
+Chat với ứng viên
+
+👨‍💻 3. Quản trị viên (Admin)
+Chức năng:
+
+Quản lý tài khoản ứng viên và nhà tuyển dụng
+
+Duyệt bài đăng tuyển dụng
+
+Thống kê hệ thống
