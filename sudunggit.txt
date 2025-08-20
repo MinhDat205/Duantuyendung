@@ -53,3 +53,35 @@ Ví dụ bạn muốn up index.php và style.css thì:
 git add index.php style.css
 git commit -m "Thêm index.php và style.css"
 git push origin main
+
+--------------------------------------------------------------------------------------
+
+🔹 Trường hợp 1: Chỉ chỉnh sửa file (chưa git add)
+
+Nếu bạn chỉ sửa file nhưng chưa git add, thì dùng:
+
+git checkout -- .
+
+
+👉 Toàn bộ file sẽ quay về trạng thái như lần cuối commit/pull.
+
+🔹 Trường hợp 2: Đã git add nhưng chưa commit
+
+Nếu bạn đã git add rồi nhưng chưa commit:
+
+git reset --hard
+
+
+👉 Xóa staging (vùng git add) và hủy hết thay đổi file.
+
+🔹 Trường hợp 3: Đã commit nhưng chưa push
+
+Nếu bạn đã lỡ commit nhưng chưa push, và muốn quay về giống GitHub:
+
+git reset --hard origin/main
+
+
+(hoặc origin/master nếu repo dùng master)
+👉 Toàn bộ code trên máy sẽ quay về giống y hệt repo trên GitHub.
+
+⚠️ Lưu ý: Các lệnh này sẽ mất hết thay đổi bạn vừa làm, không thể khôi phục lại nếu chưa backup.
