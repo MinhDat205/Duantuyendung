@@ -1,0 +1,8 @@
+# Thêm tất cả file mới vào git
+git add .
+
+# Commit lại (ghi chú thay đổi)
+git commit -m "Thêm file mới"
+
+# Đẩy lên GitHub
+git push origin main
