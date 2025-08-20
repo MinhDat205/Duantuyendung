@@ -1,3 +1,19 @@
+🔹 Lệnh tải file/code mới từ GitHub
+
+Mở CMD/Terminal trong thư mục dự án của bạn (nơi đã clone).
+Ví dụ:
+
+cd C:\xampp\htdocs\HeThongTuyenDung
+
+
+Chạy lệnh:
+
+git pull origin main
+
+
+(hoặc git pull origin master nếu repo dùng nhánh master)
+-------------------------------------------------------------------------------------
+
 # Thêm tất cả file mới vào git
 git add .
 
@@ -5,4 +21,35 @@ git add .
 git commit -m "Thêm file mới"
 
 # Đẩy lên GitHub
+git push origin main
+
+-------------------------------------------------------------------------------------
+
+🔹 Các bước up file cụ thể bằng Git
+
+Mở CMD/Terminal tại thư mục dự án.
+
+Thêm file cần upload, ví dụ bạn muốn up index.php:
+
+git add index.php
+
+
+Commit lại (ghi chú thay đổi):
+
+git commit -m "Thêm file index.php"
+
+
+Push lên GitHub:
+
+git push origin main
+
+
+(nếu repo dùng nhánh master thì thay main thành master)
+
+🔹 Nếu muốn up nhiều file cụ thể
+
+Ví dụ bạn muốn up index.php và style.css thì:
+
+git add index.php style.css
+git commit -m "Thêm index.php và style.css"
 git push origin main
