@@ -19,4 +19,3 @@ if ($conn->query($sql) === TRUE) {
     echo json_encode(["status" => "error", "message" => $conn->error]);
 }
 ?>
-// thay đổi
