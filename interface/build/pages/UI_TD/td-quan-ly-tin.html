@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý tin tuyển dụng</title>
+  <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
+  <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
+  <link href="../../assets/css/argon-dashboard-tailwind.css?v=1.0.1" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+  <style>.btn-xs{padding:.25rem .5rem;border:1px solid;border-radius:.3rem;font-size:.75rem}</style>
+</head>
+<body class="bg-gray-50 text-slate-500">
+  <div class="absolute w-full bg-blue-500 min-h-75"></div>
+
+  <aside class="fixed inset-y-0 my-4 w-full max-w-64 bg-white shadow-xl rounded-2xl xl:left-0 xl:translate-x-0 overflow-y-auto">
+    <div class="h-19"><a class="block px-8 py-6 font-semibold" href="../dashboard.html">Argon Dashboard</a></div>
+    <hr class="h-px bg-gradient-to-r from-transparent via-black/40 to-transparent" />
+    <ul class="flex flex-col">
+      <li><a class="px-4 py-2 flex items-center m-2" href="./td-ho-so.html">Hồ sơ Tuyển Dụng</a></li>
+      <li><a class="px-4 py-2 flex items-center m-2" href="./td-quan-ly-ung-vien.html">Quản lý ứng viên</a></li>
+      <li><a class="px-4 py-2 flex items-center bg-blue-100 rounded-lg m-2" href="./td-quan-ly-tin.html">Quản Lý Tin Tuyển Dụng </a></li>
+    </ul>
+  </aside>
+
+  <main class="relative h-full max-h-screen xl:ml-68 rounded-xl">
+    <nav class="relative flex items-center px-6 py-2 mx-6 rounded-2xl">
+      <h6 class="mb-0 font-bold text-white">Quản Lý Tin Tuyển Dụng</h6>
+    </nav>
+
+    <div class="w-full px-6 py-6 mx-auto">
+      <!-- Bảng -->
+      <div class="bg-white shadow-xl rounded-2xl p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+          <h6 class="font-semibold text-slate-700">Danh sách tin tuyển dụng</h6>
+          <div class="flex gap-2">
+            <input id="search" class="border rounded-lg px-3 py-2 text-sm" placeholder="Tìm theo chức danh...">
+            <button onclick="toggleAdd()" class="px-4 py-2 text-sm bg-blue-500 text-white rounded-lg">+ Thêm tin</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-slate-600">
+            <thead>
+              <tr class="text-xxs uppercase text-slate-400">
+                <th class="px-6 py-3 text-left">Chức danh</th>
+                <th class="px-6 py-3 text-left">Ngày đăng</th>
+                <th class="px-6 py-3 text-left">Mức lương</th>
+                <th class="px-6 py-3 text-left">Địa điểm</th>
+                <th class="px-6 py-3 text-right">Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="tin-table" class="border-t">
+              <tr><td colspan="5" class="px-6 py-4 text-slate-400">Đang tải...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Form thêm -->
+      <div id="form-add-wrap" class="hidden bg-white shadow-xl rounded-2xl p-6 mt-6">
+        <h6 class="font-semibold mb-4">Thêm tin tuyển dụng</h6>
+        <form id="form-add" class="grid gap-4 md:grid-cols-2">
+          <input name="MaNTD" placeholder="Mã NTD" class="border rounded-lg px-3 py-2" required>
+          <input name="ChucDanh" placeholder="Chức danh" class="border rounded-lg px-3 py-2" required>
+          <input name="MucLuong" placeholder="Mức lương" class="border rounded-lg px-3 py-2">
+          <input name="DiaDiemLamViec" placeholder="Địa điểm" class="border rounded-lg px-3 py-2">
+          <textarea name="MoTaCongViec" placeholder="Mô tả công việc" class="border rounded-lg px-3 py-2 md:col-span-2"></textarea>
+          <textarea name="YeuCau" placeholder="Yêu cầu" class="border rounded-lg px-3 py-2 md:col-span-2"></textarea>
+          <button class="px-4 py-2 bg-blue-500 text-white rounded-lg md:col-span-2">Lưu</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal sửa -->
+  <div id="modal-edit" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
+      <h6 class="font-semibold mb-4">Sửa tin tuyển dụng</h6>
+      <form id="form-edit" class="grid gap-4 md:grid-cols-2">
+        <input type="hidden" name="MaTin" id="edit-MaTin">
+        <input name="ChucDanh" id="edit-ChucDanh" placeholder="Chức danh" class="border rounded-lg px-3 py-2 md:col-span-2">
+        <input name="MucLuong" id="edit-MucLuong" placeholder="Mức lương" class="border rounded-lg px-3 py-2">
+        <input name="DiaDiemLamViec" id="edit-DiaDiemLamViec" placeholder="Địa điểm" class="border rounded-lg px-3 py-2">
+        <textarea name="MoTaCongViec" id="edit-MoTaCongViec" placeholder="Mô tả" class="border rounded-lg px-3 py-2 md:col-span-2"></textarea>
+        <textarea name="YeuCau" id="edit-YeuCau" placeholder="Yêu cầu" class="border rounded-lg px-3 py-2 md:col-span-2"></textarea>
+        <input name="TrangThai" id="edit-TrangThai" placeholder="TrangThai (ChoDuyet/DaDuyet/TuChoi)" class="border rounded-lg px-3 py-2 md:col-span-2">
+        <div class="md:col-span-2 flex justify-end gap-2">
+          <button id="btn-close-edit" type="button" class="px-4 py-2 bg-gray-200 rounded-lg">Hủy</button>
+          <button class="px-4 py-2 bg-blue-500 text-white rounded-lg">Lưu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script>
+   
+const ORIGIN = (location.origin && location.origin.startsWith('http'))
+  ? location.origin : 'http://localhost:8080';
+// Lấy origin hiện tại (tự có :8080) rồi trỏ đúng thư mục php của bạn
+    const API_BASE = 'http://localhost:8080/Duantuyendung/API/';
+
+    const API_SHOW_TIN   = API_BASE + 'API_show_Tintuyendung.php';
+  const API_INSERT_TIN = API_BASE + 'API_insert_Tintuyendung.php';
+  const API_UPDATE_TIN = API_BASE + 'API_update_Tintuyendung.php';
+  const API_DELETE_TIN = API_BASE + 'API_delete_Tintuyendung.php';
+    let TIN_LIST = [];
+    function toggleAdd(){ document.getElementById('form-add-wrap').classList.toggle('hidden'); }
+
+    async function loadTin(){
+      try{
+        const res = await fetch(API_SHOW_TIN);
+        const js  = await res.json();
+        if(js.status!=='success') throw new Error(js.message||'Lỗi tải dữ liệu');
+        TIN_LIST = js.data||[];
+        renderTable();
+      }catch(e){
+        document.getElementById('tin-table').innerHTML =
+          `<tr><td colspan="5" class="px-6 py-4 text-red-500">${e.message}</td></tr>`;
+      }
+    }
+
+    function renderTable(){
+      const q = (document.getElementById('search').value||'').toLowerCase();
+      const list = TIN_LIST.filter(t => (t.ChucDanh||'').toLowerCase().includes(q));
+
+      const tb = document.getElementById('tin-table');
+      if(!list.length){
+        tb.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-slate-400">Không có dữ liệu</td></tr>`;
+        return;
+      }
+      tb.innerHTML = list.map(t=>`
+        <tr class="border-b">
+          <td class="px-6 py-3">${t.ChucDanh||''}</td>
+          <td class="px-6 py-3">${t.NgayDang||''}</td>
+          <td class="px-6 py-3">${t.MucLuong||''}</td>
+          <td class="px-6 py-3">${t.DiaDiemLamViec||''}</td>
+          <td class="px-6 py-3 text-right">
+            <button onclick="openEdit(${t.MaTin})" class="btn-xs border-blue-400 text-blue-600">Sửa</button>
+            <button onclick="delTin(${t.MaTin})" class="btn-xs border-red-400 text-red-600">Xóa</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function addTin(e){
+      e.preventDefault();
+      const fd = new FormData(document.getElementById('form-add'));
+      try{
+        const res = await fetch(API_INSERT_TIN,{method:'POST',body:fd});
+        const js  = await res.json();
+        if(js.status==='success'){ alert(js.message); document.getElementById('form-add').reset(); toggleAdd(); loadTin(); }
+        else alert(js.message||'Thêm thất bại');
+      }catch(_){ alert('Lỗi API thêm tin'); }
+    }
+
+    function openEdit(id){
+      const t = TIN_LIST.find(x=>String(x.MaTin)===String(id));
+      if(!t){ alert('Không tìm thấy tin'); return; }
+      document.getElementById('edit-MaTin').value = t.MaTin;
+      document.getElementById('edit-ChucDanh').value = t.ChucDanh||'';
+      document.getElementById('edit-MoTaCongViec').value = t.MoTaCongViec||'';
+      document.getElementById('edit-YeuCau').value = t.YeuCau||'';
+      document.getElementById('edit-MucLuong').value = t.MucLuong||'';
+      document.getElementById('edit-DiaDiemLamViec').value = t.DiaDiemLamViec||'';
+      document.getElementById('edit-TrangThai').value = t.TrangThai||'';
+      document.getElementById('modal-edit').classList.remove('hidden');
+    }
+
+    async function saveEdit(e){
+      e.preventDefault();
+      const fd = new FormData(document.getElementById('form-edit'));
+      try{
+        const res = await fetch(API_UPDATE_TIN,{method:'POST',body:fd});
+        const js  = await res.json();
+        if(js.status==='success'){ alert(js.message); closeEdit(); loadTin(); }
+        else alert(js.message||'Cập nhật thất bại');
+      }catch(_){ alert('Lỗi API cập nhật'); }
+    }
+
+    async function delTin(id){
+      if(!confirm('Xóa tin này?')) return;
+      const fd = new FormData(); fd.append('MaTin',id);
+      try{
+        const res = await fetch(API_DELETE_TIN,{method:'POST',body:fd});
+        const js  = await res.json();
+        if(js.status==='success'){ alert(js.message); loadTin(); }
+        else alert(js.message||'Xóa thất bại');
+      }catch(_){ alert('Lỗi API xóa'); }
+    }
+
+    function closeEdit(){ document.getElementById('modal-edit').classList.add('hidden'); }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      loadTin();
+      document.getElementById('form-add').onsubmit  = addTin;
+      document.getElementById('form-edit').onsubmit = saveEdit;
+      document.getElementById('btn-close-edit').onclick = closeEdit;
+      document.getElementById('search').addEventListener('input', renderTable);
+    });
+  </script>
+
+  <script src="../../assets/js/plugins/perfect-scrollbar.min.js" async></script>
+  <script src="../../assets/js/argon-dashboard-tailwind.js?v=1.0.1" async></script>
+</body>
+</html>
