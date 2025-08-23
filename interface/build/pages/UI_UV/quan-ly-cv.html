@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fidovn - Quản lý CV</title>
+    <!-- Font Awesome Icons -->
+    <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'fido-orange': '#FF6B35',
+                        'fido-dark': '#2D3748'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .sidebar-item.is-active {
+            background-color: #FF6B35 !important;
+            color: white !important;
+        }
+        .sidebar-item:hover {
+            background-color: #f3f4f6;
+        }
+        .cv-card {
+            transition: all 0.3s ease;
+        }
+        .cv-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .cv-card.default {
+            border: 2px solid #FF6B35;
+        }
+        .btn-primary {
+            background-color: #FF6B35;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #e55a2b;
+        }
+        .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        .toast {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            color: white;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .toast.success {
+            background-color: #10b981;
+        }
+        .toast.error {
+            background-color: #ef4444;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal.show {
+            display: block;
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            width: 90%;
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Toast Container -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Header -->
+    <header class="bg-fido-dark text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-white">Fidovn</h1>
+                </div>
+                <nav class="hidden md:flex items-center space-x-8">
+                    <a href="main.html" class="flex items-center space-x-2 hover:text-fido-orange transition-colors">
+                        <i class="fas fa-home"></i>
+                        <span>Trang chủ</span>
+                    </a>
+                    <a href="vieclam.html" class="flex items-center space-x-2 hover:text-fido-orange transition-colors">
+                        <i class="fas fa-briefcase"></i>
+                        <span>Việc làm</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-2 hover:text-fido-orange transition-colors">
+                        <i class="fas fa-building"></i>
+                        <span>Công ty</span>
+                    </a>
+                </nav>
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 hover:bg-gray-700 rounded-lg transition-colors">
+                        <i class="fas fa-user-circle text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Breadcrumbs -->
+    <div class="bg-white border-b">
+        <div class="container mx-auto px-4 py-2">
+            <nav class="text-sm text-gray-600">
+                <a href="main.html" class="hover:text-fido-orange">Trang chủ</a>
+                <span class="mx-2">/</span>
+                <a href="#" class="hover:text-fido-orange">Tài khoản</span>
+                <span class="mx-2">/</span>
+                <span>Quản lý CV</span>
+            </nav>
+        </div>
+    </div>
+
+    <div class="flex min-h-screen bg-gray-50">
+        <!-- Sidebar Left (280px) -->
+        <aside id="uv-sidebar" class="w-70 bg-white shadow-lg">
+            <div class="p-6">
+                <!-- Profile Brief Card -->
+                <div class="uv-brief-card bg-orange-500 rounded-lg p-4 mb-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                            <span class="text-white font-bold text-lg">T</span>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-white font-semibold">Thắng Trương Văn</h4>
+                            <p class="text-white text-sm opacity-90">ID: #45824901</p>
+                            <p class="text-white text-sm opacity-90">thangtv5280@ut.edu.vn</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav class="space-y-2">
+                    <a href="dashboard.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-tv text-blue-500"></i>
+                        <span>Tổng quan</span>
+                    </a>
+                    <a href="thong-tin-ca-nhan.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-user text-orange-500"></i>
+                        <span>Thông tin cá nhân</span>
+                    </a>
+                    <a href="quan-ly-cv.html" class="sidebar-item is-active flex items-center space-x-3 p-3 rounded-lg">
+                        <i class="fas fa-file-alt text-emerald-500"></i>
+                        <span>Quản lý CV</span>
+                    </a>
+                    <a href="vieclam.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-briefcase text-cyan-500"></i>
+                        <span>Quản lý việc làm</span>
+                    </a>
+                    <a href="ung-tuyen-cua-toi.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-paper-plane text-purple-500"></i>
+                        <span>Ứng tuyển của tôi</span>
+                    </a>
+                    <a href="tin-da-luu.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-bookmark text-yellow-500"></i>
+                        <span>Tin đã lưu</span>
+                    </a>
+                    <a href="lich-phong-van.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-calendar text-pink-500"></i>
+                        <span>Lịch phỏng vấn</span>
+                    </a>
+                    <a href="theo-doi.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-heart text-red-500"></i>
+                        <span>Theo dõi</span>
+                    </a>
+                    <a href="profile.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-cog text-gray-500"></i>
+                        <span>Quản lý tài khoản</span>
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content Right (flex 1) -->
+        <main class="flex-1 p-8">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex items-center justify-between mb-8">
+                    <h1 class="text-3xl font-bold text-gray-800">Quản lý CV</h1>
+                    <div class="flex space-x-3">
+                        <button onclick="openCreateCVModal()" class="btn-primary">
+                            <i class="fas fa-plus mr-2"></i>
+                            Tạo CV mới
+                        </button>
+                        <button onclick="openUploadCVModal()" class="btn-secondary">
+                            <i class="fas fa-upload mr-2"></i>
+                            Upload CV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CV Statistics -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-file-alt text-blue-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1" id="totalCVs">0</h3>
+                        <p class="text-gray-600 text-sm">Tổng CV</p>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-check text-green-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1" id="activeCVs">0</h3>
+                        <p class="text-gray-600 text-sm">CV hoạt động</p>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-eye text-orange-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1" id="viewedCVs">0</h3>
+                        <p class="text-gray-600 text-sm">CV đã xem</p>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-download text-purple-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1" id="downloadedCVs">0</h3>
+                        <p class="text-gray-600 text-sm">CV đã tải</p>
+                    </div>
+                </div>
+
+                <!-- CV List -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-6">Danh sách CV</h2>
+                    
+                    <div id="cvList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- CV cards will be loaded here -->
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="emptyState" class="hidden text-center py-16">
+                        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-file-alt text-3xl text-gray-400"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Chưa có CV nào</h3>
+                        <p class="text-gray-600 mb-6">Tạo CV đầu tiên để bắt đầu ứng tuyển việc làm!</p>
+                        <button onclick="openCreateCVModal()" class="btn-primary">
+                            <i class="fas fa-plus mr-2"></i>
+                            Tạo CV mới
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create CV Modal -->
+    <div id="createCVModal" class="modal">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">Tạo CV mới</h3>
+                <button onclick="closeCreateCVModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="createCVForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tên CV</label>
+                    <input type="text" id="cvName" name="cv_name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fido-orange focus:border-transparent" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mẫu CV</label>
+                    <select id="cvTemplate" name="cv_template" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fido-orange focus:border-transparent">
+                        <option value="modern">Mẫu hiện đại</option>
+                        <option value="classic">Mẫu cổ điển</option>
+                        <option value="creative">Mẫu sáng tạo</option>
+                        <option value="minimal">Mẫu tối giản</option>
+                    </select>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeCreateCVModal()" class="btn-secondary">Hủy</button>
+                    <button type="submit" class="btn-primary">Tạo CV</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Upload CV Modal -->
+    <div id="uploadCVModal" class="modal">
+        <div class="modal-content">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">Upload CV</h3>
+                <button onclick="closeUploadCVModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="uploadCVForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tên CV</label>
+                    <input type="text" id="uploadCVName" name="cv_name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fido-orange focus:border-transparent" required>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">File CV</label>
+                    <input type="file" id="cvFile" name="cv_file" accept=".pdf,.doc,.docx" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fido-orange focus:border-transparent" required>
+                    <p class="text-sm text-gray-500 mt-1">Hỗ trợ: PDF, DOC, DOCX (tối đa 5MB)</p>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeUploadCVModal()" class="btn-secondary">Hủy</button>
+                    <button type="submit" class="btn-primary">Upload CV</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        let cvs = [];
+
+        // Sample CV data
+        const sampleCVs = [
+            {
+                id: 1,
+                name: "CV Developer Fullstack",
+                type: "AI Generated",
+                template: "modern",
+                status: "active",
+                is_default: true,
+                created_at: "2024-01-15",
+                updated_at: "2024-01-15",
+                views: 25,
+                downloads: 8,
+                file_size: "2.3 MB",
+                file_type: "PDF"
+            },
+            {
+                id: 2,
+                name: "CV Marketing Digital",
+                type: "AI Generated",
+                template: "creative",
+                status: "active",
+                is_default: false,
+                created_at: "2024-01-10",
+                updated_at: "2024-01-12",
+                views: 18,
+                downloads: 5,
+                file_size: "1.8 MB",
+                file_type: "PDF"
+            },
+            {
+                id: 3,
+                name: "CV Sales Executive",
+                type: "Uploaded",
+                template: "classic",
+                status: "active",
+                is_default: false,
+                created_at: "2024-01-05",
+                updated_at: "2024-01-05",
+                views: 12,
+                downloads: 3,
+                file_size: "1.2 MB",
+                file_type: "DOCX"
+            }
+        ];
+
+        // Load CVs
+        async function loadCVs() {
+            try {
+                const response = await fetch('../../API/ungvien/cv-list.php');
+                const data = await response.json();
+                
+                if (data.ok) {
+                    cvs = data.data;
+                } else {
+                    // For demo purposes, use sample data
+                    cvs = sampleCVs;
+                }
+                
+                updateStatistics();
+                displayCVs();
+            } catch (error) {
+                console.error('Error loading CVs:', error);
+                // Use sample data for demo
+                cvs = sampleCVs;
+                updateStatistics();
+                displayCVs();
+            }
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            document.getElementById('totalCVs').textContent = cvs.length;
+            document.getElementById('activeCVs').textContent = cvs.filter(cv => cv.status === 'active').length;
+            document.getElementById('viewedCVs').textContent = cvs.reduce((sum, cv) => sum + cv.views, 0);
+            document.getElementById('downloadedCVs').textContent = cvs.reduce((sum, cv) => sum + cv.downloads, 0);
+        }
+
+        // Display CVs
+        function displayCVs() {
+            const container = document.getElementById('cvList');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (cvs.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            
+            container.innerHTML = cvs.map(cv => `
+                <div class="cv-card bg-white border border-gray-200 rounded-lg p-6 ${cv.is_default ? 'default' : ''}">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">${cv.type}</span>
+                            ${cv.is_default ? '<span class="px-2 py-1 bg-fido-orange text-white text-xs rounded-full">Mặc định</span>' : ''}
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="editCV(${cv.id})" class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteCV(${cv.id})" class="text-red-400 hover:text-red-600">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">${cv.name}</h3>
+                    <p class="text-sm text-gray-600 mb-2">Mẫu: ${cv.template}</p>
+                    <p class="text-sm text-gray-500 mb-4">Cập nhật: ${formatDate(cv.updated_at)}</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+                        <div>
+                            <span class="text-gray-500">Lượt xem:</span>
+                            <span class="font-medium ml-1">${cv.views}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">Lượt tải:</span>
+                            <span class="font-medium ml-1">${cv.downloads}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-2">
+                        <button onclick="previewCV(${cv.id})" class="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+                            <i class="fas fa-eye mr-2"></i>
+                            Xem trước
+                        </button>
+                        <button onclick="downloadCV(${cv.id})" class="flex-1 bg-fido-orange text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors">
+                            <i class="fas fa-download mr-2"></i>
+                            Tải xuống
+                        </button>
+                    </div>
+                    
+                    ${!cv.is_default ? `
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <button onclick="setDefaultCV(${cv.id})" class="w-full bg-blue-50 text-blue-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors">
+                                <i class="fas fa-star mr-2"></i>
+                                Đặt làm CV mặc định
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        // Modal functions
+        function openCreateCVModal() {
+            document.getElementById('createCVModal').classList.add('show');
+        }
+
+        function closeCreateCVModal() {
+            document.getElementById('createCVModal').classList.remove('show');
+            document.getElementById('createCVForm').reset();
+        }
+
+        function openUploadCVModal() {
+            document.getElementById('uploadCVModal').classList.add('show');
+        }
+
+        function closeUploadCVModal() {
+            document.getElementById('uploadCVModal').classList.remove('show');
+            document.getElementById('uploadCVForm').reset();
+        }
+
+        // Create CV form submission
+        document.getElementById('createCVForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const cvData = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch('../../API/ungvien/cv-create.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(cvData)
+                });
+
+                const result = await response.json();
+                
+                if (result.ok) {
+                    showToast('Tạo CV thành công!', 'success');
+                    closeCreateCVModal();
+                    loadCVs();
+                } else {
+                    showToast(result.message || 'Có lỗi xảy ra khi tạo CV', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating CV:', error);
+                // For demo purposes, add locally
+                const newCV = {
+                    id: Date.now(),
+                    name: cvData.cv_name,
+                    type: "AI Generated",
+                    template: cvData.cv_template,
+                    status: "active",
+                    is_default: false,
+                    created_at: new Date().toISOString().split('T')[0],
+                    updated_at: new Date().toISOString().split('T')[0],
+                    views: 0,
+                    downloads: 0,
+                    file_size: "0 MB",
+                    file_type: "PDF"
+                };
+                
+                cvs.push(newCV);
+                updateStatistics();
+                displayCVs();
+                showToast('Tạo CV thành công!', 'success');
+                closeCreateCVModal();
+            }
+        });
+
+        // Upload CV form submission
+        document.getElementById('uploadCVForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch('../../API/ungvien/cv-upload.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (result.ok) {
+                    showToast('Upload CV thành công!', 'success');
+                    closeUploadCVModal();
+                    loadCVs();
+                } else {
+                    showToast(result.message || 'Có lỗi xảy ra khi upload CV', 'error');
+                }
+            } catch (error) {
+                console.error('Error uploading CV:', error);
+                showToast('Có lỗi xảy ra khi upload CV', 'error');
+            }
+        });
+
+        // CV actions
+        function editCV(cvId) {
+            // Navigate to CV editor or open edit modal
+            console.log('Edit CV:', cvId);
+            showToast('Chức năng đang phát triển', 'info');
+        }
+
+        function deleteCV(cvId) {
+            if (!confirm('Bạn có chắc muốn xóa CV này?')) {
+                return;
+            }
+
+            // Remove CV from list
+            cvs = cvs.filter(cv => cv.id !== cvId);
+            updateStatistics();
+            displayCVs();
+            showToast('Đã xóa CV thành công', 'success');
+        }
+
+        function previewCV(cvId) {
+            // Open CV preview in new tab or modal
+            console.log('Preview CV:', cvId);
+            showToast('Chức năng đang phát triển', 'info');
+        }
+
+        function downloadCV(cvId) {
+            // Download CV file
+            console.log('Download CV:', cvId);
+            showToast('Đang tải CV...', 'info');
+        }
+
+        function setDefaultCV(cId) {
+            // Set CV as default
+            cvs.forEach(cv => {
+                cv.is_default = cv.id === cId;
+            });
+            
+            updateStatistics();
+            displayCVs();
+            showToast('Đã đặt CV làm mặc định', 'success');
+        }
+
+        // Show toast message
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCVs();
+        });
+    </script>
+</body>
+</html>

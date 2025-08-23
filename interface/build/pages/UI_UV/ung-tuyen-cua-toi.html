@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fidovn - Ứng tuyển của tôi</title>
+    <!-- Font Awesome Icons -->
+    <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'fido-orange': '#FF6B35',
+                        'fido-dark': '#2D3748'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .sidebar-item.is-active {
+            background-color: #FF6B35 !important;
+            color: white !important;
+        }
+        .sidebar-item:hover {
+            background-color: #f3f4f6;
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .status-submitted { background-color: #dbeafe; color: #1e40af; }
+        .status-viewed { background-color: #fef3c7; color: #d97706; }
+        .status-interviewing { background-color: #d1fae5; color: #059669; }
+        .status-rejected { background-color: #fee2e2; color: #dc2626; }
+        .status-hired { background-color: #dcfce7; color: #16a34a; }
+        .application-card {
+            transition: all 0.3s ease;
+        }
+        .application-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-fido-dark text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-white">Fidovn</h1>
+                </div>
+                <nav class="hidden md:flex items-center space-x-8">
+                    <a href="main.html" class="flex items-center space-x-2 hover:text-fido-orange transition-colors">
+                        <i class="fas fa-home"></i>
+                        <span>Trang chủ</span>
+                    </a>
+                    <a href="vieclam.html" class="flex items-center space-x-2 hover:text-fido-orange transition-colors">
+                        <i class="fas fa-briefcase"></i>
+                        <span>Việc làm</span>
+                    </a>
+                    <a href="#" class="flex items-center space-x-2 hover:text-fido-orange transition-colors">
+                        <i class="fas fa-building"></i>
+                        <span>Công ty</span>
+                    </a>
+                </nav>
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 hover:bg-gray-700 rounded-lg transition-colors">
+                        <i class="fas fa-user-circle text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Breadcrumbs -->
+    <div class="bg-white border-b">
+        <div class="container mx-auto px-4 py-2">
+            <nav class="text-sm text-gray-600">
+                <a href="main.html" class="hover:text-fido-orange">Trang chủ</a>
+                <span class="mx-2">/</span>
+                <a href="#" class="hover:text-fido-orange">Tài khoản</span>
+                <span class="mx-2">/</span>
+                <span>Ứng tuyển của tôi</span>
+            </nav>
+        </div>
+    </div>
+
+    <div class="flex min-h-screen bg-gray-50">
+        <!-- Sidebar Left (280px) -->
+        <aside id="uv-sidebar" class="w-70 bg-white shadow-lg">
+            <div class="p-6">
+                <!-- Profile Brief Card -->
+                <div class="uv-brief-card bg-orange-500 rounded-lg p-4 mb-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                            <span class="text-white font-bold text-lg">T</span>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-white font-semibold">Thắng Trương Văn</h4>
+                            <p class="text-white text-sm opacity-90">ID: #45824901</p>
+                            <p class="text-white text-sm opacity-90">thangtv5280@ut.edu.vn</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav class="space-y-2">
+                    <a href="dashboard.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-tv text-blue-500"></i>
+                        <span>Tổng quan</span>
+                    </a>
+                    <a href="thong-tin-ca-nhan.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-user text-orange-500"></i>
+                        <span>Thông tin cá nhân</span>
+                    </a>
+                    <a href="quan-ly-cv.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-file-alt text-emerald-500"></i>
+                        <span>Quản lý CV</span>
+                    </a>
+                    <a href="vieclam.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-briefcase text-cyan-500"></i>
+                        <span>Quản lý việc làm</span>
+                    </a>
+                    <a href="ung-tuyen-cua-toi.html" class="sidebar-item is-active flex items-center space-x-3 p-3 rounded-lg">
+                        <i class="fas fa-paper-plane text-purple-500"></i>
+                        <span>Ứng tuyển của tôi</span>
+                    </a>
+                    <a href="tin-da-luu.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-bookmark text-yellow-500"></i>
+                        <span>Tin đã lưu</span>
+                    </a>
+                    <a href="lich-phong-van.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-calendar text-pink-500"></i>
+                        <span>Lịch phỏng vấn</span>
+                    </a>
+                    <a href="theo-doi.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-heart text-red-500"></i>
+                        <span>Theo dõi</span>
+                    </a>
+                    <a href="profile.html" class="sidebar-item flex items-center space-x-3 p-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-cog text-gray-500"></i>
+                        <span>Quản lý tài khoản</span>
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content Right (flex 1) -->
+        <main class="flex-1 p-8">
+            <div class="max-w-6xl mx-auto">
+                <h1 class="text-3xl font-bold text-gray-800 mb-8">Ứng tuyển của tôi</h1>
+                
+                <!-- Statistics Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-paper-plane text-blue-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1" id="totalApplications">0</h3>
+                        <p class="text-gray-600 text-sm">Tổng đơn</p>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-eye text-yellow-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1" id="viewedApplications">0</h3>
+                        <p class="text-gray-600 text-sm">Đã xem</p>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-calendar-check text-green-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1" id="interviewApplications">0</h3>
+                        <p class="text-gray-600 text-sm">Phỏng vấn</p>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+                        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-times text-red-600"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1" id="rejectedApplications">0</h3>
+                        <p class="text-gray-600 text-sm">Từ chối</p>
+                    </div>
+                </div>
+
+                <!-- Filter Bar -->
+                <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <!-- Status Filter -->
+                        <div class="flex flex-wrap gap-2">
+                            <button class="status-filter-btn active bg-fido-orange text-white px-4 py-2 rounded-lg text-sm font-medium" data-status="all">Tất cả</button>
+                            <button class="status-filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300" data-status="submitted">Đã nộp</button>
+                            <button class="status-filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300" data-status="viewed">Đã xem</button>
+                            <button class="status-filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300" data-status="interviewing">Phỏng vấn</button>
+                            <button class="status-filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300" data-status="rejected">Từ chối</button>
+                            <button class="status-filter-btn bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300" data-status="hired">Nhận việc</button>
+                        </div>
+                        
+                        <!-- Search and Sort -->
+                        <div class="flex items-center gap-4">
+                            <input type="text" id="searchInput" placeholder="Tìm kiếm việc làm..." 
+                                   class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <select id="sortSelect" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="latest">Mới nhất</option>
+                                <option value="oldest">Cũ nhất</option>
+                                <option value="company">Theo công ty</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Applications Table -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Việc làm
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Công ty
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Ngày nộp
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Trạng thái
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Hành động
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="applicationsTableBody">
+                                <!-- Applications will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="hidden text-center py-16">
+                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-paper-plane text-3xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Chưa có đơn ứng tuyển nào</h3>
+                    <p class="text-gray-600 mb-6">Bắt đầu tìm kiếm việc làm và nộp đơn ứng tuyển ngay hôm nay!</p>
+                    <a href="vieclam.html" class="inline-block bg-fido-orange text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors">
+                        Tìm việc làm
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        let applications = [];
+        let currentFilter = 'all';
+        let currentSort = 'latest';
+
+        // Sample applications data
+        const sampleApplications = [
+            {
+                id: 1,
+                job_title: "CHUYÊN VIÊN DIGITAL MARKETING",
+                company: "CÔNG TY TNHH DIGITAL SOLUTIONS",
+                company_logo: "DIGITAL",
+                applied_date: "2024-01-15",
+                status: "submitted",
+                status_text: "Đã nộp",
+                cv_name: "CV Marketing Digital",
+                location: "Hồ Chí Minh, Quận 1",
+                salary: "15 triệu - 25 triệu /tháng"
+            },
+            {
+                id: 2,
+                job_title: "NHÂN VIÊN KINH DOANH",
+                company: "CÔNG TY TNHH ABC",
+                company_logo: "ABC",
+                applied_date: "2024-01-12",
+                status: "viewed",
+                status_text: "Đã xem",
+                cv_name: "CV Sales Executive",
+                location: "Hà Nội, Ba Đình",
+                salary: "10 triệu - 15 triệu /tháng"
+            },
+            {
+                id: 3,
+                job_title: "DEVELOPER FRONTEND",
+                company: "CÔNG TY TNHH TECH",
+                company_logo: "TECH",
+                applied_date: "2024-01-10",
+                status: "interviewing",
+                status_text: "Phỏng vấn",
+                cv_name: "CV Developer Fullstack",
+                location: "Hồ Chí Minh, Quận 7",
+                salary: "20 triệu - 30 triệu /tháng"
+            },
+            {
+                id: 4,
+                job_title: "KẾ TOÁN VIÊN",
+                company: "CÔNG TY TNHH FINANCE",
+                company_logo: "FINANCE",
+                applied_date: "2024-01-08",
+                status: "rejected",
+                status_text: "Từ chối",
+                cv_name: "CV Kế toán",
+                location: "Đà Nẵng, Hải Châu",
+                salary: "8 triệu - 12 triệu /tháng"
+            },
+            {
+                id: 5,
+                job_title: "NHÂN VIÊN NHÂN SỰ",
+                company: "CÔNG TY TNHH HR",
+                company_logo: "HR",
+                applied_date: "2024-01-05",
+                status: "hired",
+                status_text: "Nhận việc",
+                cv_name: "CV Nhân sự",
+                location: "Hồ Chí Minh, Quận 3",
+                salary: "12 triệu - 18 triệu /tháng"
+            }
+        ];
+
+        // Load applications
+        async function loadApplications() {
+            try {
+                const response = await fetch('../../API/ungvien/applications.php');
+                const data = await response.json();
+                
+                if (data.ok) {
+                    applications = data.data;
+                } else {
+                    // For demo purposes, use sample data
+                    applications = sampleApplications;
+                }
+                
+                updateStatistics();
+                displayApplications();
+            } catch (error) {
+                console.error('Error loading applications:', error);
+                // Use sample data for demo
+                applications = sampleApplications;
+                updateStatistics();
+                displayApplications();
+            }
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const total = applications.length;
+            const viewed = applications.filter(app => app.status === 'viewed').length;
+            const interviewing = applications.filter(app => app.status === 'interviewing').length;
+            const rejected = applications.filter(app => app.status === 'rejected').length;
+
+            document.getElementById('totalApplications').textContent = total;
+            document.getElementById('viewedApplications').textContent = viewed;
+            document.getElementById('interviewApplications').textContent = interviewing;
+            document.getElementById('rejectedApplications').textContent = rejected;
+        }
+
+        // Display applications
+        function displayApplications() {
+            const tbody = document.getElementById('applicationsTableBody');
+            const emptyState = document.getElementById('emptyState');
+            
+            // Filter applications
+            let filteredApplications = applications;
+            if (currentFilter !== 'all') {
+                filteredApplications = applications.filter(app => app.status === currentFilter);
+            }
+            
+            // Sort applications
+            filteredApplications.sort((a, b) => {
+                switch (currentSort) {
+                    case 'latest':
+                        return new Date(b.applied_date) - new Date(a.applied_date);
+                    case 'oldest':
+                        return new Date(a.applied_date) - new Date(b.applied_date);
+                    case 'company':
+                        return a.company.localeCompare(b.company);
+                    default:
+                        return 0;
+                }
+            });
+
+            if (filteredApplications.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            
+            tbody.innerHTML = filteredApplications.map(app => `
+                <tr class="application-card hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                                <span class="text-sm font-bold text-gray-600">${app.company_logo.substring(0, 1)}</span>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">${app.job_title}</div>
+                                <div class="text-sm text-gray-500">${app.location}</div>
+                                <div class="text-sm text-fido-orange">${app.salary}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${app.company}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${formatDate(app.applied_date)}</div>
+                        <div class="text-sm text-gray-500">${app.cv_name}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="status-badge status-${app.status}">${app.status_text}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button onclick="viewApplication(${app.id})" class="text-fido-orange hover:text-orange-600">
+                                Xem chi tiết
+                            </button>
+                            ${app.status === 'submitted' ? 
+                                `<button onclick="cancelApplication(${app.id})" class="text-red-600 hover:text-red-800">
+                                    Hủy đơn
+                                </button>` : ''
+                            }
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        // Status filter functionality
+        document.querySelectorAll('.status-filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all buttons
+                document.querySelectorAll('.status-filter-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-fido-orange', 'text-white');
+                    b.classList.add('bg-gray-200', 'text-gray-700');
+                });
+                
+                // Add active class to clicked button
+                this.classList.remove('bg-gray-200', 'text-gray-700');
+                this.classList.add('active', 'bg-fido-orange', 'text-white');
+                
+                // Get filter status
+                currentFilter = this.dataset.status;
+                
+                // Display filtered applications
+                displayApplications();
+            });
+        });
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            if (searchTerm === '') {
+                displayApplications();
+                return;
+            }
+            
+            const filteredApplications = applications.filter(app => 
+                app.job_title.toLowerCase().includes(searchTerm) ||
+                app.company.toLowerCase().includes(searchTerm)
+            );
+            
+            displayFilteredApplications(filteredApplications);
+        });
+
+        // Display filtered applications
+        function displayFilteredApplications(filteredApps) {
+            const tbody = document.getElementById('applicationsTableBody');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (filteredApps.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            
+            tbody.innerHTML = filteredApps.map(app => `
+                <tr class="application-card hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                                <span class="text-sm font-bold text-gray-600">${app.company_logo.substring(0, 1)}</span>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">${app.job_title}</div>
+                                <div class="text-sm text-gray-500">${app.location}</div>
+                                <div class="text-sm text-fido-orange">${app.salary}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${app.company}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${formatDate(app.applied_date)}</div>
+                        <div class="text-sm text-gray-500">${app.cv_name}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="status-badge status-${app.status}">${app.status_text}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button onclick="viewApplication(${app.id})" class="text-fido-orange hover:text-orange-600">
+                                Xem chi tiết
+                            </button>
+                            ${app.status === 'submitted' ? 
+                                `<button onclick="cancelApplication(${app.id})" class="text-red-600 hover:text-red-800">
+                                    Hủy đơn
+                                </button>` : ''
+                            }
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Sort functionality
+        document.getElementById('sortSelect').addEventListener('change', function() {
+            currentSort = this.value;
+            displayApplications();
+        });
+
+        // View application details
+        function viewApplication(applicationId) {
+            // Navigate to application detail page or show modal
+            console.log('View application:', applicationId);
+            // You can implement navigation to a detail page here
+        }
+
+        // Cancel application
+        async function cancelApplication(applicationId) {
+            if (!confirm('Bạn có chắc muốn hủy đơn ứng tuyển này?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('../../API/ungvien/application-cancel.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ application_id: applicationId })
+                });
+
+                const result = await response.json();
+                
+                if (result.ok) {
+                    // Remove application from list
+                    applications = applications.filter(app => app.id !== applicationId);
+                    updateStatistics();
+                    displayApplications();
+                    showToast('Đã hủy đơn ứng tuyển thành công', 'success');
+                } else {
+                    showToast('Có lỗi xảy ra khi hủy đơn', 'error');
+                }
+            } catch (error) {
+                console.error('Error canceling application:', error);
+                // For demo purposes, remove locally
+                applications = applications.filter(app => app.id !== applicationId);
+                updateStatistics();
+                displayApplications();
+                showToast('Đã hủy đơn ứng tuyển thành công', 'success');
+            }
+        }
+
+        // Show toast message
+        function showToast(message, type = 'info') {
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'}`;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadApplications();
+        });
+    </script>
+</body>
+</html>
