@@ -1,0 +1,33 @@
+admin1@example.com
+hashed_password_admin1
+
+
+<!-- Placeholder Sidenav -->
+<div id="sidenav-container" role="complementary" aria-label="Thanh điều hướng quản trị"></div>
+
+<script>
+  (async function loadSidenav() {
+    try {
+      const res = await fetch("Sidenav_admin.html", { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const html = await res.text();
+      const host = document.getElementById("sidenav-container");
+      host.innerHTML = html;
+
+      // Gắn listener Đăng xuất từ trang cha (script bên trong Sidenav không auto chạy)
+      const logoutBtn = host.querySelector("#btnLogout");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", function (e) {
+          e.preventDefault();
+          try {
+            localStorage.removeItem("admin_logged_in");
+            localStorage.removeItem("admin_email");
+          } catch {}
+          window.location.href = "../../../API/API_logout_Admin.php";
+        });
+      }
+    } catch (e) {
+      console.error("Không thể tải Sidenav_admin.html", e);
+    }
+  })();
+</script>

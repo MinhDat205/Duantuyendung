@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tin tuyển dụng (Ứng Viên)</title>
+
+  <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
+  <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
+  <link href="../../assets/css/argon-dashboard-tailwind.css?v=1.0.1" rel="stylesheet" />
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        referrerpolicy="no-referrer">
+
+  <style>
+    .card { border:1px solid #e2e8f0; border-radius:1rem; padding:1rem; background:white }
+    .btn { padding:.5rem .9rem; border-radius:.65rem; font-weight:700; font-size:.85rem }
+    .btn-blue { background:#3b82f6; color:#fff }
+    .btn-gray { background:#e5e7eb }
+    .badge { padding:.25rem .6rem; border-radius:.5rem; font-size:.7rem; font-weight:700 }
+    .badge-blue { background:#dbeafe; color:#1e40af }
+    .badge-green{ background:#dcfce7; color:#065f46 }
+  </style>
+</head>
+
+<body class="bg-gray-50 text-slate-600">
+  <div class="absolute w-full bg-blue-500 min-h-75"></div>
+
+  <aside class="fixed inset-y-0 my-4 w-full max-w-64 bg-white shadow-xl rounded-2xl xl:left-0 xl:translate-x-0 overflow-y-auto">
+    <div class="h-19"><a class="block px-8 py-6 font-semibold" href="../dashboard.html">Argon Dashboard</a></div>
+    <hr class="h-px bg-gradient-to-r from-transparent via-black/40 to-transparent" />
+    <ul class="flex flex-col">
+      <li><a class="px-4 py-2 flex items-center m-2" href="./uv-ho-so.html">Hồ sơ Ứng Viên</a></li>
+      <li><a class="px-4 py-2 flex items-center bg-blue-100 rounded-lg m-2" href="./uv-tin-tuyen-dung.html">Tin tuyển dụng</a></li>
+    </ul>
+  </aside>
+
+  <main class="relative h-full max-h-screen xl:ml-68 rounded-xl">
+    <nav class="relative flex items-center px-6 py-2 mx-6 rounded-2xl">
+      <h6 class="mb-0 font-bold text-white">Tin tuyển dụng</h6>
+    </nav>
+
+    <div class="w-full px-6 py-6 mx-auto">
+      <div class="bg-white rounded-2xl shadow-xl">
+        <div class="p-6 pb-0 border-b grid md:grid-cols-2 gap-4 items-end">
+          <div class="grid sm:grid-cols-2 gap-2">
+            <input id="search-key" class="rounded-lg border px-3 py-2" placeholder="Từ khóa...">
+            <div class="grid grid-cols-2 gap-2">
+              <input id="filter-nganh" class="rounded-lg border px-3 py-2" placeholder="Ngành">
+              <input id="filter-dia-diem" class="rounded-lg border px-3 py-2" placeholder="Địa điểm">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <input id="filter-luong-min" type="number" class="rounded-lg border px-3 py-2" placeholder="Lương từ">
+              <input id="filter-luong-max" type="number" class="rounded-lg border px-3 py-2" placeholder="đến">
+            </div>
+          </div>
+          <div class="flex gap-2 justify-end">
+            <input id="uv-id" type="number" class="rounded-lg border px-3 py-2 w-36" placeholder="Mã UV">
+            <button id="btn-search" class="btn btn-blue">Tìm kiếm</button>
+            <button id="tab-applied-btn" class="btn btn-gray">Tin đã ứng tuyển</button>
+          </div>
+        </div>
+
+        <div id="tab-list" class="p-6">
+          <div id="jobs-wrap" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div class="h-32 bg-slate-100 rounded animate-pulse md:col-span-2 xl:col-span-3"></div>
+          </div>
+        </div>
+
+        <div id="tab-applied" class="p-6 hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="text-xxs uppercase text-slate-400">
+                  <th class="px-6 py-3 text-left">Tiêu đề</th>
+                  <th class="px-6 py-3 text-left">Trạng thái</th>
+                  <th class="px-6 py-3 text-left">Ngày ứng tuyển</th>
+                  <th class="px-6 py-3 text-right">Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="applied-tb" class="border-t">
+                <tr><td colspan="4" class="px-6 py-6 text-slate-400">Chưa có dữ liệu</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const ORIGIN   = (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://localhost:8080';
+    const API_BASE = `${ORIGIN}/Duantuyendung/API/`;
+    const API_SHOW_TIN   = `${API_BASE}API_show_Tintuyendung.php`;
+    const API_SEARCH_TIN = `${API_BASE}API_search_Tintuyendung_advanced.php`;
+    const API_INSERT_UT  = `${API_BASE}API_insert_Ungtuyen.php`;
+    const API_DELETE_UT  = `${API_BASE}API_delete_Ungtuyen.php`;
+    const API_SHOW_UT_BY_UV = `${API_BASE}API_show_Ungtuyen_byUV.php`;
+
+    const tabList   = document.getElementById('tab-list');
+    const tabApplied= document.getElementById('tab-applied');
+    document.getElementById('tab-applied-btn').onclick = async () => {
+      tabList.classList.add('hidden');
+      tabApplied.classList.remove('hidden');
+      await loadApplied();
+    };
+
+    async function fetchJSON(url, options = {}){
+      const res  = await fetch(url, options);
+      const text = await res.text();
+      if(!res.ok){ alert(`HTTP ${res.status} @ ${url}\n\n${text.slice(0,300)}`); throw new Error(res.status); }
+      const ct = res.headers.get('content-type')||'';
+      if(!ct.includes('application/json')){ alert(`API không trả JSON @ ${url}\n\n${text.slice(0,300)}`); throw new Error('Not JSON'); }
+      return JSON.parse(text);
+    }
+
+    function jobCard(t){
+      const title = t.ChucDanh || t.TieuDe || 'Tin tuyển dụng';
+      const cty   = t.TenCongTy || t.CongTy || (t.NTD && t.NTD.TenCongTy) || 'Công ty';
+      const desc  = (t.MoTaCongViec||'').slice(0,160);
+      const luong = t.MucLuong ? `<span class=\"badge badge-green\">${t.MucLuong}</span>` : '';
+      const dia   = t.DiaDiemLamViec || t.DiaDiem || '';
+      return `
+        <div class="card">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="font-bold text-slate-800">${title}</div>
+              <div class="text-sm text-slate-500">${cty}</div>
+            </div>
+            <div class="text-right">
+              ${luong}
+            </div>
+          </div>
+          <div class="text-sm text-slate-600 mt-2 line-clamp-3">${desc}</div>
+          <div class="flex items-center justify-between mt-3 text-sm text-slate-500">
+            <span class="badge badge-blue">${dia||'N/A'}</span>
+            <button class="btn btn-blue" onclick="applyJob(${t.MaTin})">Ứng tuyển</button>
+          </div>
+        </div>`;
+    }
+
+    async function loadList(){
+      const wrap = document.getElementById('jobs-wrap');
+      wrap.innerHTML = `<div class=\"h-32 bg-slate-100 rounded animate-pulse md:col-span-2 xl:col-span-3\"></div>`;
+      try{
+        const js = await fetchJSON(API_SHOW_TIN);
+        // API_show_Tintuyendung.php trả về MẢNG thuần không có status
+        const list = Array.isArray(js) ? js : (js.data||[]);
+        if(!list.length){ wrap.innerHTML = `<div class=\"text-slate-400\">Không có tin</div>`; return; }
+        wrap.innerHTML = list.map(jobCard).join('');
+      }catch(e){ wrap.innerHTML = `<div class=\"text-red-500\">Lỗi tải dữ liệu</div>`; }
+    }
+
+    async function searchList(){
+      const q  = document.getElementById('search-key').value.trim();
+      const dd = document.getElementById('filter-dia-diem').value.trim();
+      const body = { keyword: q };
+      if(dd) body.DiaDiemLamViec = dd; // theo API_search_Tintuyendung_advanced.php
+      const wrap = document.getElementById('jobs-wrap');
+      wrap.innerHTML = `<div class=\"h-32 bg-slate-100 rounded animate-pulse md:col-span-2 xl:col-span-3\"></div>`;
+      try{
+        const js = await fetchJSON(API_SEARCH_TIN, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+        if(js.status!=="success") throw new Error(js.message||'Lỗi tải dữ liệu');
+        const list = js.data||[];
+        if(!list.length){ wrap.innerHTML = `<div class=\"text-slate-400\">Không có kết quả</div>`; return; }
+        wrap.innerHTML = list.map(jobCard).join('');
+      }catch(e){ wrap.innerHTML = `<div class=\"text-red-500\">Lỗi tìm kiếm</div>`; }
+    }
+
+    async function applyJob(MaTin){
+      const uv = document.getElementById('uv-id').value.trim();
+      if(!uv){ alert('Nhập Mã UV trước khi ứng tuyển'); return; }
+      const fd = new FormData();
+      fd.append('MaUngVien', uv);
+      fd.append('MaTin', MaTin);
+      try{
+        const js = await fetchJSON(API_INSERT_UT,{ method:'POST', body: fd });
+        if(js.status==='success'){
+          alert('Ứng tuyển thành công');
+        }else{
+          alert(js.message||'Ứng tuyển thất bại');
+        }
+      }catch(e){ alert('Lỗi API ứng tuyển'); }
+    }
+
+    async function loadApplied(){
+      const uv = document.getElementById('uv-id').value.trim();
+      if(!uv){ alert('Nhập Mã UV để xem tin đã ứng tuyển'); return; }
+      const tb = document.getElementById('applied-tb');
+      tb.innerHTML = `<tr><td colspan=\"4\" class=\"px-6 py-6 text-slate-400\">Đang tải…</td></tr>`;
+      try{
+        const js = await fetchJSON(`${API_SHOW_UT_BY_UV}?MaUngVien=${encodeURIComponent(uv)}`);
+        if(js.status!=="success") throw new Error(js.message||'Lỗi tải dữ liệu');
+        const rows = js.data||[];
+        if(!rows.length){ tb.innerHTML = `<tr><td colspan=\"4\" class=\"px-6 py-6 text-slate-400\">Chưa có bản ghi</td></tr>`; return; }
+        tb.innerHTML = rows.map(r=>{
+          const title = r.ChucDanh || r.TieuDe || `Tin #${r.MaTin}`;
+          const st    = r.TrangThai || 'DangXet';
+          const date  = r.NgayUngTuyen ? new Date(r.NgayUngTuyen).toLocaleString() : '-';
+          return `
+            <tr class=\"border-b\">
+              <td class=\"px-6 py-3\">${title}</td>
+              <td class=\"px-6 py-3\">${st}</td>
+              <td class=\"px-6 py-3\">${date}</td>
+              <td class=\"px-6 py-3 text-right\"><button class=\"btn btn-gray\" onclick=\"cancelApply(${r.MaUngTuyen})\">Hủy</button></td>
+            </tr>`;
+        }).join('');
+      }catch(e){ tb.innerHTML = `<tr><td colspan=\"4\" class=\"px-6 py-6 text-red-500\">Lỗi tải dữ liệu</td></tr>`; }
+    }
+
+    async function cancelApply(MaUngTuyen){
+      if(!confirm('Hủy ứng tuyển này?')) return;
+      const fd = new FormData();
+      fd.append('MaUngTuyen', MaUngTuyen);
+      try{
+        const js = await fetchJSON(API_DELETE_UT,{ method:'POST', body: fd });
+        if(js.status==='success'){
+          await loadApplied();
+        }else{
+          alert(js.message||'Hủy thất bại');
+        }
+      }catch(e){ alert('Lỗi API hủy'); }
+    }
+
+    document.getElementById('btn-search').addEventListener('click', ()=>{
+      tabApplied.classList.add('hidden');
+      tabList.classList.remove('hidden');
+      const hasFilter = ['search-key','filter-nganh','filter-dia-diem','filter-luong-min','filter-luong-max']
+        .some(id=> (document.getElementById(id).value||'').trim());
+      if(hasFilter) searchList(); else loadList();
+    });
+
+    document.addEventListener('DOMContentLoaded', loadList);
+  </script>
+
+  <script src="../../assets/js/plugins/perfect-scrollbar.min.js" async></script>
+  <script src="../../assets/js/argon-dashboard-tailwind.js?v=1.0.1" async></script>
+</body>
+</html>
+
+

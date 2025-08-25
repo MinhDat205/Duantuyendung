@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="apple-touch-icon"
+      sizes="76x76"
+      href="../assets/img/apple-icon.png"
+    />
+    <link rel="icon" type="image/png" href="../assets/img/favicon.png" />
+    <title>Đăng ký / Đăng nhập - Duantuyendung</title>
+
+    <!-- Fonts & Icons -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700"
+      rel="stylesheet"
+    />
+    <script
+      src="https://kit.fontawesome.com/42d5adcbca.js"
+      crossorigin="anonymous"
+    ></script>
+    <link href="../assets/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="../assets/css/nucleo-svg.css" rel="stylesheet" />
+    <!-- Argon Tailwind -->
+    <link
+      href="../assets/css/argon-dashboard-tailwind.css?v=1.0.1"
+      rel="stylesheet"
+    />
+
+    <style>
+      .tab-btn.active {
+        opacity: 1;
+        filter: none;
+      }
+      .tab-btn:not(.active) {
+        opacity: 0.6;
+      }
+      .hidden {
+        display: none;
+      }
+      .chip {
+        display: inline-block;
+        padding: 4px 8px;
+        border: 1px solid #ddd;
+        border-radius: 999px;
+        margin: 2px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .chip.selected {
+        background: #1f2937;
+        color: #fff;
+        border-color: #1f2937;
+      }
+    </style>
+  </head>
+  <body
+    class="m-0 font-sans antialiased font-normal bg-white text-start text-base leading-default text-slate-500"
+  >
+    <!-- Navbar tối giản -->
+    <nav
+      class="absolute top-0 z-30 flex flex-wrap items-center justify-between w-full px-4 py-2 mt-6 mb-4 shadow-none lg:flex-nowrap lg:justify-start"
+    >
+      <div
+        class="container flex items-center justify-between py-0 flex-wrap-inherit"
+      >
+        <span
+          class="py-1.75 ml-4 mr-4 font-bold text-white text-sm whitespace-nowrap lg:ml-0"
+        >
+          Duantuyendung
+        </span>
+      </div>
+    </nav>
+
+    <main class="mt-0 transition-all duration-200 ease-in-out">
+      <section class="min-h-screen">
+        <div
+          class="bg-top relative flex items-start pt-12 pb-56 m-4 overflow-hidden bg-cover min-h-50-screen rounded-xl bg-[url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/signup-cover.jpg')]"
+        >
+          <span
+            class="absolute top-0 left-0 w-full h-full bg-center bg-cover bg-gradient-to-tl from-zinc-800 to-zinc-700 opacity-60"
+          ></span>
+          <div class="container z-10">
+            <div class="flex flex-wrap justify-center -mx-3">
+              <div
+                class="w-full max-w-full px-3 mx-auto mt-0 text-center lg:flex-0 shrink-0 lg:w-5/12"
+              >
+                <h1 class="mt-12 mb-2 text-white">Chào bạn!</h1>
+                <p class="text-white">
+                  Tạo tài khoản mới hoặc đăng nhập để bắt đầu.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="container">
+          <div class="flex flex-wrap -mx-3 -mt-48 md:-mt-56 lg:-mt-48">
+            <div
+              class="w-full max-w-full px-3 mx-auto mt-0 md:flex-0 shrink-0 md:w-7/12 lg:w-5/12 xl:w-4/12"
+            >
+              <div
+                class="relative z-0 flex flex-col min-w-0 break-words bg-white border-0 shadow-xl rounded-2xl bg-clip-border"
+              >
+                <div
+                  class="p-6 pb-0 text-center bg-white border-b-0 rounded-t-2xl"
+                >
+                  <div class="flex justify-center gap-3">
+                    <button
+                      id="btnTabSignup"
+                      class="tab-btn active inline-block px-5 py-2.5 font-bold text-center text-white align-middle bg-gradient-to-tl from-zinc-800 to-zinc-700 rounded-lg text-sm"
+                    >
+                      Đăng ký
+                    </button>
+                    <button
+                      id="btnTabSignin"
+                      class="tab-btn inline-block px-5 py-2.5 font-bold text-center text-slate-700 align-middle bg-gray-100 rounded-lg text-sm"
+                    >
+                      Đăng nhập
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Đăng ký -->
+                <div id="tabSignup" class="flex-auto p-6">
+                  <form id="formSignup">
+                    <div class="mb-3">
+                      <label class="text-sm font-semibold">Bạn là</label>
+                      <div class="flex gap-3 mt-2">
+                        <label class="text-sm">
+                          <input
+                            type="radio"
+                            name="loaiTaiKhoan"
+                            value="UngVien"
+                            checked
+                          />
+                          Ứng viên
+                        </label>
+                        <label class="text-sm">
+                          <input
+                            type="radio"
+                            name="loaiTaiKhoan"
+                            value="NhaTuyenDung"
+                          />
+                          Nhà tuyển dụng
+                        </label>
+                      </div>
+                    </div>
+
+                    <div id="uvFields">
+                      <div class="mb-3">
+                        <input
+                          id="uvHoTen"
+                          type="text"
+                          class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                          placeholder="Họ tên (Ứng viên)"
+                        />
+                      </div>
+                      <div class="mb-3">
+                        <input
+                          id="uvSoDienThoai"
+                          type="text"
+                          class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                          placeholder="Số điện thoại (tuỳ chọn)"
+                        />
+                      </div>
+                    </div>
+
+                    <div id="ntdFields" class="hidden">
+                      <div class="mb-3">
+                        <input
+                          id="ntdTenCongTy"
+                          type="text"
+                          class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                          placeholder="Tên công ty"
+                        />
+                      </div>
+                      <div class="mb-3">
+                        <input
+                          id="ntdSoDienThoai"
+                          type="text"
+                          class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                          placeholder="Số điện thoại (tuỳ chọn)"
+                        />
+                      </div>
+                      <div class="mb-3">
+                        <input
+                          id="ntdDiaChi"
+                          type="text"
+                          class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                          placeholder="Địa chỉ (tuỳ chọn)"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="mb-3">
+                      <input
+                        id="email"
+                        type="email"
+                        class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                        placeholder="Email"
+                      />
+                    </div>
+
+                    <div class="mb-3">
+                      <input
+                        id="password"
+                        type="password"
+                        class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                        placeholder="Mật khẩu"
+                      />
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="text-sm font-semibold block mb-1"
+                        >Chọn ngành (nhiều)</label
+                      >
+                      <div id="catsWrap" class="flex flex-wrap"></div>
+                      <p class="text-xs text-slate-400 mt-1">
+                        Nhấp để chọn/bỏ chọn. Dữ liệu lấy từ bảng
+                        <em>DanhMucNghe</em>.
+                      </p>
+                    </div>
+
+                    <div class="text-center">
+                      <button
+                        type="submit"
+                        class="inline-block w-full px-5 py-2.5 mt-4 mb-2 font-bold text-center text-white bg-gradient-to-tl from-zinc-800 to-zinc-700 rounded-lg text-sm"
+                      >
+                        Tạo tài khoản
+                      </button>
+                      <div id="signupMsg" class="text-sm mt-2"></div>
+                    </div>
+                  </form>
+                </div>
+
+                <!-- Đăng nhập -->
+                <div id="tabSignin" class="flex-auto p-6 hidden">
+                  <form id="formSignin">
+                    <div class="mb-3">
+                      <input
+                        id="loginEmail"
+                        type="email"
+                        class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                        placeholder="Email"
+                      />
+                    </div>
+                    <div class="mb-3">
+                      <input
+                        id="loginPassword"
+                        type="password"
+                        class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                        placeholder="Mật khẩu"
+                      />
+                    </div>
+                    <div class="text-center">
+                      <button
+                        type="submit"
+                        class="inline-block w-full px-5 py-2.5 mt-4 mb-2 font-bold text-center text-white bg-gradient-to-tl from-zinc-800 to-zinc-700 rounded-lg text-sm"
+                      >
+                        Đăng nhập
+                      </button>
+                      <div id="signinMsg" class="text-sm mt-2"></div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+              <p class="text-xs text-center text-slate-400 mt-3">
+                ©
+                <script>
+                  document.write(new Date().getFullYear());
+                </script>
+                Duantuyendung
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- plugin for scrollbar  -->
+    <script src="../assets/js/plugins/perfect-scrollbar.min.js" async></script>
+    <!-- main script file  -->
+    <script
+      src="../assets/js/argon-dashboard-tailwind.js?v=1.0.1"
+      async
+    ></script>
+
+    <script>
+      // ====== CẤU HÌNH ======
+      const API_BASE = "http://localhost/Duantuyendung/interf/API/";
+
+      // ====== TAB ======
+      const btnTabSignup = document.getElementById("btnTabSignup");
+      const btnTabSignin = document.getElementById("btnTabSignin");
+      const tabSignup = document.getElementById("tabSignup");
+      const tabSignin = document.getElementById("tabSignin");
+
+      btnTabSignup.addEventListener("click", () => {
+        btnTabSignup.classList.add("active");
+        btnTabSignin.classList.remove("active");
+        tabSignup.classList.remove("hidden");
+        tabSignin.classList.add("hidden");
+      });
+      btnTabSignin.addEventListener("click", () => {
+        btnTabSignin.classList.add("active");
+        btnTabSignup.classList.remove("active");
+        tabSignin.classList.remove("hidden");
+        tabSignup.classList.add("hidden");
+      });
+
+      // ====== ROLE TOGGLE ======
+      const uvFields = document.getElementById("uvFields");
+      const ntdFields = document.getElementById("ntdFields");
+      document.querySelectorAll('input[name="loaiTaiKhoan"]').forEach((r) => {
+        r.addEventListener("change", () => {
+          if (r.checked && r.value === "UngVien") {
+            uvFields.classList.remove("hidden");
+            ntdFields.classList.add("hidden");
+          }
+          if (r.checked && r.value === "NhaTuyenDung") {
+            ntdFields.classList.remove("hidden");
+            uvFields.classList.add("hidden");
+          }
+        });
+      });
+
+      // ====== CATEGORIES (chips multiselect) ======
+      const catsWrap = document.getElementById("catsWrap");
+      let cats = [];
+      let selectedCats = new Set();
+
+      async function loadCategories() {
+        try {
+          const rs = await fetch(API_BASE + "get_categories.php");
+          const js = await rs.json();
+          if (js.ok) {
+            cats = js.data;
+            catsWrap.innerHTML = "";
+            js.data.forEach((c) => {
+              const chip = document.createElement("span");
+              chip.className = "chip";
+              chip.textContent = c.TenDanhMuc;
+              chip.dataset.id = c.MaDanhMuc;
+              chip.addEventListener("click", () => {
+                const id = Number(chip.dataset.id);
+                if (selectedCats.has(id)) {
+                  selectedCats.delete(id);
+                  chip.classList.remove("selected");
+                } else {
+                  selectedCats.add(id);
+                  chip.classList.add("selected");
+                }
+              });
+              catsWrap.appendChild(chip);
+            });
+          } else {
+            catsWrap.innerHTML =
+              '<span class="text-xs text-red-600">Tải danh mục thất bại</span>';
+          }
+        } catch (e) {
+          catsWrap.innerHTML =
+            '<span class="text-xs text-red-600">Lỗi kết nối danh mục</span>';
+        }
+      }
+      loadCategories();
+
+      // ====== SIGNUP ======
+      const formSignup = document.getElementById("formSignup");
+      const signupMsg = document.getElementById("signupMsg");
+
+      formSignup.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        signupMsg.textContent = "Đang xử lý...";
+
+        const role = document.querySelector(
+          'input[name="loaiTaiKhoan"]:checked'
+        ).value;
+        const payload = {
+          email: document.getElementById("email").value.trim(),
+          password: document.getElementById("password").value,
+          loaiTaiKhoan: role,
+          danhMucIds: Array.from(selectedCats),
+        };
+
+        if (role === "UngVien") {
+          payload.hoTen = document.getElementById("uvHoTen").value.trim();
+          payload.soDienThoai = document
+            .getElementById("uvSoDienThoai")
+            .value.trim();
+        } else {
+          payload.tenCongTy = document
+            .getElementById("ntdTenCongTy")
+            .value.trim();
+          payload.soDienThoai = document
+            .getElementById("ntdSoDienThoai")
+            .value.trim();
+          payload.diaChi = document.getElementById("ntdDiaChi").value.trim();
+        }
+
+        try {
+          const rs = await fetch(API_BASE + "auth_register.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const js = await rs.json();
+          if (js.ok) {
+            signupMsg.className = "text-sm text-green-600";
+            signupMsg.textContent = "Đăng ký thành công! Bạn có thể đăng nhập.";
+            // tự chuyển tab đăng nhập
+            setTimeout(() => btnTabSignin.click(), 800);
+          } else {
+            signupMsg.className = "text-sm text-red-600";
+            signupMsg.textContent = js.error || "Đăng ký thất bại";
+          }
+        } catch (err) {
+          signupMsg.className = "text-sm text-red-600";
+          signupMsg.textContent = "Lỗi kết nối máy chủ";
+        }
+      });
+
+      // ====== SIGNIN ======
+      const formSignin = document.getElementById("formSignin");
+      const signinMsg = document.getElementById("signinMsg");
+
+      formSignin.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        signinMsg.textContent = "Đang xử lý...";
+
+        const payload = {
+          email: document.getElementById("loginEmail").value.trim(),
+          password: document.getElementById("loginPassword").value,
+        };
+
+        try {
+          const rs = await fetch(API_BASE + "auth_login.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const js = await rs.json();
+          if (js.ok) {
+            signinMsg.className = "text-sm text-green-600";
+            signinMsg.textContent = "Đăng nhập thành công!";
+            // TODO: điều hướng theo vai trò
+            // Ví dụ:
+            // if (js.data.LoaiTaiKhoan === 'UngVien') window.location.href = '../pages/UI_UV/dashboard.html';
+            // else window.location.href = '../pages/UI_TD/dashboard.html';
+          } else {
+            signinMsg.className = "text-sm text-red-600";
+            signinMsg.textContent = js.error || "Đăng nhập thất bại";
+          }
+        } catch (err) {
+          signinMsg.className = "text-sm text-red-600";
+          signinMsg.textContent = "Lỗi kết nối máy chủ";
+        }
+      });
+    </script>
+  </body>
+</html>
