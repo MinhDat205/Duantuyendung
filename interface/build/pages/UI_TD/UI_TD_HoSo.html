@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hồ sơ Nhà Tuyển Dụng</title>
+
+  <!-- Argon assets -->
+  <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
+  <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
+  <link href="../../assets/css/argon-dashboard-tailwind.css?v=1.0.1" rel="stylesheet" />
+
+  <!-- Font Awesome: dùng CSS CDN để tránh lỗi 403 của kit -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        referrerpolicy="no-referrer">
+</head>
+
+<body class="m-0 font-sans text-base antialiased leading-default bg-gray-50 text-slate-600">
+  <div class="absolute w-full bg-blue-500 min-h-75"></div>
+
+  <!-- Sidebar -->
+  <aside class="fixed inset-y-0 my-4 w-full max-w-64 bg-white shadow-xl rounded-2xl xl:left-0 xl:translate-x-0 overflow-y-auto">
+    <div class="h-19"><a class="block px-8 py-6 font-semibold" href="../dashboard.html">Argon Dashboard</a></div>
+    <hr class="h-px bg-gradient-to-r from-transparent via-black/40 to-transparent" />
+    <ul class="flex flex-col">
+      <li><a class="px-4 py-2 flex items-center bg-blue-100 rounded-lg m-2" href="./td-ho-so.html">Hồ sơ Tuyển Dụng</a></li>
+      <li><a class="px-4 py-2 flex items-center m-2" href="./td-quan-ly-ung-vien.html">Quản lý ứng viên</a></li>
+      <li><a class="px-4 py-2 flex items-center m-2" href="./td-quan-ly-tin.html">Quản Lý Tin Tuyển Dụng</a></li>
+    </ul>
+  </aside>
+
+  <main class="relative h-full max-h-screen xl:ml-68 rounded-xl">
+    <nav class="relative flex items-center px-6 py-2 mx-6 rounded-2xl">
+      <h6 class="mb-0 font-bold text-white">Hồ sơ Nhà Tuyển Dụng</h6>
+    </nav>
+
+    <div class="w-full px-6 py-6 mx-auto">
+      <div class="bg-white rounded-2xl shadow-xl">
+        <div class="p-6 pb-0 border-b flex gap-2">
+          <button id="tab-view-btn" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-100">Xem</button>
+          <button id="tab-edit-btn" class="px-4 py-2 text-sm font-semibold rounded-lg border">Chỉnh sửa</button>
+        </div>
+
+        <!-- Tab Xem -->
+        <div id="tab-view" class="p-6">
+          <div id="list-ntd" class="grid md:grid-cols-2 gap-4">
+            <div class="h-4 bg-slate-200 rounded animate-pulse md:col-span-2"></div>
+          </div>
+        </div>
+
+        <!-- Tab Chỉnh sửa -->
+        <div id="tab-edit" class="p-6 hidden">
+          <div class="grid gap-4 md:grid-cols-2">
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold mb-1">Chọn Nhà tuyển dụng (MaTK)</label>
+              <select id="sel-matk" class="w-full rounded-lg border px-3 py-2"></select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold mb-1">Email</label>
+              <div class="relative">
+                <i class="fa-solid fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input id="Email" class="w-full rounded-lg border pl-9 pr-3 py-2" placeholder="Email đăng nhập">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold mb-1">Mật khẩu</label>
+              <div class="relative">
+                <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input id="MatKhau" type="password" class="w-full rounded-lg border pl-9 pr-3 py-2" placeholder="Mật khẩu mới">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold mb-1">Loại tài khoản</label>
+              <select id="LoaiTaiKhoan" class="w-full rounded-lg border px-3 py-2">
+                <option value="NhaTuyenDung">NhaTuyenDung</option>
+                <option value="UngVien">UngVien</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold mb-1">Trạng thái</label>
+              <select id="TrangThai" class="w-full rounded-lg border px-3 py-2">
+                <option value="HoatDong">HoatDong</option>
+                <option value="BiKhoa">BiKhoa</option>
+              </select>
+            </div>
+
+            <div class="md:col-span-2 flex gap-2 pt-2">
+              <button id="btn-save" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-semibold">Lưu</button>
+              <button id="btn-cancel" type="button" class="px-4 py-2 bg-slate-100 rounded-lg text-sm font-semibold">Hủy</button>
+            </div>
+          </div>
+        </div>
+        <!-- /Tab Chỉnh sửa -->
+      </div>
+    </div>
+  </main>
+
+  <!-- =================== JS =================== -->
+  <script>
+    // ===== Config API =====
+    const ORIGIN   = (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://localhost:8080';
+    const API_BASE = `${ORIGIN}/Duantuyendung/API/`; // NHỚ có dấu "/" cuối
+    const API_SHOW_TD   = `${API_BASE}API_show_Nhatuyendung.php`;
+    const API_UPDATE_TD = `${API_BASE}API_update_Nhatuyendung.php`;
+
+    let NTD_LIST = [];
+
+    // ===== Helpers: màu gradient + avatar chữ cái đầu =====
+    const GRADIENTS = [
+      'from-blue-600 to-cyan-400',
+      'from-emerald-500 to-teal-400',
+      'from-purple-600 to-pink-500',
+      'from-orange-500 to-amber-400',
+      'from-red-600 to-orange-500',
+      'from-indigo-600 to-sky-500'
+    ];
+    const hash = (s) => { let h=0; for (let i=0;i<(s||'').length;i++){ h=(h<<5)-h+s.charCodeAt(i); h|=0; } return Math.abs(h); };
+    const gradFor = (name) => GRADIENTS[ hash(name||'?') % GRADIENTS.length ];
+    const initials = (name) => (name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+
+    // ===== Tabs =====
+    const tabView = document.getElementById('tab-view');
+    const tabEdit = document.getElementById('tab-edit');
+    document.getElementById('tab-view-btn').onclick = () => { tabView.classList.remove('hidden'); tabEdit.classList.add('hidden'); };
+    document.getElementById('tab-edit-btn').onclick = () => { tabEdit.classList.remove('hidden'); tabView.classList.add('hidden'); };
+    document.getElementById('btn-cancel').onclick   = () => { tabView.classList.remove('hidden'); tabEdit.classList.add('hidden'); };
+
+    // ===== Fetch helper: bắt lỗi JSON rõ ràng =====
+    async function fetchJSON(url, options = {}) {
+      const res  = await fetch(url, options);
+      const text = await res.text();
+      if (!res.ok) { alert(`HTTP ${res.status} @ ${url}\n\n${text.slice(0,300)}`); throw new Error(res.status); }
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) { alert(`API không trả JSON @ ${url}\n\n${text.slice(0,300)}`); throw new Error('Not JSON'); }
+      return JSON.parse(text);
+    }
+
+    // ===== Load danh sách NTD =====
+    async function loadNTD(){
+      try{
+        const js = await fetchJSON(API_SHOW_TD);
+        if(js.status!=='success') throw new Error(js.message||'Lỗi tải dữ liệu');
+        NTD_LIST = js.data || [];
+
+        const wrap = document.getElementById('list-ntd');
+        wrap.innerHTML = NTD_LIST.map(it=>{
+          const ten   = it.TenCongTy || '-';
+          const email = it.Email || '-';
+          const sdt   = it.SoDienThoai || it.SDT || '-';
+          const dc    = it.DiaChi || '-';
+          const mota  = it.ThongTinCongTy || it.MoTa || '-';
+          const grad  = gradFor(ten);
+          const init  = initials(ten);
+
+          return `
+            <div class="p-5 rounded-xl border border-slate-200 bg-white/70 hover:shadow-lg hover:border-slate-300 transition">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-11 h-11 rounded-xl bg-gradient-to-br ${grad} text-white flex items-center justify-center font-bold shadow-sm">
+                    ${init}
+                  </div>
+                  <h6 class="font-extrabold text-lg text-slate-800 leading-tight">
+                    <span class="bg-gradient-to-r ${grad} bg-clip-text text-transparent drop-shadow-sm">
+                      ${ten}
+                    </span>
+                  </h6>
+                </div>
+                <span class="text-xs text-slate-400">MaTK: ${it.MaTK||'-'}</span>
+              </div>
+
+              <div class="grid md:grid-cols-2 gap-2 text-sm">
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-envelope text-slate-400 w-4 text-center"></i>
+                  <div><span class="text-slate-400">Email:</span> ${email}</div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-phone text-slate-400 w-4 text-center"></i>
+                  <div><span class="text-slate-400">SĐT:</span> ${sdt}</div>
+                </div>
+                <div class="md:col-span-2 flex items-start gap-2">
+                  <i class="fa-solid fa-location-dot text-slate-400 w-4 text-center mt-0.5"></i>
+                  <div><span class="text-slate-400">Địa chỉ:</span> ${dc}</div>
+                </div>
+                <div class="md:col-span-2 flex items-start gap-2">
+                  <i class="fa-solid fa-circle-info text-slate-400 w-4 text-center mt-0.5"></i>
+                  <div class="w-full">
+                    <span class="text-slate-400">Giới thiệu:</span>
+                    <div class="mt-1 whitespace-pre-line">${mota}</div>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+        }).join('');
+
+        // fill select
+        const sel = document.getElementById('sel-matk');
+        sel.innerHTML = NTD_LIST.map(it => `<option value="${it.MaTK}">${it.TenCongTy||'NTD'} — MaTK ${it.MaTK}</option>`).join('');
+        sel.onchange = () => {
+          const picked = NTD_LIST.find(x => String(x.MaTK) === String(sel.value));
+          document.getElementById('Email').value = picked?.Email || '';
+        };
+        sel.dispatchEvent(new Event('change'));
+      }catch(e){
+        console.error(e);
+        document.getElementById('list-ntd').innerHTML = `<div class="text-red-500">Lỗi tải dữ liệu</div>`;
+      }
+    }
+
+    // ===== Submit cập nhật =====
+    document.getElementById('btn-save').addEventListener('click', async ()=>{
+      const MaTK         = document.getElementById('sel-matk').value;
+      const Email        = document.getElementById('Email').value.trim();
+      const MatKhau      = document.getElementById('MatKhau').value.trim();
+      const LoaiTaiKhoan = document.getElementById('LoaiTaiKhoan').value;
+      const TrangThai    = document.getElementById('TrangThai').value;
+
+      const fd = new FormData();
+      fd.append('MaTK', MaTK);
+      if (Email)        fd.append('Email', Email);
+      if (MatKhau)      fd.append('MatKhau', MatKhau);
+      if (LoaiTaiKhoan) { fd.append('LoaiTaiKhoan', LoaiTaiKhoan); fd.append('LoaiTK', LoaiTaiKhoan); } // tương thích API
+      if (TrangThai)    fd.append('TrangThai', TrangThai);
+
+      try{
+        const js = await fetchJSON(API_UPDATE_TD, { method:'POST', body: fd });
+        if(js.status === 'success'){
+          alert('Cập nhật thành công');
+          document.getElementById('MatKhau').value = '';
+          tabView.classList.remove('hidden'); tabEdit.classList.add('hidden');
+          loadNTD();
+        }else{
+          alert(js.message || 'Cập nhật thất bại');
+        }
+      }catch(e){
+        console.error(e);
+        alert('Lỗi API');
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', loadNTD);
+  </script>
+
+  <!-- Argon scripts -->
+  <script src="../../assets/js/plugins/perfect-scrollbar.min.js" async></script>
+  <script src="../../assets/js/argon-dashboard-tailwind.js?v=1.0.1" async></script>
+</body>
+</html>
