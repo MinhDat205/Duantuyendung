@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Quản lý tin tuyển dụng | Admin</title>
+
+    <!-- Guard -->
+    <script>
+      (function () {
+        if (localStorage.getItem("admin_logged_in") !== "true") {
+          window.location.href = "UI_DangNhap_Admin.html";
+        }
+      })();
+    </script>
+
+    <!-- Fonts & Icons -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700"
+      rel="stylesheet"
+    />
+    <script
+      src="https://kit.fontawesome.com/42d5adcbca.js"
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- Argon / Tailwind assets -->
+    <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
+    <link
+      href="../../assets/css/argon-dashboard-tailwind.css?v=1.0.1"
+      rel="stylesheet"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="76x76"
+      href="../../assets/img/apple-icon.png"
+    />
+    <link rel="icon" type="image/png" href="../../assets/img/favicon.png" />
+
+    <style>
+      /* Modal portal */
+      .modal-portal {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: none;
+      }
+      .modal-portal.show {
+        display: flex;
+      }
+      .modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+      }
+      .modal-card {
+        position: relative;
+        margin: auto;
+        width: min(768px, 92vw);
+        max-height: 85vh;
+        background: #fff;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      }
+      .modal-body-scroll {
+        padding: 1.5rem;
+        overflow-y: auto;
+        max-height: calc(85vh - 60px);
+      }
+      html.lock-scroll,
+      body.lock-scroll {
+        overflow: hidden;
+      }
+      .btn {
+        cursor: pointer;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        border: 2px solid rgba(255, 255, 255, 0.95);
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38),
+          0 10px 18px rgba(0, 0, 0, 0.25);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        isolation: isolate;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+
+      /* Nút thao tác */
+      .action-btn {
+        min-width: 80px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+        text-align: center;
+      }
+      .btn-approve {
+        background: #10b981;
+      }
+      .btn-reject {
+        background: #ef4444;
+      }
+      .btn-edit {
+        background: #3b82f6;
+      }
+      .btn-del {
+        background: #6b7280;
+      }
+      .action-btn:hover {
+        opacity: 0.88;
+      }
+
+      /* Badge trạng thái */
+      .badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .badge-wait {
+        background: #fef08a;
+        color: #854d0e;
+      }
+      .badge-ok {
+        background: #bbf7d0;
+        color: #065f46;
+      }
+      .badge-no {
+        background: #fecaca;
+        color: #7f1d1d;
+      }
+    </style>
+  </head>
+
+  <body class="m-0 font-sans text-base antialiased bg-gray-50 text-slate-600">
+    <!-- Sidenav -->
+    <div
+      id="sidenav-container"
+      role="complementary"
+      aria-label="Thanh điều hướng quản trị"
+    ></div>
+    <script>
+      (async function loadSidenav() {
+        try {
+          const res = await fetch("Sidenav_admin.html", { cache: "no-store" });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const html = await res.text();
+          const host = document.getElementById("sidenav-container");
+          host.innerHTML = html;
+          const logoutBtn = host.querySelector("#btnLogout");
+          if (logoutBtn) {
+            logoutBtn.addEventListener("click", function (e) {
+              e.preventDefault();
+              try {
+                localStorage.removeItem("admin_logged_in");
+                localStorage.removeItem("admin_email");
+              } catch {}
+              window.location.href = "../../../API/API_logout_Admin.php";
+            });
+          }
+        } catch (e) {
+          console.error("Không thể tải Sidenav_admin.html", e);
+        }
+      })();
+    </script>
+
+    <main
+      class="relative h-full max-h-screen transition-all duration-200 ease-in-out xl:ml-68 rounded-xl"
+    >
+      <!-- Navbar -->
+      <nav class="mx-6 mt-4 px-6 py-3 bg-white rounded-2xl shadow-md">
+        <div class="flex items-center justify-between">
+          <h6 class="font-bold text-lg text-slate-700">
+            Quản lý tin tuyển dụng
+          </h6>
+          <div class="text-sm text-slate-500">
+            Xin chào, <span id="adminEmail">admin</span>
+          </div>
+        </div>
+      </nav>
+
+      <div class="w-full px-6 py-6 mx-auto">
+        <!-- Filters -->
+        <div
+          class="relative flex flex-col min-w-0 break-words bg-white border-0 shadow-xl rounded-2xl mb-6"
+        >
+          <div
+            class="p-6 pb-0 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"
+          >
+            <div class="relative flex items-center w-full sm:w-1/2">
+              <span class="absolute left-3 text-slate-400"
+                ><i class="fas fa-search"></i
+              ></span>
+              <input
+                id="searchInput"
+                type="text"
+                placeholder="Tìm theo chức danh, mô tả, địa điểm..."
+                class="pl-9 text-sm w-full rounded-lg border border-gray-300 bg-white py-2 pr-3 text-gray-700 focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <select
+                id="filterTrangThai"
+                class="text-sm rounded-lg border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
+              >
+                <option value="">-- Trạng thái --</option>
+                <option value="ChoDuyet">Chờ duyệt</option>
+                <option value="DaDuyet">Đã duyệt</option>
+                <option value="TuChoi">Từ chối</option>
+              </select>
+              <button
+                id="btnRefresh"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white bg-gradient-to-tl from-zinc-800 to-zinc-700 hover:opacity-90"
+                title="Tải lại dữ liệu"
+              >
+                <i class="fas fa-sync"></i> Tải lại
+              </button>
+            </div>
+          </div>
+          <div class="px-6 pb-4 text-xs text-slate-400">
+            API: <code>../../../API/API_show_Tintuyendung.php</code>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div
+          class="relative flex flex-col min-w-0 break-words bg-white border-0 shadow-xl rounded-2xl"
+        >
+          <div class="p-6 pb-0 flex items-center justify-between">
+            <h6 class="text-lg font-semibold text-slate-700">
+              Danh sách tin tuyển dụng
+            </h6>
+            <span id="countLabel" class="text-xs text-slate-400"></span>
+          </div>
+          <div class="flex-auto px-0 pt-0 pb-2">
+            <div class="p-0 overflow-x-auto">
+              <table
+                class="items-center w-full mb-0 align-top border-collapse text-slate-700"
+              >
+                <thead>
+                  <tr class="text-slate-500">
+                    <th class="px-6 py-3 text-left text-xs font-bold uppercase">
+                      Mã tin
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-bold uppercase">
+                      Chức danh
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-bold uppercase">
+                      Mức lương
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-bold uppercase">
+                      Địa điểm
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-bold uppercase">
+                      Ngày đăng
+                    </th>
+                    <th
+                      class="px-6 py-3 text-center text-xs font-bold uppercase"
+                    >
+                      Trạng thái
+                    </th>
+                    <th
+                      class="px-6 py-3 text-center text-xs font-bold uppercase"
+                    >
+                      Thao tác
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+
+              <div class="flex items-center justify-between px-6 py-4">
+                <div class="text-xs text-slate-400" id="pageInfo"></div>
+                <div class="flex gap-2">
+                  <button
+                    id="prevPage"
+                    class="px-4 py-2 rounded-lg border text-sm hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Trước
+                  </button>
+                  <button
+                    id="nextPage"
+                    class="px-4 py-2 rounded-lg border text-sm hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ========= MODAL EDIT ========= -->
+    <div id="portal" class="modal-portal" aria-hidden="true">
+      <div class="modal-backdrop" data-close="modal"></div>
+      <div class="modal-card" role="dialog" aria-modal="true">
+        <div class="flex items-center px-6 py-4 border-b">
+          <h3 class="flex-1 text-lg font-semibold text-center text-slate-700">
+            Sửa tin tuyển dụng
+          </h3>
+          <button
+            id="btnCloseModal"
+            class="text-slate-500 hover:text-slate-700 btn"
+            aria-label="Đóng"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body-scroll">
+          <form id="editForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input type="hidden" id="edit_MaTin" name="MaTin" />
+            <div class="sm:col-span-2">
+              <label class="block text-sm mb-1 font-medium text-slate-600"
+                >Chức danh</label
+              >
+              <input
+                id="edit_ChucDanh"
+                name="ChucDanh"
+                class="w-full rounded-lg border border-gray-300 py-2 px-3 text-gray-700 focus:border-blue-500 focus:outline-none"
+                required
+              />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-sm mb-1 font-medium text-slate-600"
+                >Mô tả công việc</label
+              >
+              <textarea
+                id="edit_MoTaCongViec"
+                name="MoTaCongViec"
+                class="w-full rounded-lg border border-gray-300 py-2 px-3 text-gray-700 focus:border-blue-500 focus:outline-none"
+                rows="4"
+              ></textarea>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-sm mb-1 font-medium text-slate-600"
+                >Yêu cầu</label
+              >
+              <textarea
+                id="edit_YeuCau"
+                name="YeuCau"
+                class="w-full rounded-lg border border-gray-300 py-2 px-3 text-gray-700 focus:border-blue-500 focus:outline-none"
+                rows="4"
+              ></textarea>
+            </div>
+            <div>
+              <label class="block text-sm mb-1 font-medium text-slate-600"
+                >Mức lương</label
+              >
+              <input
+                id="edit_MucLuong"
+                name="MucLuong"
+                class="w-full rounded-lg border border-gray-300 py-2 px-3 text-gray-700 focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-sm mb-1 font-medium text-slate-600"
+                >Địa điểm</label
+              >
+              <input
+                id="edit_DiaDiemLamViec"
+                name="DiaDiemLamViec"
+                class="w-full rounded-lg border border-gray-300 py-2 px-3 text-gray-700 focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="block text-sm mb-1 font-medium text-slate-600"
+                >Trạng thái</label
+              >
+              <select
+                id="edit_TrangThai"
+                name="TrangThai"
+                class="w-full rounded-lg border border-gray-300 py-2 px-3 text-gray-700 focus:border-blue-500 focus:outline-none"
+              >
+                <option value="ChoDuyet">Chờ duyệt</option>
+                <option value="DaDuyet">Đã duyệt</option>
+                <option value="TuChoi">Từ chối</option>
+              </select>
+            </div>
+            <div class="sm:col-span-2 flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                id="btnCancelModal"
+                class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 btn"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                class="px-4 py-2 rounded-lg text-white bg-gradient-to-tl from-zinc-800 to-zinc-700 hover:opacity-90 btn"
+              >
+                Lưu
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ====== API endpoints ======
+      const API_BASE = "../../../API";
+      const API_SHOW = API_BASE + "/API_show_Tintuyendung.php";
+      const API_UPDATE = API_BASE + "/API_update_Tintuyendung.php";
+      const API_DELETE = API_BASE + "/API_delete_Tintuyendung.php";
+
+      // ====== Helpers ======
+      const $ = (s) => document.querySelector(s);
+      document.getElementById("adminEmail").textContent =
+        localStorage.getItem("admin_email") || "admin";
+
+      function showToast(msg, type = "success") {
+        const old = document.querySelector(".toast");
+        if (old) old.remove();
+        const el = document.createElement("div");
+        el.className = "toast";
+        let bg = "#10b981"; // success
+        let icon = '<i class="fas fa-check-circle"></i>';
+        if (type === "error") {
+          bg = "#ef4444";
+          icon = '<i class="fas fa-times-circle"></i>';
+        } else if (type === "info") {
+          bg = "#3b82f6";
+          icon = '<i class="fas fa-info-circle"></i>';
+        }
+        el.style.background = bg;
+        el.innerHTML = `${icon} <span>${msg}</span>`;
+        document.body.appendChild(el);
+        setTimeout(() => el.classList.add("show"), 20);
+        setTimeout(() => {
+          el.classList.remove("show");
+          setTimeout(() => el.remove(), 250);
+        }, 2600);
+      }
+
+      function badge(tt) {
+        if (tt === "DaDuyet")
+          return '<span class="badge badge-ok">Đã duyệt</span>';
+        if (tt === "TuChoi")
+          return '<span class="badge badge-no">Từ chối</span>';
+        return '<span class="badge badge-wait">Chờ duyệt</span>';
+      }
+      function fmtDate(s) {
+        if (!s) return "";
+        const d = new Date(s);
+        return isNaN(d) ? String(s) : d.toLocaleDateString("vi-VN");
+      }
+      function paginate(arr, page, size) {
+        const s = (page - 1) * size;
+        return arr.slice(s, s + size);
+      }
+
+      // ====== State ======
+      let rawData = [];
+      let viewData = [];
+      let page = 1;
+      const pageSize = 10;
+
+      async function getJSON(url) {
+        const r = await fetch(url, { cache: "no-store" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      }
+      async function postForm(url, obj) {
+        const body = new URLSearchParams();
+        Object.entries(obj).forEach(([k, v]) => body.append(k, v ?? ""));
+        const r = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body,
+        });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const ct = r.headers.get("Content-Type") || "";
+        return ct.includes("application/json")
+          ? r.json()
+          : { status: "success" };
+      }
+
+      function applyFilters() {
+        const q = ($("#searchInput").value || "").trim().toLowerCase();
+        const tt = $("#filterTrangThai").value;
+        viewData = rawData.filter((r) => {
+          const hitQ =
+            !q ||
+            String(r.ChucDanh || "")
+              .toLowerCase()
+              .includes(q) ||
+            String(r.MoTaCongViec || "")
+              .toLowerCase()
+              .includes(q) ||
+            String(r.DiaDiemLamViec || "")
+              .toLowerCase()
+              .includes(q);
+          const hitTT = !tt || r.TrangThai === tt;
+          return hitQ && hitTT;
+        });
+        $("#countLabel").textContent = `${viewData.length} tin`;
+        page = 1;
+        renderTable();
+      }
+
+      function renderTable() {
+        const tbody = $("#tableBody");
+        tbody.innerHTML = "";
+        const rows = paginate(viewData, page, pageSize);
+        rows.forEach((r) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="px-6 py-4 border-b text-sm">${r.MaTin ?? ""}</td>
+            <td class="px-6 py-4 border-b text-sm font-medium">${
+              r.ChucDanh ?? ""
+            }</td>
+            <td class="px-6 py-4 border-b text-sm">${r.MucLuong ?? ""}</td>
+            <td class="px-6 py-4 border-b text-sm">${
+              r.DiaDiemLamViec ?? ""
+            }</td>
+            <td class="px-6 py-4 border-b text-sm">${fmtDate(r.NgayDang)}</td>
+            <td class="px-6 py-4 text-center border-b">${badge(
+              r.TrangThai
+            )}</td>
+            <td class="px-6 py-4 text-center border-b">
+              <div class="flex justify-center gap-2">
+                <button class="action-btn btn-approve" data-act="approve" data-id="${
+                  r.MaTin
+                }">Duyệt</button>
+                <button class="action-btn btn-reject" data-act="reject" data-id="${
+                  r.MaTin
+                }">Từ chối</button>
+                <button class="action-btn btn-edit" data-act="edit" data-id="${
+                  r.MaTin
+                }">Sửa</button>
+                <button class="action-btn btn-del" data-act="delete" data-id="${
+                  r.MaTin
+                }">Xóa</button>
+              </div>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+        const totalPages = Math.max(1, Math.ceil(viewData.length / pageSize));
+        $("#pageInfo").textContent = `Trang ${page} / ${totalPages}`;
+        $("#prevPage").disabled = page <= 1;
+        $("#nextPage").disabled = page >= totalPages;
+      }
+
+      async function loadData() {
+        try {
+          const data = await getJSON(API_SHOW);
+          rawData = Array.isArray(data) ? data : data?.data || [];
+          applyFilters();
+        } catch (e) {
+          console.error(e);
+          showToast("Không tải được dữ liệu!", "error");
+        }
+      }
+
+      // ====== Events ======
+      document.getElementById("btnRefresh").addEventListener("click", loadData);
+      document
+        .getElementById("searchInput")
+        .addEventListener("input", applyFilters);
+      document
+        .getElementById("filterTrangThai")
+        .addEventListener("change", applyFilters);
+
+      document.getElementById("prevPage").addEventListener("click", () => {
+        if (page > 1) {
+          page--;
+          renderTable();
+        }
+      });
+      document.getElementById("nextPage").addEventListener("click", () => {
+        const totalPages = Math.max(1, Math.ceil(viewData.length / pageSize));
+        if (page < totalPages) {
+          page++;
+          renderTable();
+        }
+      });
+
+      // Click actions
+      document.addEventListener("click", async (e) => {
+        const btn = e.target.closest("[data-act]");
+        if (!btn) return;
+        const id = btn.dataset.id;
+        const act = btn.dataset.act;
+
+        if (act === "approve" || act === "reject") {
+          const next = act === "approve" ? "DaDuyet" : "TuChoi";
+          try {
+            const r = await postForm(API_UPDATE, {
+              MaTin: id,
+              TrangThai: next,
+            });
+            if (r.status === "success") {
+              const i = rawData.findIndex(
+                (x) => String(x.MaTin) === String(id)
+              );
+              if (i > -1) rawData[i].TrangThai = next;
+              showToast(
+                next === "DaDuyet" ? "Đã duyệt tin" : "Đã từ chối tin",
+                "info"
+              );
+              applyFilters();
+            } else {
+              showToast(r.message || "Cập nhật thất bại!", "error");
+            }
+          } catch (err) {
+            console.error(err);
+            showToast("Lỗi kết nối!", "error");
+          }
+          return;
+        }
+
+        if (act === "delete") {
+          if (!confirm("Xóa tin #" + id + " ?")) return;
+          try {
+            const r = await postForm(API_DELETE, { MaTin: id });
+            if (r.status === "success") {
+              rawData = rawData.filter((x) => String(x.MaTin) !== String(id));
+              showToast("Đã xóa tin", "info");
+              applyFilters();
+            } else showToast(r.message || "Xóa thất bại!", "error");
+          } catch (err) {
+            console.error(err);
+            showToast("Lỗi kết nối!", "error");
+          }
+          return;
+        }
+
+        if (act === "edit") {
+          const row = rawData.find((x) => String(x.MaTin) === String(id));
+          if (!row) {
+            showToast("Không tìm thấy tin!", "error");
+            return;
+          }
+          // Prefill
+          $("#edit_MaTin").value = row.MaTin || "";
+          $("#edit_ChucDanh").value = row.ChucDanh || "";
+          $("#edit_MoTaCongViec").value = row.MoTaCongViec || "";
+          $("#edit_YeuCau").value = row.YeuCau || "";
+          $("#edit_MucLuong").value = row.MucLuong || "";
+          $("#edit_DiaDiemLamViec").value = row.DiaDiemLamViec || "";
+          $("#edit_TrangThai").value = row.TrangThai || "ChoDuyet";
+          openModal(true);
+        }
+      });
+
+      // ====== Modal control ======
+      const portal = document.getElementById("portal");
+      function openModal(show) {
+        if (show) {
+          portal.classList.add("show");
+          portal.setAttribute("aria-hidden", "false");
+          document.documentElement.classList.add("lock-scroll");
+          document.body.classList.add("lock-scroll");
+          setTimeout(() => $("#edit_ChucDanh")?.focus(), 30);
+        } else {
+          portal.classList.remove("show");
+          portal.setAttribute("aria-hidden", "true");
+          document.documentElement.classList.remove("lock-scroll");
+          document.body.classList.remove("lock-scroll");
+        }
+      }
+      document
+        .getElementById("btnCloseModal")
+        .addEventListener("click", () => openModal(false));
+      document
+        .getElementById("btnCancelModal")
+        .addEventListener("click", () => openModal(false));
+      portal.addEventListener("click", (e) => {
+        if (e.target.dataset.close === "modal") openModal(false);
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && portal.classList.contains("show"))
+          openModal(false);
+      });
+
+      // ====== Submit edit ======
+      document
+        .getElementById("editForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const payload = {
+            MaTin: $("#edit_MaTin").value,
+            ChucDanh: $("#edit_ChucDanh").value.trim(),
+            MoTaCongViec: $("#edit_MoTaCongViec").value.trim(),
+            YeuCau: $("#edit_YeuCau").value.trim(),
+            MucLuong: $("#edit_MucLuong").value.trim(),
+            DiaDiemLamViec: $("#edit_DiaDiemLamViec").value.trim(),
+            TrangThai: $("#edit_TrangThai").value,
+          };
+          if (!payload.ChucDanh) {
+            showToast("Vui lòng nhập Chức danh!", "error");
+            return;
+          }
+
+          try {
+            const r = await postForm(API_UPDATE, payload);
+            if (r.status === "success") {
+              const i = rawData.findIndex(
+                (x) => String(x.MaTin) === String(payload.MaTin)
+              );
+              if (i > -1) Object.assign(rawData[i], payload);
+              showToast("Đã cập nhật tin", "success");
+              openModal(false);
+              applyFilters();
+            } else showToast(r.message || "Cập nhật thất bại!", "error");
+          } catch (err) {
+            console.error(err);
+            showToast("Lỗi kết nối!", "error");
+          }
+        });
+
+      // Init
+      (function init() {
+        document.getElementById("adminEmail").textContent =
+          localStorage.getItem("admin_email") || "admin";
+        loadData();
+      })();
+    </script>
+
+    <!-- Optional vendor scripts -->
+    <script
+      src="../../assets/js/plugins/perfect-scrollbar.min.js"
+      async
+    ></script>
+    <script
+      src="../../assets/js/argon-dashboard-tailwind.js?v=1.0.1"
+      async
+    ></script>
+  </body>
+</html>

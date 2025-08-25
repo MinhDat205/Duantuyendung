@@ -1,0 +1,112 @@
+<!-- Sidenav_admin.html -->
+<aside
+  class="fixed inset-y-0 block w-full p-0 my-4 overflow-y-auto bg-white shadow-xl xl:ml-6 max-w-64 rounded-2xl xl:left-0 xl:translate-x-0 z-50"
+>
+  <!-- Logo / Title -->
+  <div class="h-19">
+    <a
+      class="block px-8 py-6 m-0 text-sm whitespace-nowrap text-slate-700"
+      href="UI_Admin_Trangchu.html"
+    >
+      <img
+        src="../../assets/img/logo-ct.png"
+        class="inline h-full max-w-full max-h-8"
+        alt="logo"
+      />
+      <span class="ml-1 font-semibold">Admin</span>
+    </a>
+  </div>
+
+  <hr
+    class="h-px mt-0 bg-transparent bg-gradient-to-r from-transparent via-black/20 to-transparent"
+  />
+
+  <!-- Menu items -->
+  <div
+    class="items-center block w-auto max-h-screen overflow-auto h-sidenav grow basis-full"
+  >
+    <ul class="flex flex-col pl-0 mb-0">
+      <!-- Trang chủ -->
+      <li class="mt-0.5 w-full">
+        <a
+          class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
+          href="UI_Admin_Trangchu.html"
+        >
+          <i class="ni ni-tv-2 mr-2 text-blue-500"></i>
+          <span>Trang chủ</span>
+        </a>
+      </li>
+
+      <!-- Quản lý tài khoản -->
+      <li class="mt-0.5 w-full">
+        <a
+          class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
+          href="UI_Admin_QuanLyTaiKhoan.html"
+        >
+          <i class="ni ni-single-02 mr-2 text-orange-500"></i>
+          <span>Quản lý tài khoản</span>
+        </a>
+      </li>
+
+      <!-- Quản lý tin tuyển dụng -->
+      <li class="mt-0.5 w-full">
+        <a
+          class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
+          href="UI_Admin_QuanLyTintuyendung.html"
+        >
+          <i class="ni ni-briefcase-24 mr-2 text-orange-500"></i>
+          <span>Quản lý tin tuyển dụng</span>
+        </a>
+      </li>
+
+      <!-- Đăng xuất -->
+      <li class="mt-0.5 w-full">
+        <button
+          id="btnLogout"
+          class="w-[calc(100%-1rem)] ml-2 py-2.5 text-left text-sm flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg cursor-pointer"
+        >
+          <i class="ni ni-button-power mr-2 text-red-600"></i>
+          <span>Đăng xuất</span>
+        </button>
+      </li>
+    </ul>
+  </div>
+</aside>
+
+<script>
+  (function () {
+    const API_LOGOUT = "/Duantuyendung/interface/API/API_logout_Admin.php";
+    const LOGIN_PAGE =
+      "/Duantuyendung/interface/build/pages/UI_AD/UI_DangNhap_Admin.html?logged_out=1";
+
+    const btn = document.getElementById("btnLogout");
+    if (!btn) return;
+
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      // Trạng thái đang xử lý
+      btn.disabled = true;
+      btn.style.opacity = "0.6";
+
+      try {
+        // Xoá client state trước
+        try {
+          localStorage.removeItem("admin_logged_in");
+          localStorage.removeItem("admin_email");
+        } catch (_) {}
+
+        // Gọi API để huỷ session server (có credentials)
+        await fetch(API_LOGOUT, {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        });
+      } catch (_) {
+        // Bất kể thành công hay lỗi vẫn chuyển hướng
+      } finally {
+        window.location.href = LOGIN_PAGE;
+      }
+    });
+  })();
+</script>

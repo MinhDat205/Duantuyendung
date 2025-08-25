@@ -37,4 +37,3 @@ Quản lý tài khoản ứng viên và nhà tuyển dụng
 
 Duyệt bài đăng tuyển dụng
 
-Thống kê hệ thống

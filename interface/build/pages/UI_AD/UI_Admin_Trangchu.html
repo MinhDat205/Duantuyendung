@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Trang chủ Admin</title>
+
+    <!-- Guard -->
+    <script>
+      (function () {
+        if (localStorage.getItem("admin_logged_in") !== "true") {
+          window.location.href = "UI_DangNhap_Admin.html";
+        }
+      })();
+    </script>
+
+    <!-- Fonts & Icons -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700"
+      rel="stylesheet"
+    />
+    <script
+      src="https://kit.fontawesome.com/42d5adcbca.js"
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- Argon -->
+    <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
+    <link
+      href="../../assets/css/argon-dashboard-tailwind.css?v=1.0.1"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* Ảnh nền cho toàn bộ main */
+      main {
+        background: url("../../assets/img/Trangchu.jpg") no-repeat center center;
+        background-size: cover;
+        position: relative;
+      }
+      /* Overlay làm mờ nền một chút */
+      main::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.7);
+        z-index: 0;
+        border-radius: 0.75rem;
+      }
+      main > * {
+        position: relative;
+        z-index: 1;
+      }
+    </style>
+  </head>
+
+  <body class="m-0 font-sans text-base antialiased bg-gray-50 text-slate-600">
+    <!-- Placeholder Sidenav -->
+    <div
+      id="sidenav-container"
+      role="complementary"
+      aria-label="Thanh điều hướng quản trị"
+    ></div>
+
+    <script>
+      (async function loadSidenav() {
+        try {
+          const res = await fetch("Sidenav_admin.html", { cache: "no-store" });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const html = await res.text();
+          const host = document.getElementById("sidenav-container");
+          host.innerHTML = html;
+
+          // Gắn listener Đăng xuất từ trang cha (script bên trong Sidenav không auto chạy)
+          const logoutBtn = host.querySelector("#btnLogout");
+          if (logoutBtn) {
+            logoutBtn.addEventListener("click", function (e) {
+              e.preventDefault();
+              try {
+                localStorage.removeItem("admin_logged_in");
+                localStorage.removeItem("admin_email");
+              } catch {}
+              window.location.href = "../../../API/API_logout_Admin.php";
+            });
+          }
+        } catch (e) {
+          console.error("Không thể tải Sidenav_admin.html", e);
+        }
+      })();
+    </script>
+
+    <main
+      class="relative h-full min-h-screen transition-all duration-200 ease-in-out xl:ml-68 rounded-xl overflow-hidden"
+    >
+      <!-- Navbar -->
+      <nav
+        class="mx-6 mt-4 px-6 py-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-md"
+      >
+        <div class="flex items-center justify-between">
+          <h6 class="font-bold">Trang chủ Admin</h6>
+          <div class="text-sm text-slate-700">
+            Xin chào, <span id="adminEmail">admin</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Nội dung -->
+      <div class="w-full px-6 py-6 mx-auto">
+        <div class="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-6">
+          <h5 class="mb-4 font-bold text-lg">Bảng điều khiển</h5>
+          <p class="text-slate-700 text-sm">
+            Đây là trang tổng quan dành cho quản trị viên. Bạn có thể sử dụng
+            menu bên trái để quản lý tài khoản, tin tuyển dụng và các chức năng
+            khác.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      document.getElementById("adminEmail").textContent =
+        localStorage.getItem("admin_email") || "admin";
+    </script>
+  </body>
+</html>
