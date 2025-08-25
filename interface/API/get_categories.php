@@ -1,12 +1,22 @@
 <?php
-// API/get_categories.php
+// interface/API/get_categories.php
 require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/utils.php';
 
 try {
-  $q = $pdo->query("SELECT MaDanhMuc, TenDanhMuc FROM DanhMucNghe ORDER BY TenDanhMuc ASC");
-  $rows = $q->fetchAll();
-  json_ok($rows);
-} catch (Exception $e) {
-  json_error('Lỗi lấy danh mục', 500, ['detail'=>$e->getMessage()]);
+  $sql = "SELECT MaDanhMuc, TenDanhMuc FROM DanhMucNghe ORDER BY TenDanhMuc ASC";
+  $rs  = $conn->query($sql);
+  if (!$rs) {
+    http_response_code(500);
+    echo json_encode(['ok'=>false, 'error'=>'Query lỗi', 'detail'=>$conn->error], JSON_UNESCAPED_UNICODE);
+    exit;
+  }
+  $data = [];
+  while ($row = $rs->fetch_assoc()) { $data[] = $row; }
+  echo json_encode(['ok'=>true, 'data'=>$data], JSON_UNESCAPED_UNICODE);
+} catch (Throwable $e) {
+  http_response_code(500);
+  echo json_encode(['ok'=>false, 'error'=>'Lỗi lấy danh mục', 'detail'=>$e->getMessage()], JSON_UNESCAPED_UNICODE);
+} finally {
+  if (isset($rs) && $rs instanceof mysqli_result) $rs->free();
+  if (isset($conn) && $conn instanceof mysqli) $conn->close();
 }

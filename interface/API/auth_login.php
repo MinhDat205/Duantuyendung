@@ -1,48 +1,64 @@
 <?php
-// API/auth_login.php
+// interface/API/auth_login.php
 require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/utils.php';
 
-$body = read_json();
-require_fields($body, ['email','password']);
+$body = read_json_body();
+if (!isset($body['email'],$body['password'])) {
+  http_response_code(422);
+  echo json_encode(['ok'=>false,'error'=>'Thiếu email hoặc mật khẩu'], JSON_UNESCAPED_UNICODE); exit;
+}
 
 $email = trim($body['email']);
 $password = (string)$body['password'];
 
 try {
-  $stmt = $pdo->prepare("SELECT MaTK, Email, MatKhau, LoaiTaiKhoan, TrangThai FROM TaiKhoan WHERE Email = ? LIMIT 1");
-  $stmt->execute([$email]);
-  $user = $stmt->fetch();
+  $stmt = $conn->prepare("SELECT MaTK, Email, MatKhau, LoaiTaiKhoan, TrangThai FROM TaiKhoan WHERE Email = ? LIMIT 1");
+  $stmt->bind_param('s', $email);
+  $stmt->execute();
+  $res = $stmt->get_result();
+  $user = $res->fetch_assoc();
+  $stmt->close();
 
-  if (!$user) json_error('Sai email hoặc mật khẩu', 401);
-  if ($user['TrangThai'] !== 'HoatDong') json_error('Tài khoản bị khoá', 403);
-  if (!password_verify($password, $user['MatKhau'])) json_error('Sai email hoặc mật khẩu', 401);
+  if (!$user) { http_response_code(401); echo json_encode(['ok'=>false,'error'=>'Sai email hoặc mật khẩu'], JSON_UNESCAPED_UNICODE); exit; }
+  if ($user['TrangThai'] !== 'HoatDong') { http_response_code(403); echo json_encode(['ok'=>false,'error'=>'Tài khoản bị khoá'], JSON_UNESCAPED_UNICODE); exit; }
+  if (!password_verify($password, $user['MatKhau'])) { http_response_code(401); echo json_encode(['ok'=>false,'error'=>'Sai email hoặc mật khẩu'], JSON_UNESCAPED_UNICODE); exit; }
 
-  // Lấy info theo role
   if ($user['LoaiTaiKhoan'] === 'UngVien') {
-    $q = $pdo->prepare("SELECT MaUngVien, HoTen FROM UngVien WHERE MaTK = ?");
-    $q->execute([$user['MaTK']]);
-    $u = $q->fetch();
-    json_ok([
-      'MaTK' => (int)$user['MaTK'],
-      'LoaiTaiKhoan' => $user['LoaiTaiKhoan'],
-      'Email' => $user['Email'],
-      'MaUngVien' => $u['MaUngVien'] ?? null,
-      'HoTen' => $u['HoTen'] ?? null
-    ]);
+    $stmt = $conn->prepare("SELECT MaUngVien, HoTen FROM UngVien WHERE MaTK = ?");
+    $stmt->bind_param('i', $user['MaTK']);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $u = $res->fetch_assoc();
+    $stmt->close();
+
+    echo json_encode(['ok'=>true,'data'=>[
+      'MaTK'=>(int)$user['MaTK'],
+      'LoaiTaiKhoan'=>$user['LoaiTaiKhoan'],
+      'Email'=>$user['Email'],
+      'MaUngVien'=>$u['MaUngVien'] ?? null,
+      'HoTen'=>$u['HoTen'] ?? null
+    ]], JSON_UNESCAPED_UNICODE);
+
   } else {
-    $q = $pdo->prepare("SELECT MaNTD, TenCongTy FROM NhaTuyenDung WHERE MaTK = ?");
-    $q->execute([$user['MaTK']]);
-    $c = $q->fetch();
-    json_ok([
-      'MaTK' => (int)$user['MaTK'],
-      'LoaiTaiKhoan' => $user['LoaiTaiKhoan'],
-      'Email' => $user['Email'],
-      'MaNTD' => $c['MaNTD'] ?? null,
-      'TenCongTy' => $c['TenCongTy'] ?? null
-    ]);
+    $stmt = $conn->prepare("SELECT MaNTD, TenCongTy FROM NhaTuyenDung WHERE MaTK = ?");
+    $stmt->bind_param('i', $user['MaTK']);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $c = $res->fetch_assoc();
+    $stmt->close();
+
+    echo json_encode(['ok'=>true,'data'=>[
+      'MaTK'=>(int)$user['MaTK'],
+      'LoaiTaiKhoan'=>$user['LoaiTaiKhoan'],
+      'Email'=>$user['Email'],
+      'MaNTD'=>$c['MaNTD'] ?? null,
+      'TenCongTy'=>$c['TenCongTy'] ?? null
+    ]], JSON_UNESCAPED_UNICODE);
   }
 
-} catch (Exception $e) {
-  json_error('Đăng nhập thất bại', 500, ['detail'=>$e->getMessage()]);
+} catch (Throwable $e) {
+  http_response_code(500);
+  echo json_encode(['ok'=>false,'error'=>'Đăng nhập thất bại','detail'=>$e->getMessage()], JSON_UNESCAPED_UNICODE);
+} finally {
+  if (isset($conn) && $conn instanceof mysqli) $conn->close();
 }

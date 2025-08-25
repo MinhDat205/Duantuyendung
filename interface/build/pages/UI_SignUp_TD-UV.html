@@ -42,24 +42,179 @@
       }
       .chip {
         display: inline-block;
-        padding: 4px 8px;
-        border: 1px solid #ddd;
+        padding: 6px 10px;
+        border: 1px solid #d1d5db;
         border-radius: 999px;
-        margin: 2px;
+        margin: 4px;
         font-size: 12px;
         cursor: pointer;
+        user-select: none;
       }
       .chip.selected {
-        background: #1f2937;
+        background: #111827;
         color: #fff;
-        border-color: #1f2937;
+        border-color: #111827;
+      }
+      .chip-small {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #111827;
+        color: #fff;
+        font-size: 12px;
+      }
+      .chip-x {
+        cursor: pointer;
+        opacity: 0.85;
+      }
+      .input {
+        width: 100%;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+      }
+      .btn-primary {
+        display: inline-block;
+        width: 100%;
+        padding: 0.6rem 1rem;
+        border-radius: 0.5rem;
+        color: #fff;
+        background: linear-gradient(45deg, #27272a, #3f3f46);
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+      .btn-primary:hover {
+        filter: brightness(1.03);
+        transform: translateY(-1px);
+      }
+      .btn {
+        padding: 0.55rem 0.9rem;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+      .btn-outline {
+        border: 1px solid #d1d5db;
+        color: #111827;
+        background: #fff;
+      }
+      .btn-outline:hover {
+        background: #f8fafc;
+      }
+      .btn-primary-sm {
+        background: linear-gradient(45deg, #27272a, #3f3f46);
+        color: #fff;
+      }
+      .msg {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+      }
+      .muted {
+        color: #6b7280;
+        font-size: 0.85rem;
+      }
+      .preview {
+        width: 100%;
+        max-height: 200px;
+        object-fit: contain;
+        border: 1px dashed #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 8px;
+        background: #fafafa;
+      }
+
+      /* ===== Modal (đã sửa) ===== */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: none;
+        z-index: 9998;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal.open {
+        display: flex;
+      }
+      .modal-backdrop.open {
+        display: block;
+      }
+      .modal-card {
+        width: 100%;
+        max-width: 720px;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      }
+      .modal-header {
+        padding: 14px 16px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .modal-title {
+        font-weight: 700;
+        font-size: 16px;
+      }
+      .modal-body {
+        padding: 14px 16px;
+      }
+      .modal-footer {
+        padding: 12px 16px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+      .search-input {
+        width: 100%;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        padding: 0.55rem 0.75rem;
+        font-size: 0.95rem;
+      }
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 8px;
+        margin-bottom: 10px;
+      }
+      .cat-list {
+        max-height: 380px;
+        overflow: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 8px;
+        background: #fafafa;
+      }
+      .cat-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+      .cat-item:hover {
+        background: #f1f5f9;
       }
     </style>
   </head>
   <body
     class="m-0 font-sans antialiased font-normal bg-white text-start text-base leading-default text-slate-500"
   >
-    <!-- Navbar tối giản -->
+    <!-- Navbar -->
     <nav
       class="absolute top-0 z-30 flex flex-wrap items-center justify-between w-full px-4 py-2 mt-6 mb-4 shadow-none lg:flex-nowrap lg:justify-start"
     >
@@ -104,6 +259,7 @@
               <div
                 class="relative z-0 flex flex-col min-w-0 break-words bg-white border-0 shadow-xl rounded-2xl bg-clip-border"
               >
+                <!-- Tabs -->
                 <div
                   class="p-6 pb-0 text-center bg-white border-b-0 rounded-t-2xl"
                 >
@@ -128,33 +284,34 @@
                   <form id="formSignup">
                     <div class="mb-3">
                       <label class="text-sm font-semibold">Bạn là</label>
-                      <div class="flex gap-3 mt-2">
-                        <label class="text-sm">
-                          <input
+                      <div class="flex gap-4 mt-2">
+                        <label class="text-sm"
+                          ><input
                             type="radio"
                             name="loaiTaiKhoan"
                             value="UngVien"
                             checked
                           />
-                          Ứng viên
-                        </label>
-                        <label class="text-sm">
-                          <input
+                          Ứng viên</label
+                        >
+                        <label class="text-sm"
+                          ><input
                             type="radio"
                             name="loaiTaiKhoan"
                             value="NhaTuyenDung"
                           />
-                          Nhà tuyển dụng
-                        </label>
+                          Nhà tuyển dụng</label
+                        >
                       </div>
                     </div>
 
+                    <!-- Ứng viên -->
                     <div id="uvFields">
                       <div class="mb-3">
                         <input
                           id="uvHoTen"
                           type="text"
-                          class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                          class="input"
                           placeholder="Họ tên (Ứng viên)"
                         />
                       </div>
@@ -162,18 +319,43 @@
                         <input
                           id="uvSoDienThoai"
                           type="text"
-                          class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                          class="input"
                           placeholder="Số điện thoại (tuỳ chọn)"
                         />
                       </div>
+
+                      <!-- Ảnh CV -->
+                      <div class="mb-3">
+                        <label class="text-sm font-semibold block mb-1"
+                          >Ảnh CV (tuỳ chọn)</label
+                        >
+                        <input
+                          id="uvAnhCV"
+                          type="file"
+                          accept="image/*"
+                          class="input"
+                        />
+                        <small class="text-xs text-slate-400"
+                          >Hỗ trợ: JPG/PNG/WebP/GIF, tối đa 5MB.</small
+                        >
+                        <div id="cvPreviewWrap" class="mt-2 hidden">
+                          <img
+                            id="cvPreview"
+                            class="preview"
+                            alt="Xem trước ảnh CV"
+                          />
+                        </div>
+                        <div id="cvMsg" class="msg"></div>
+                      </div>
                     </div>
 
+                    <!-- Nhà tuyển dụng -->
                     <div id="ntdFields" class="hidden">
                       <div class="mb-3">
                         <input
                           id="ntdTenCongTy"
                           type="text"
-                          class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                          class="input"
                           placeholder="Tên công ty"
                         />
                       </div>
@@ -181,7 +363,7 @@
                         <input
                           id="ntdSoDienThoai"
                           type="text"
-                          class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                          class="input"
                           placeholder="Số điện thoại (tuỳ chọn)"
                         />
                       </div>
@@ -189,7 +371,7 @@
                         <input
                           id="ntdDiaChi"
                           type="text"
-                          class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                          class="input"
                           placeholder="Địa chỉ (tuỳ chọn)"
                         />
                       </div>
@@ -199,40 +381,46 @@
                       <input
                         id="email"
                         type="email"
-                        class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                        class="input"
                         placeholder="Email"
                       />
                     </div>
-
                     <div class="mb-3">
                       <input
                         id="password"
                         type="password"
-                        class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                        class="input"
                         placeholder="Mật khẩu"
                       />
                     </div>
 
+                    <!-- Ngành nghề -->
                     <div class="mb-3">
                       <label class="text-sm font-semibold block mb-1"
-                        >Chọn ngành (nhiều)</label
+                        >Ngành nghề (nhiều)</label
                       >
-                      <div id="catsWrap" class="flex flex-wrap"></div>
-                      <p class="text-xs text-slate-400 mt-1">
-                        Nhấp để chọn/bỏ chọn. Dữ liệu lấy từ bảng
-                        <em>DanhMucNghe</em>.
+                      <div class="flex items-center gap-8 flex-wrap">
+                        <button
+                          type="button"
+                          id="btnOpenCats"
+                          class="btn btn-outline"
+                        >
+                          Chọn ngành nghề
+                        </button>
+                        <div
+                          id="selectedChips"
+                          class="flex flex-wrap gap-2"
+                        ></div>
+                      </div>
+                      <p class="text-xs text-slate-400 mt-2">
+                        Nhấn “Chọn ngành nghề” để tìm và chọn nhanh.
                       </p>
                     </div>
 
-                    <div class="text-center">
-                      <button
-                        type="submit"
-                        class="inline-block w-full px-5 py-2.5 mt-4 mb-2 font-bold text-center text-white bg-gradient-to-tl from-zinc-800 to-zinc-700 rounded-lg text-sm"
-                      >
-                        Tạo tài khoản
-                      </button>
-                      <div id="signupMsg" class="text-sm mt-2"></div>
-                    </div>
+                    <button type="submit" class="btn-primary mt-2">
+                      Tạo tài khoản
+                    </button>
+                    <div id="signupMsg" class="msg"></div>
                   </form>
                 </div>
 
@@ -243,7 +431,7 @@
                       <input
                         id="loginEmail"
                         type="email"
-                        class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                        class="input"
                         placeholder="Email"
                       />
                     </div>
@@ -251,19 +439,14 @@
                       <input
                         id="loginPassword"
                         type="password"
-                        class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3"
+                        class="input"
                         placeholder="Mật khẩu"
                       />
                     </div>
-                    <div class="text-center">
-                      <button
-                        type="submit"
-                        class="inline-block w-full px-5 py-2.5 mt-4 mb-2 font-bold text-center text-white bg-gradient-to-tl from-zinc-800 to-zinc-700 rounded-lg text-sm"
-                      >
-                        Đăng nhập
-                      </button>
-                      <div id="signinMsg" class="text-sm mt-2"></div>
-                    </div>
+                    <button type="submit" class="btn-primary mt-2">
+                      Đăng nhập
+                    </button>
+                    <div id="signinMsg" class="msg"></div>
                   </form>
                 </div>
               </div>
@@ -278,6 +461,49 @@
           </div>
         </div>
       </section>
+
+      <!-- Backdrop & Modal chọn ngành -->
+      <div id="catsBackdrop" class="modal-backdrop" aria-hidden="true"></div>
+      <div
+        id="catsModal"
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="catsTitle"
+      >
+        <div class="modal-card" tabindex="-1">
+          <div class="modal-header">
+            <div id="catsTitle" class="modal-title">Chọn ngành nghề</div>
+            <div class="flex-1"></div>
+            <button type="button" id="btnCloseCats" class="btn btn-outline">
+              Đóng
+            </button>
+          </div>
+          <div class="modal-body">
+            <input
+              id="catSearch"
+              type="text"
+              class="search-input"
+              placeholder="Tìm kiếm ngành... (gõ để lọc)"
+            />
+            <div class="toolbar">
+              <button type="button" id="btnSelectAll" class="btn btn-outline">
+                Chọn tất cả (đang lọc)
+              </button>
+              <button type="button" id="btnClearAll" class="btn btn-outline">
+                Bỏ chọn tất cả
+              </button>
+              <span id="catCount" class="muted"></span>
+            </div>
+            <div id="catList" class="cat-list"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="btnSaveCats" class="btn btn-primary-sm">
+              Lưu lựa chọn
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
 
     <!-- plugin for scrollbar  -->
@@ -289,15 +515,29 @@
     ></script>
 
     <script>
-      // ====== CẤU HÌNH ======
-      const API_BASE = "http://localhost/Duantuyendung/interf/API/";
+      // ====== TỰ TÍNH BASE PATHS ======
+      (function computeBases() {
+        const { origin, pathname } = window.location;
+        const marker = "/interface/";
+        const idx = pathname.indexOf(marker);
+        if (idx === -1)
+          window.BASE_INTERFACE = origin + "/Duantuyendung/interface";
+        else
+          window.BASE_INTERFACE =
+            origin + pathname.substring(0, idx + marker.length - 1);
+        window.API_BASE = window.BASE_INTERFACE + "/API/";
+        window.URL_UV_HOME =
+          window.BASE_INTERFACE + "/build/pages/UI_UV/UI_Ungvien_Trangchu.html";
+        window.URL_TD_HOME =
+          window.BASE_INTERFACE +
+          "/build/pages/UI_TD/UI_Nhatuyendung_Trangchu.html";
+      })();
 
       // ====== TAB ======
       const btnTabSignup = document.getElementById("btnTabSignup");
       const btnTabSignin = document.getElementById("btnTabSignin");
       const tabSignup = document.getElementById("tabSignup");
       const tabSignin = document.getElementById("tabSignin");
-
       btnTabSignup.addEventListener("click", () => {
         btnTabSignup.classList.add("active");
         btnTabSignin.classList.remove("active");
@@ -327,45 +567,209 @@
         });
       });
 
-      // ====== CATEGORIES (chips multiselect) ======
-      const catsWrap = document.getElementById("catsWrap");
-      let cats = [];
-      let selectedCats = new Set();
+      // ====== CATEGORIES (Modal + Search + Checkbox) ======
+      const btnOpenCats = document.getElementById("btnOpenCats");
+      const catsModal = document.getElementById("catsModal");
+      const catsBackdrop = document.getElementById("catsBackdrop");
+      const btnCloseCats = document.getElementById("btnCloseCats");
+      const btnSaveCats = document.getElementById("btnSaveCats");
+      const btnSelectAll = document.getElementById("btnSelectAll");
+      const btnClearAll = document.getElementById("btnClearAll");
+      const catSearch = document.getElementById("catSearch");
+      const catList = document.getElementById("catList");
+      const catCount = document.getElementById("catCount");
+      const selectedChips = document.getElementById("selectedChips");
+
+      let allCats = []; // [{MaDanhMuc, TenDanhMuc}]
+      let selectedCats = new Set(); // ids đã chọn (app state)
+      let tempSelected = new Set(); // ids chọn tạm trong modal
+      let filtered = []; // danh sách sau khi lọc
 
       async function loadCategories() {
         try {
           const rs = await fetch(API_BASE + "get_categories.php");
           const js = await rs.json();
           if (js.ok) {
-            cats = js.data;
-            catsWrap.innerHTML = "";
-            js.data.forEach((c) => {
-              const chip = document.createElement("span");
-              chip.className = "chip";
-              chip.textContent = c.TenDanhMuc;
-              chip.dataset.id = c.MaDanhMuc;
-              chip.addEventListener("click", () => {
-                const id = Number(chip.dataset.id);
-                if (selectedCats.has(id)) {
-                  selectedCats.delete(id);
-                  chip.classList.remove("selected");
-                } else {
-                  selectedCats.add(id);
-                  chip.classList.add("selected");
-                }
-              });
-              catsWrap.appendChild(chip);
-            });
+            allCats = js.data || [];
+            filtered = [...allCats];
+            renderCatList();
+            updateCount();
+            renderSelectedChips();
           } else {
-            catsWrap.innerHTML =
-              '<span class="text-xs text-red-600">Tải danh mục thất bại</span>';
+            catList.innerHTML = `<div class="muted">Tải danh mục thất bại</div>`;
           }
         } catch (e) {
-          catsWrap.innerHTML =
-            '<span class="text-xs text-red-600">Lỗi kết nối danh mục</span>';
+          catList.innerHTML = `<div class="muted">Lỗi kết nối danh mục</div>`;
         }
       }
       loadCategories();
+
+      function lockBodyScroll(lock) {
+        if (lock) document.body.style.overflow = "hidden";
+        else document.body.style.overflow = "";
+      }
+
+      function openCatsModal() {
+        tempSelected = new Set(selectedCats);
+        catSearch.value = "";
+        filtered = [...allCats];
+        renderCatList();
+        updateCount();
+        catsModal.classList.add("open");
+        catsBackdrop.classList.add("open");
+        lockBodyScroll(true);
+        // focus vào ô tìm kiếm sau 50ms
+        setTimeout(() => catSearch.focus(), 50);
+      }
+      function closeCatsModal() {
+        catsModal.classList.remove("open");
+        catsBackdrop.classList.remove("open");
+        lockBodyScroll(false);
+      }
+      btnOpenCats.addEventListener("click", openCatsModal);
+      btnCloseCats.addEventListener("click", closeCatsModal);
+      catsBackdrop.addEventListener("click", closeCatsModal);
+      // ESC để đóng
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && catsModal.classList.contains("open"))
+          closeCatsModal();
+      });
+
+      btnSaveCats.addEventListener("click", () => {
+        selectedCats = new Set(tempSelected);
+        renderSelectedChips();
+        closeCatsModal();
+      });
+
+      let searchTimer = null;
+      catSearch.addEventListener("input", () => {
+        if (searchTimer) clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+          const q = catSearch.value.trim().toLowerCase();
+          filtered = q
+            ? allCats.filter((c) =>
+                (c.TenDanhMuc || "").toLowerCase().includes(q)
+              )
+            : [...allCats];
+          renderCatList();
+          updateCount();
+        }, 180);
+      });
+
+      function renderCatList() {
+        if (!filtered.length) {
+          catList.innerHTML = `<div class="muted p-3">Không có ngành phù hợp.</div>`;
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        filtered.forEach((c) => {
+          const idNum = Number(c.MaDanhMuc);
+          const row = document.createElement("div");
+          row.className = "cat-item";
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.id = "cat_" + idNum;
+          cb.checked = tempSelected.has(idNum);
+          cb.addEventListener("change", () => {
+            if (cb.checked) tempSelected.add(idNum);
+            else tempSelected.delete(idNum);
+            updateCount();
+          });
+          const label = document.createElement("label");
+          label.setAttribute("for", "cat_" + idNum);
+          label.textContent = c.TenDanhMuc;
+          row.appendChild(cb);
+          row.appendChild(label);
+          frag.appendChild(row);
+        });
+        catList.innerHTML = "";
+        catList.appendChild(frag);
+      }
+
+      function updateCount() {
+        const total = allCats.length,
+          filt = filtered.length,
+          sel = tempSelected.size;
+        catCount.textContent = `Đang hiển thị ${filt}/${total} ngành · Đã chọn ${sel}`;
+      }
+
+      btnSelectAll.addEventListener("click", () => {
+        filtered.forEach((c) => tempSelected.add(Number(c.MaDanhMuc)));
+        renderCatList();
+        updateCount();
+      });
+      btnClearAll.addEventListener("click", () => {
+        tempSelected.clear();
+        renderCatList();
+        updateCount();
+      });
+
+      function renderSelectedChips() {
+        selectedChips.innerHTML = "";
+        if (!selectedCats.size) {
+          selectedChips.innerHTML = `<span class="muted">Chưa chọn ngành nào</span>`;
+          return;
+        }
+        const byId = new Map(
+          allCats.map((c) => [Number(c.MaDanhMuc), c.TenDanhMuc])
+        );
+        Array.from(selectedCats)
+          .sort((a, b) => a - b)
+          .forEach((id) => {
+            const name = byId.get(Number(id)) || "#" + id;
+            const chip = document.createElement("span");
+            chip.className = "chip-small";
+            chip.innerHTML = `${name} <span class="chip-x" title="Bỏ chọn">&times;</span>`;
+            chip.querySelector(".chip-x").addEventListener("click", () => {
+              selectedCats.delete(Number(id));
+              renderSelectedChips();
+            });
+            selectedChips.appendChild(chip);
+          });
+      }
+
+      // ====== UPLOAD ẢNH CV (ứng viên) ======
+      const uvAnhCV = document.getElementById("uvAnhCV");
+      const cvPreviewWrap = document.getElementById("cvPreviewWrap");
+      const cvPreview = document.getElementById("cvPreview");
+      const cvMsg = document.getElementById("cvMsg");
+      let uploadedCvRelPath = null; // 'uploads/cv/xxx.png'
+
+      uvAnhCV.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        uploadedCvRelPath = null;
+        cvMsg.className = "msg text-slate-600";
+        cvMsg.textContent = "";
+        if (!file) {
+          cvPreviewWrap.classList.add("hidden");
+          return;
+        }
+        const fd = new FormData();
+        fd.append("cv", file);
+        cvMsg.textContent = "Đang tải ảnh CV...";
+        try {
+          const rs = await fetch(API_BASE + "upload_cv.php", {
+            method: "POST",
+            body: fd,
+          });
+          const js = await rs.json();
+          if (js.ok) {
+            uploadedCvRelPath = js.data.relPath;
+            cvPreview.src = BASE_INTERFACE + "/" + uploadedCvRelPath;
+            cvPreviewWrap.classList.remove("hidden");
+            cvMsg.className = "msg text-green-600";
+            cvMsg.textContent = "Tải ảnh thành công";
+          } else {
+            cvPreviewWrap.classList.add("hidden");
+            cvMsg.className = "msg text-red-600";
+            cvMsg.textContent = js.error || "Tải ảnh thất bại";
+          }
+        } catch {
+          cvPreviewWrap.classList.add("hidden");
+          cvMsg.className = "msg text-red-600";
+          cvMsg.textContent = "Lỗi kết nối khi tải ảnh";
+        }
+      });
 
       // ====== SIGNUP ======
       const formSignup = document.getElementById("formSignup");
@@ -373,6 +777,7 @@
 
       formSignup.addEventListener("submit", async (e) => {
         e.preventDefault();
+        signupMsg.className = "msg text-slate-600";
         signupMsg.textContent = "Đang xử lý...";
 
         const role = document.querySelector(
@@ -384,12 +789,12 @@
           loaiTaiKhoan: role,
           danhMucIds: Array.from(selectedCats),
         };
-
         if (role === "UngVien") {
           payload.hoTen = document.getElementById("uvHoTen").value.trim();
           payload.soDienThoai = document
             .getElementById("uvSoDienThoai")
             .value.trim();
+          if (uploadedCvRelPath) payload.anhCV = uploadedCvRelPath;
         } else {
           payload.tenCongTy = document
             .getElementById("ntdTenCongTy")
@@ -408,16 +813,16 @@
           });
           const js = await rs.json();
           if (js.ok) {
-            signupMsg.className = "text-sm text-green-600";
-            signupMsg.textContent = "Đăng ký thành công! Bạn có thể đăng nhập.";
-            // tự chuyển tab đăng nhập
+            signupMsg.className = "msg text-green-600";
+            signupMsg.textContent =
+              "Đăng ký thành công! Chuyển qua đăng nhập...";
             setTimeout(() => btnTabSignin.click(), 800);
           } else {
-            signupMsg.className = "text-sm text-red-600";
+            signupMsg.className = "msg text-red-600";
             signupMsg.textContent = js.error || "Đăng ký thất bại";
           }
-        } catch (err) {
-          signupMsg.className = "text-sm text-red-600";
+        } catch {
+          signupMsg.className = "msg text-red-600";
           signupMsg.textContent = "Lỗi kết nối máy chủ";
         }
       });
@@ -425,16 +830,14 @@
       // ====== SIGNIN ======
       const formSignin = document.getElementById("formSignin");
       const signinMsg = document.getElementById("signinMsg");
-
       formSignin.addEventListener("submit", async (e) => {
         e.preventDefault();
+        signinMsg.className = "msg text-slate-600";
         signinMsg.textContent = "Đang xử lý...";
-
         const payload = {
           email: document.getElementById("loginEmail").value.trim(),
           password: document.getElementById("loginPassword").value,
         };
-
         try {
           const rs = await fetch(API_BASE + "auth_login.php", {
             method: "POST",
@@ -443,18 +846,18 @@
           });
           const js = await rs.json();
           if (js.ok) {
-            signinMsg.className = "text-sm text-green-600";
-            signinMsg.textContent = "Đăng nhập thành công!";
-            // TODO: điều hướng theo vai trò
-            // Ví dụ:
-            // if (js.data.LoaiTaiKhoan === 'UngVien') window.location.href = '../pages/UI_UV/dashboard.html';
-            // else window.location.href = '../pages/UI_TD/dashboard.html';
+            signinMsg.className = "msg text-green-600";
+            signinMsg.textContent =
+              "Đăng nhập thành công! Đang chuyển trang...";
+            const role = js.data.LoaiTaiKhoan;
+            window.location.href =
+              role === "UngVien" ? window.URL_UV_HOME : window.URL_TD_HOME;
           } else {
-            signinMsg.className = "text-sm text-red-600";
+            signinMsg.className = "msg text-red-600";
             signinMsg.textContent = js.error || "Đăng nhập thất bại";
           }
-        } catch (err) {
-          signinMsg.className = "text-sm text-red-600";
+        } catch {
+          signinMsg.className = "msg text-red-600";
           signinMsg.textContent = "Lỗi kết nối máy chủ";
         }
       });
