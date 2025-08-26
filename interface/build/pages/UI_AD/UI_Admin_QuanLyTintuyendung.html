@@ -76,7 +76,6 @@
       .btn {
         cursor: pointer;
       }
-
       /* Toast */
       .toast {
         position: fixed;
@@ -101,8 +100,7 @@
       .toast.show {
         opacity: 1;
       }
-
-      /* Nút thao tác */
+      /* Action buttons */
       .action-btn {
         min-width: 80px;
         padding: 8px 12px;
@@ -127,8 +125,7 @@
       .action-btn:hover {
         opacity: 0.88;
       }
-
-      /* Badge trạng thái */
+      /* Badge */
       .badge {
         display: inline-block;
         padding: 6px 12px;
@@ -161,6 +158,7 @@
     <script>
       (async function loadSidenav() {
         try {
+          // Sidenav_admin.html nằm CÙNG THƯ MỤC với file này
           const res = await fetch("Sidenav_admin.html", { cache: "no-store" });
           if (!res.ok) throw new Error("HTTP " + res.status);
           const html = await res.text();
@@ -237,7 +235,7 @@
             </div>
           </div>
           <div class="px-6 pb-4 text-xs text-slate-400">
-            API: <code>../../../API/API_show_Tintuyendung.php</code>
+            API: <code>../../../API/API_show_TinTuyenDung.php?scope=admin</code>
           </div>
         </div>
 
@@ -420,9 +418,9 @@
     <script>
       // ====== API endpoints ======
       const API_BASE = "../../../API";
-      const API_SHOW = API_BASE + "/API_show_Tintuyendung.php";
-      const API_UPDATE = API_BASE + "/API_update_Tintuyendung.php";
-      const API_DELETE = API_BASE + "/API_delete_Tintuyendung.php";
+      const API_SHOW = API_BASE + "/API_show_TinTuyenDung.php";
+      const API_UPDATE = API_BASE + "/API_update_TinTuyenDung.php";
+      const API_DELETE = API_BASE + "/API_delete_TinTuyenDung.php";
 
       // ====== Helpers ======
       const $ = (s) => document.querySelector(s);
@@ -434,8 +432,8 @@
         if (old) old.remove();
         const el = document.createElement("div");
         el.className = "toast";
-        let bg = "#10b981"; // success
-        let icon = '<i class="fas fa-check-circle"></i>';
+        let bg = "#10b981",
+          icon = '<i class="fas fa-check-circle"></i>';
         if (type === "error") {
           bg = "#ef4444";
           icon = '<i class="fas fa-times-circle"></i>';
@@ -471,15 +469,18 @@
       }
 
       // ====== State ======
-      let rawData = [];
-      let viewData = [];
+      let rawData = [],
+        viewData = [];
       let page = 1;
       const pageSize = 10;
 
       async function getJSON(url) {
         const r = await fetch(url, { cache: "no-store" });
+        console.log("[GET]", url, r.status);
         if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
+        const j = await r.json();
+        console.log("[RESP]", j);
+        return j;
       }
       async function postForm(url, obj) {
         const body = new URLSearchParams();
@@ -543,13 +544,13 @@
                 <button class="action-btn btn-approve" data-act="approve" data-id="${
                   r.MaTin
                 }">Duyệt</button>
-                <button class="action-btn btn-reject" data-act="reject" data-id="${
+                <button class="action-btn btn-reject"  data-act="reject"  data-id="${
                   r.MaTin
                 }">Từ chối</button>
-                <button class="action-btn btn-edit" data-act="edit" data-id="${
+                <button class="action-btn btn-edit"    data-act="edit"    data-id="${
                   r.MaTin
                 }">Sửa</button>
-                <button class="action-btn btn-del" data-act="delete" data-id="${
+                <button class="action-btn btn-del"     data-act="delete"  data-id="${
                   r.MaTin
                 }">Xóa</button>
               </div>
@@ -564,7 +565,7 @@
 
       async function loadData() {
         try {
-          const data = await getJSON(API_SHOW);
+          const data = await getJSON(API_SHOW + "?scope=admin");
           rawData = Array.isArray(data) ? data : data?.data || [];
           applyFilters();
         } catch (e) {
@@ -620,9 +621,7 @@
                 "info"
               );
               applyFilters();
-            } else {
-              showToast(r.message || "Cập nhật thất bại!", "error");
-            }
+            } else showToast(r.message || "Cập nhật thất bại!", "error");
           } catch (err) {
             console.error(err);
             showToast("Lỗi kết nối!", "error");
@@ -648,10 +647,7 @@
 
         if (act === "edit") {
           const row = rawData.find((x) => String(x.MaTin) === String(id));
-          if (!row) {
-            showToast("Không tìm thấy tin!", "error");
-            return;
-          }
+          if (!row) return showToast("Không tìm thấy tin!", "error");
           // Prefill
           $("#edit_MaTin").value = row.MaTin || "";
           $("#edit_ChucDanh").value = row.ChucDanh || "";
@@ -694,7 +690,7 @@
           openModal(false);
       });
 
-      // ====== Submit edit ======
+      // Submit edit
       document
         .getElementById("editForm")
         .addEventListener("submit", async (e) => {
@@ -708,10 +704,8 @@
             DiaDiemLamViec: $("#edit_DiaDiemLamViec").value.trim(),
             TrangThai: $("#edit_TrangThai").value,
           };
-          if (!payload.ChucDanh) {
-            showToast("Vui lòng nhập Chức danh!", "error");
-            return;
-          }
+          if (!payload.ChucDanh)
+            return showToast("Vui lòng nhập Chức danh!", "error");
 
           try {
             const r = await postForm(API_UPDATE, payload);
