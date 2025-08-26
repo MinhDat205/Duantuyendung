@@ -73,6 +73,18 @@
     </style>
 </head>
 <body class="bg-gray-50">
+    <!-- Sidebar Placeholder -->
+    <div id="uv-sidenav"></div>
+    
+    <script type="module">
+        import { BASE_URL } from '../../assets/js/config.js';
+        fetch(BASE_URL + "interface/build/pages/UI_UV/Sidenav_Ungvien.html")
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById("uv-sidenav").innerHTML = html;
+            });
+    </script>
+    
     <!-- Hero Section -->
     <div class="hero-section">
         <div class="max-w-4xl mx-auto">

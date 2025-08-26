@@ -1,11 +1,3 @@
-<?php
-session_start();
-// Kiểm tra đăng nhập
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'NhaTuyenDung') {
-    header('Location: ../../UI_SignUp_TD-UV.html');
-    exit();
-}
-?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -17,7 +9,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_type']) || $_SESSION[
     <link href="../assets/css/argon-dashboard-tailwind.css" rel="stylesheet" />
     <style>
         .sidenav {
-            position: fixed;`
+            position: fixed;
             top: 0;
             left: 0;
             height: 100vh;
@@ -120,51 +112,6 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_type']) || $_SESSION[
             background: rgba(255,255,255,0.2);
         }
         
-        .main-content {
-            margin-left: 260px;
-            padding: 2rem;
-            min-height: 100vh;
-            background: #f8f9fa;
-        }
-        
-        .content-header {
-            background: white;
-            padding: 2rem;
-            border-radius: 1rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        
-        .welcome-text {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 0.5rem;
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        
-        .status-active {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-        
-        .status-pending {
-            background: #fef5e7;
-            color: #744210;
-        }
-        
-        .status-inactive {
-            background: #fed7d7;
-            color: #742a2a;
-        }
-        
         @media (max-width: 768px) {
             .sidenav {
                 transform: translateX(-100%);
@@ -172,10 +119,6 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_type']) || $_SESSION[
             
             .sidenav.open {
                 transform: translateX(0);
-            }
-            
-            .main-content {
-                margin-left: 0;
             }
             
             .mobile-toggle {
@@ -254,25 +197,6 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_type']) || $_SESSION[
         </div>
     </nav>
 
-    <!-- Main Content Area -->
-    <div class="main-content">
-        <div class="content-header">
-            <h1 class="welcome-text">Chào mừng trở lại!</h1>
-            <p>Quản lý hệ thống tuyển dụng của bạn một cách hiệu quả</p>
-            <div class="mt-4">
-                <span class="status-badge" id="statusBadge">Đang kiểm tra...</span>
-            </div>
-        </div>
-        
-        <!-- Content sẽ được load từ các trang khác -->
-        <div id="pageContent">
-            <div class="text-center text-gray-500">
-                <i class="ni ni-chart-bar-32" style="font-size: 3rem;"></i>
-                <p class="mt-4">Chọn một mục từ menu để bắt đầu</p>
-            </div>
-        </div>
-    </div>
-
     <script type="module">
         import { API_BASE, BASE_URL } from '../../assets/js/config.js';
         
@@ -288,19 +212,6 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_type']) || $_SESSION[
                     // Cập nhật thông tin công ty
                     document.getElementById('companyName').textContent = ntd.TenCongTy;
                     document.getElementById('companyEmail').textContent = ntd.Email;
-                    
-                    // Cập nhật trạng thái
-                    const statusBadge = document.getElementById('statusBadge');
-                    if (ntd.TrangThai === 'HoatDong') {
-                        statusBadge.textContent = 'Tài khoản đã kích hoạt';
-                        statusBadge.className = 'status-badge status-active';
-                    } else if (ntd.TrangThai === 'Pending') {
-                        statusBadge.textContent = 'Đang chờ duyệt';
-                        statusBadge.className = 'status-badge status-pending';
-                    } else {
-                        statusBadge.textContent = 'Tài khoản bị khóa';
-                        statusBadge.className = 'status-badge status-inactive';
-                    }
                     
                     // Lưu thông tin vào localStorage để sử dụng ở các trang khác
                     localStorage.setItem('ntdInfo', JSON.stringify(ntd));

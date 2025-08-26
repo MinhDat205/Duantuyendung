@@ -26,14 +26,17 @@
 <body class="bg-gray-50 text-slate-600">
   <div class="absolute w-full bg-blue-500 min-h-75"></div>
 
-  <aside class="fixed inset-y-0 my-4 w-full max-w-64 bg-white shadow-xl rounded-2xl xl:left-0 xl:translate-x-0 overflow-y-auto">
-    <div class="h-19"><a class="block px-8 py-6 font-semibold" href="UI_Ungvien_Trangchu.html">Trang chủ UV</a></div>
-    <hr class="h-px bg-gradient-to-r from-transparent via-black/40 to-transparent" />
-    <ul class="flex flex-col">
-      <li><a class="px-4 py-2 flex items-center m-2" href="./uv-ho-so.html">Hồ sơ Ứng Viên</a></li>
-      <li><a class="px-4 py-2 flex items-center bg-blue-100 rounded-lg m-2" href="./uv-tin-tuyen-dung.html">Tin tuyển dụng</a></li>
-    </ul>
-  </aside>
+  <!-- Sidebar Placeholder -->
+  <div id="uv-sidenav"></div>
+
+  <script type="module">
+      import { BASE_URL } from '../../assets/js/config.js';
+      fetch(BASE_URL + "interface/build/pages/UI_UV/Sidenav_Ungvien.html")
+          .then(r => r.text())
+          .then(html => {
+              document.getElementById("uv-sidenav").innerHTML = html;
+          });
+  </script>
 
   <main class="relative h-full max-h-screen xl:ml-68 rounded-xl">
     <nav class="relative flex items-center px-6 py-2 mx-6 rounded-2xl">
@@ -126,8 +129,15 @@
       const desc  = (t.MoTaCongViec||'').slice(0,160);
       const luong = t.MucLuong ? `<span class=\"badge badge-green\">${t.MucLuong}</span>` : '';
       const dia   = t.DiaDiemLamViec || t.DiaDiem || '';
+      
+      // Kiểm tra xem đã ứng tuyển chưa
+      const hasApplied = t.hasApplied || false;
+      const applyButton = hasApplied 
+        ? `<button class="btn btn-gray" disabled>Đã ứng tuyển</button>`
+        : `<button class="btn btn-blue hover:bg-blue-600" onclick="applyJob(${t.MaTin})">Ứng tuyển</button>`;
+      
       return `
-        <div class="card">
+        <div class="card hover:shadow-lg transition-shadow">
           <div class="flex items-start justify-between gap-2">
             <div>
               <div class="font-bold text-slate-800">${title}</div>
@@ -140,7 +150,7 @@
           <div class="text-sm text-slate-600 mt-2 line-clamp-3">${desc}</div>
           <div class="flex items-center justify-between mt-3 text-sm text-slate-500">
             <span class="badge badge-blue">${dia||'N/A'}</span>
-            <button class="btn btn-blue" onclick="applyJob(${t.MaTin})">Ứng tuyển</button>
+            ${applyButton}
           </div>
         </div>`;
     }
@@ -148,13 +158,53 @@
     async function loadList(){
       const wrap = document.getElementById('jobs-wrap');
       wrap.innerHTML = `<div class=\"h-32 bg-slate-100 rounded animate-pulse md:col-span-2 xl:col-span-3\"></div>`;
+      
       try{
         const js = await fetchJSON(API_SHOW_TIN);
         // API_show_Tintuyendung.php trả về MẢNG thuần không có status
         const list = Array.isArray(js) ? js : (js.data||[]);
-        if(!list.length){ wrap.innerHTML = `<div class=\"text-slate-400\">Không có tin</div>`; return; }
+        if(!list.length){ 
+          wrap.innerHTML = `<div class=\"text-slate-400\">Không có tin tuyển dụng nào</div>`; 
+          return; 
+        }
+        
+        // Lấy danh sách tin đã ứng tuyển để đánh dấu
+        await markAppliedJobs(list);
+        
         wrap.innerHTML = list.map(jobCard).join('');
-      }catch(e){ wrap.innerHTML = `<div class=\"text-red-500\">Lỗi tải dữ liệu</div>`; }
+      }catch(e){ 
+        console.error('Lỗi tải dữ liệu:', e);
+        wrap.innerHTML = `<div class=\"text-red-500\">Lỗi tải dữ liệu</div>`; 
+      }
+    }
+    
+    // Đánh dấu các tin đã ứng tuyển
+    async function markAppliedJobs(jobsList) {
+      try {
+        // Lấy thông tin UV từ localStorage hoặc session
+        let uvId = document.getElementById('uv-id').value.trim();
+        if(!uvId) {
+          const auth = JSON.parse(localStorage.getItem("auth") || "null");
+          if(auth && auth.user_id) {
+            uvId = auth.user_id;
+          } else {
+            return; // Không có thông tin UV, bỏ qua
+          }
+        }
+        
+        const js = await fetchJSON(`${API_SHOW_UT_BY_UV}?MaUngVien=${encodeURIComponent(uvId)}`);
+        if(js.status === "success") {
+          const appliedJobs = js.data || [];
+          const appliedJobIds = appliedJobs.map(job => job.MaTin);
+          
+          // Đánh dấu các tin đã ứng tuyển
+          jobsList.forEach(job => {
+            job.hasApplied = appliedJobIds.includes(job.MaTin);
+          });
+        }
+      } catch(e) {
+        console.error('Lỗi khi kiểm tra tin đã ứng tuyển:', e);
+      }
     }
 
     async function searchList(){
@@ -174,58 +224,120 @@
     }
 
     async function applyJob(MaTin){
-      const uv = document.getElementById('uv-id').value.trim();
-      if(!uv){ alert('Nhập Mã UV trước khi ứng tuyển'); return; }
+      // Lấy thông tin UV từ localStorage hoặc session
+      let uvId = document.getElementById('uv-id').value.trim();
+      
+      // Nếu không có trong input, thử lấy từ localStorage
+      if(!uvId) {
+        const auth = JSON.parse(localStorage.getItem("auth") || "null");
+        if(auth && auth.user_id) {
+          uvId = auth.user_id;
+        } else {
+          alert('Vui lòng đăng nhập để ứng tuyển');
+          return;
+        }
+      }
+      
       const fd = new FormData();
-      fd.append('MaUngVien', uv);
+      fd.append('MaUngVien', uvId);
       fd.append('MaTin', MaTin);
+      
       try{
         const js = await fetchJSON(API_INSERT_UT,{ method:'POST', body: fd });
         if(js.status==='success'){
-          alert('Ứng tuyển thành công');
+          alert('Ứng tuyển thành công!');
+          // Refresh danh sách để cập nhật trạng thái
+          await loadList();
         }else{
           alert(js.message||'Ứng tuyển thất bại');
         }
-      }catch(e){ alert('Lỗi API ứng tuyển'); }
+      }catch(e){ 
+        console.error('Lỗi API ứng tuyển:', e);
+        alert('Lỗi khi ứng tuyển. Vui lòng thử lại.');
+      }
     }
 
     async function loadApplied(){
-      const uv = document.getElementById('uv-id').value.trim();
-      if(!uv){ alert('Nhập Mã UV để xem tin đã ứng tuyển'); return; }
+      // Lấy thông tin UV từ localStorage hoặc session
+      let uvId = document.getElementById('uv-id').value.trim();
+      
+      // Nếu không có trong input, thử lấy từ localStorage
+      if(!uvId) {
+        const auth = JSON.parse(localStorage.getItem("auth") || "null");
+        if(auth && auth.user_id) {
+          uvId = auth.user_id;
+        } else {
+          alert('Vui lòng đăng nhập để xem tin đã ứng tuyển');
+          return;
+        }
+      }
+      
       const tb = document.getElementById('applied-tb');
       tb.innerHTML = `<tr><td colspan=\"4\" class=\"px-6 py-6 text-slate-400\">Đang tải…</td></tr>`;
+      
       try{
-        const js = await fetchJSON(`${API_SHOW_UT_BY_UV}?MaUngVien=${encodeURIComponent(uv)}`);
+        const js = await fetchJSON(`${API_SHOW_UT_BY_UV}?MaUngVien=${encodeURIComponent(uvId)}`);
         if(js.status!=="success") throw new Error(js.message||'Lỗi tải dữ liệu');
         const rows = js.data||[];
-        if(!rows.length){ tb.innerHTML = `<tr><td colspan=\"4\" class=\"px-6 py-6 text-slate-400\">Chưa có bản ghi</td></tr>`; return; }
+        if(!rows.length){ 
+          tb.innerHTML = `<tr><td colspan=\"4\" class=\"px-6 py-6 text-slate-400\">Chưa có tin nào đã ứng tuyển</td></tr>`; 
+          return; 
+        }
         tb.innerHTML = rows.map(r=>{
           const title = r.ChucDanh || r.TieuDe || `Tin #${r.MaTin}`;
           const st    = r.TrangThai || 'DangXet';
-          const date  = r.NgayUngTuyen ? new Date(r.NgayUngTuyen).toLocaleString() : '-';
+          const date  = r.NgayUngTuyen ? new Date(r.NgayUngTuyen).toLocaleString('vi-VN') : '-';
+          
+          // Hiển thị trạng thái với màu sắc
+          let statusClass = 'text-gray-600';
+          let statusText = st;
+          if(st === 'MoiPhongVan') {
+            statusClass = 'text-green-600 font-semibold';
+            statusText = 'Mời phỏng vấn';
+          } else if(st === 'TuChoi') {
+            statusClass = 'text-red-600';
+            statusText = 'Từ chối';
+          } else if(st === 'DangXet') {
+            statusClass = 'text-blue-600';
+            statusText = 'Đang xét duyệt';
+          }
+          
           return `
-            <tr class=\"border-b\">
-              <td class=\"px-6 py-3\">${title}</td>
-              <td class=\"px-6 py-3\">${st}</td>
-              <td class=\"px-6 py-3\">${date}</td>
-              <td class=\"px-6 py-3 text-right\"><button class=\"btn btn-gray\" onclick=\"cancelApply(${r.MaUngTuyen})\">Hủy</button></td>
+            <tr class=\"border-b hover:bg-gray-50\">
+              <td class=\"px-6 py-3 font-medium\">${title}</td>
+              <td class=\"px-6 py-3\"><span class=\"${statusClass}\">${statusText}</span></td>
+              <td class=\"px-6 py-3 text-sm\">${date}</td>
+              <td class=\"px-6 py-3 text-right\">
+                <button class=\"btn btn-gray hover:bg-red-100 hover:text-red-600\" onclick=\"cancelApply(${r.MaUngTuyen})\">
+                  Hủy ứng tuyển
+                </button>
+              </td>
             </tr>`;
         }).join('');
-      }catch(e){ tb.innerHTML = `<tr><td colspan=\"4\" class=\"px-6 py-6 text-red-500\">Lỗi tải dữ liệu</td></tr>`; }
+      }catch(e){ 
+        console.error('Lỗi tải dữ liệu:', e);
+        tb.innerHTML = `<tr><td colspan=\"4\" class=\"px-6 py-6 text-red-500\">Lỗi tải dữ liệu</td></tr>`; 
+      }
     }
 
     async function cancelApply(MaUngTuyen){
-      if(!confirm('Hủy ứng tuyển này?')) return;
+      if(!confirm('Bạn có chắc chắn muốn hủy ứng tuyển này?')) return;
+      
       const fd = new FormData();
       fd.append('MaUngTuyen', MaUngTuyen);
+      
       try{
         const js = await fetchJSON(API_DELETE_UT,{ method:'POST', body: fd });
         if(js.status==='success'){
+          alert('Hủy ứng tuyển thành công!');
           await loadApplied();
         }else{
-          alert(js.message||'Hủy thất bại');
+          alert(js.message||'Hủy ứng tuyển thất bại');
         }
-      }catch(e){ alert('Lỗi API hủy'); }
+      }catch(e){ 
+        console.error('Lỗi API hủy:', e);
+        alert('Lỗi khi hủy ứng tuyển. Vui lòng thử lại.');
+      }
     }
 
     document.getElementById('btn-search').addEventListener('click', ()=>{

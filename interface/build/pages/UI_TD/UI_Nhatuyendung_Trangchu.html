@@ -118,41 +118,17 @@
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h2 class="text-xl font-bold">Nhà Tuyển Dụng</h2>
-            <p class="text-sm opacity-75">Quản lý tuyển dụng</p>
-        </div>
-        
-        <div class="company-info">
-            <h3 class="font-semibold mb-2" id="companyName">Tên Công Ty</h3>
-            <p class="text-sm opacity-75" id="companyEmail">email@company.com</p>
-        </div>
-        
-        <nav class="sidebar-menu">
-            <a href="UI_Nhatuyendung_Trangchu.html" class="menu-item active">
-                <span class="menu-icon">🏠</span>
-                Trang chủ
-            </a>
-            <a href="UI_TD_QuanLyTinTuyenDung.html" class="menu-item">
-                <span class="menu-icon">📋</span>
-                Quản lý tin tuyển dụng
-            </a>
-            <a href="UI_TD_QuanLyUngVien.html" class="menu-item">
-                <span class="menu-icon">👥</span>
-                Quản lý ứng viên
-            </a>
-            <a href="UI_TD_HoSo.html" class="menu-item">
-                <span class="menu-icon">🏢</span>
-                Hồ sơ công ty
-            </a>
-            <a href="#" class="menu-item" onclick="logout()">
-                <span class="menu-icon">🚪</span>
-                Đăng xuất
-            </a>
-        </nav>
-    </div>
+    <!-- Sidebar Placeholder -->
+    <div id="td-sidenav"></div>
+    
+    <script type="module">
+        import { BASE_URL } from '../../assets/js/config.js';
+        fetch(BASE_URL + "interface/build/pages/UI_TD/Sidenav_Nhatuyendung.html")
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById("td-sidenav").innerHTML = html;
+            });
+    </script>
     
     <!-- Main Content -->
     <div class="main-content">

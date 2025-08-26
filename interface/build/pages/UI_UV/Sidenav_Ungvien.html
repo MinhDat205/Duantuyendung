@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidebar Ứng Viên</title>
+    <link href="../assets/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="../assets/css/nucleo-svg.css" rel="stylesheet" />
+    <link href="../assets/css/argon-dashboard-tailwind.css" rel="stylesheet" />
+    <style>
+        .sidenav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            z-index: 999;
+            transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+        
+        .sidenav-header {
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .user-name {
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .user-email {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.9rem;
+        }
+        
+        .sidenav-menu {
+            padding: 1rem 0;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .menu-item:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-left-color: rgba(255,255,255,0.5);
+        }
+        
+        .menu-item.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border-left-color: white;
+        }
+        
+        .menu-icon {
+            width: 20px;
+            margin-right: 0.75rem;
+            text-align: center;
+        }
+        
+        .menu-text {
+            font-weight: 500;
+        }
+        
+        .logout-section {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 0.5rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .sidenav {
+                transform: translateX(-100%);
+            }
+            
+            .sidenav.open {
+                transform: translateX(0);
+            }
+            
+            .mobile-toggle {
+                display: block;
+                position: fixed;
+                top: 1rem;
+                left: 1rem;
+                z-index: 1000;
+                background: #667eea;
+                border: none;
+                color: white;
+                padding: 0.5rem;
+                border-radius: 0.5rem;
+                cursor: pointer;
+            }
+        }
+        
+        .mobile-toggle {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Toggle Button -->
+    <button class="mobile-toggle" onclick="toggleSidenav()">
+        <i class="ni ni-bullet-list-67"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <nav class="sidenav" id="sidenav">
+        <div class="sidenav-header">
+            <div class="user-avatar">
+                <i class="ni ni-single-02"></i>
+            </div>
+            <div class="user-name" id="userName">Đang tải...</div>
+            <div class="user-email" id="userEmail">...</div>
+        </div>
+        
+        <div class="sidenav-menu">
+            <a href="UI_Ungvien_Trangchu.html" class="menu-item" id="menu-dashboard">
+                <div class="menu-icon">
+                    <i class="ni ni-chart-bar-32"></i>
+                </div>
+                <div class="menu-text">Trang chủ UV</div>
+            </a>
+            
+            <a href="uv-ho-so.html" class="menu-item" id="menu-hoso">
+                <div class="menu-icon">
+                    <i class="ni ni-folder-17"></i>
+                </div>
+                <div class="menu-text">Hồ sơ Ứng viên</div>
+            </a>
+            
+            <a href="uv-tin-tuyen-dung.html" class="menu-item" id="menu-tintuyendung">
+                <div class="menu-icon">
+                    <i class="ni ni-briefcase-24"></i>
+                </div>
+                <div class="menu-text">Tin tuyển dụng</div>
+            </a>
+        </div>
+        
+        <div class="logout-section">
+            <button class="logout-btn" onclick="logout()">
+                <div class="menu-icon">
+                    <i class="ni ni-button-power"></i>
+                </div>
+                <div class="menu-text">Đăng xuất</div>
+            </button>
+        </div>
+    </nav>
+
+    <script type="module">
+        import { API_BASE, BASE_URL } from '../../assets/js/config.js';
+        
+        // Lấy thông tin Ứng Viên
+        async function loadUVInfo() {
+            try {
+                // Lấy thông tin từ localStorage trước
+                const uvInfo = localStorage.getItem('uvInfo');
+                if (uvInfo) {
+                    const uv = JSON.parse(uvInfo);
+                    document.getElementById('userName').textContent = uv.HoTen || 'Ứng viên';
+                    document.getElementById('userEmail').textContent = uv.Email || '';
+                    return;
+                }
+                
+                // Nếu không có trong localStorage, lấy từ API
+                const response = await fetch(API_BASE + 'API_show_Ungvien.php');
+                const data = await response.json();
+                
+                if (data.ok && data.data.length > 0) {
+                    const uv = data.data[0]; // Lấy Ứng viên đầu tiên
+                    
+                    // Cập nhật thông tin người dùng
+                    document.getElementById('userName').textContent = uv.HoTen || 'Ứng viên';
+                    document.getElementById('userEmail').textContent = uv.Email || '';
+                    
+                    // Lưu thông tin vào localStorage
+                    localStorage.setItem('uvInfo', JSON.stringify(uv));
+                    
+                } else {
+                    console.error('Lỗi khi tải thông tin:', data.error);
+                    // Nếu có lỗi, chuyển về trang đăng nhập
+                    window.location.href = BASE_URL + 'interface/build/pages/UI_SignUp_TD-UV.html';
+                }
+            } catch (error) {
+                console.error('Lỗi kết nối:', error);
+                window.location.href = BASE_URL + 'interface/build/pages/UI_SignUp_TD-UV.html';
+            }
+        }
+
+        // Đăng xuất
+        function logout() {
+            fetch(API_BASE + 'API_logout_UV.php')
+                .then(() => {
+                    localStorage.removeItem('uvInfo');
+                    window.location.href = BASE_URL + 'interface/build/pages/UI_SignUp_TD-UV.html';
+                })
+                .catch(() => {
+                    localStorage.removeItem('uvInfo');
+                    window.location.href = BASE_URL + 'interface/build/pages/UI_SignUp_TD-UV.html';
+                });
+        }
+
+        // Toggle sidebar trên mobile
+        function toggleSidenav() {
+            const sidenav = document.getElementById('sidenav');
+            sidenav.classList.toggle('open');
+        }
+
+        // Đánh dấu menu active dựa trên URL hiện tại
+        function setActiveMenu() {
+            const currentPath = window.location.pathname;
+            const menuItems = document.querySelectorAll('.menu-item');
+            
+            menuItems.forEach(item => {
+                item.classList.remove('active');
+                if (currentPath.includes(item.getAttribute('href'))) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // Khởi tạo
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUVInfo();
+            setActiveMenu();
+        });
+
+        // Xử lý click menu
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                // Xóa active class từ tất cả menu items
+                document.querySelectorAll('.menu-item').forEach(menu => {
+                    menu.classList.remove('active');
+                });
+                
+                // Thêm active class cho menu được click
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

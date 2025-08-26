@@ -13,15 +13,17 @@
 <body class="bg-gray-50 text-slate-500">
   <div class="absolute w-full bg-blue-500 min-h-75"></div>
 
-  <aside class="fixed inset-y-0 my-4 w-full max-w-64 bg-white shadow-xl rounded-2xl xl:left-0 xl:translate-x-0 overflow-y-auto">
-    <div class="h-19"><a class="block px-8 py-6 font-semibold" href="../dashboard.html">Argon Dashboard</a></div>
-    <hr class="h-px bg-gradient-to-r from-transparent via-black/40 to-transparent" />
-    <ul class="flex flex-col">
-      <li><a class="px-4 py-2 flex items-center m-2" href="./td-ho-so.html">Hồ sơ Tuyển Dụng</a></li>
-      <li><a class="px-4 py-2 flex items-center m-2" href="./td-quan-ly-ung-vien.html">Quản lý ứng viên</a></li>
-      <li><a class="px-4 py-2 flex items-center bg-blue-100 rounded-lg m-2" href="./td-quan-ly-tin.html">Quản Lý Tin Tuyển Dụng </a></li>
-    </ul>
-  </aside>
+  <!-- Sidebar Placeholder -->
+  <div id="td-sidenav"></div>
+
+  <script type="module">
+    import { BASE_URL } from '../../assets/js/config.js';
+    fetch(BASE_URL + "interface/build/pages/UI_TD/Sidenav_Nhatuyendung.html")
+        .then(r => r.text())
+        .then(html => {
+            document.getElementById("td-sidenav").innerHTML = html;
+        });
+  </script>
 
   <main class="relative h-full max-h-screen xl:ml-68 rounded-xl">
     <nav class="relative flex items-center px-6 py-2 mx-6 rounded-2xl">
