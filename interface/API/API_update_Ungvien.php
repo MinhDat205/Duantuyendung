@@ -1,17 +1,56 @@
 <?php
-include "config.php";
+// interface/API/API_update_Ungvien.php
+require_once __DIR__ . '/config.php';
 
-$MaUngVien = $_POST['MaUngVien'] ?? null;
-$HoTen = $_POST['HoTen'] ?? null;
-$SoDienThoai = $_POST['SoDienThoai'] ?? null;
-$AnhCV = $_POST['AnhCV'] ?? null;
-$KyNang = $_POST['KyNang'] ?? null;
-$KinhNghiem = $_POST['KinhNghiem'] ?? null;
-$MaDanhMuc = $_POST['MaDanhMuc'] ?? null;
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-$response = [];
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit();
+}
 
-if (!$MaUngVien) {
+// Chuẩn hoá input - nhận cả MaUngVien lẫn MaTK
+$raw = file_get_contents('php://input');
+$js  = json_decode($raw, true);
+$P   = array_merge($_POST, is_array($js)?$js:[]);
+
+$maUV = $P['MaUngVien'] ?? $P['maUV'] ?? null;
+$maTK = $P['MaTK'] ?? $P['maTK'] ?? null;
+
+if (!$maUV && !$maTK) { 
+    echo json_encode(["ok"=>false,"error"=>"Thiếu trường: MaUngVien hoặc MaTK"]); 
+    exit; 
+}
+
+// Nếu thiếu MaUngVien nhưng có MaTK → suy ra MaUngVien
+if (!$maUV && $maTK) {
+    $stmt = $conn->prepare("SELECT MaUngVien FROM UngVien WHERE MaTK=?");
+    $stmt->bind_param('i', $maTK);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) {
+        $maUV = $row['MaUngVien'];
+    } else {
+        echo json_encode(["ok"=>false,"error"=>"Không tìm thấy UV theo MaTK={$maTK}"]);
+        exit;
+    }
+    $stmt->close();
+}
+
+// Lấy các trường cần cập nhật
+$HoTen = $P['HoTen'] ?? null;
+$SoDienThoai = $P['SoDienThoai'] ?? null;
+$AnhCV = $P['AnhCV'] ?? null;
+$KyNang = $P['KyNang'] ?? null;
+$KinhNghiem = $P['KinhNghiem'] ?? null;
+$MaDanhMuc = $P['MaDanhMuc'] ?? null;
+
+try {
+    $response = [];
+
+    if (!$maUV) {
     $response = [
         "status" => "error", 
         "message" => "Thiếu tham số bắt buộc: MaUngVien"
@@ -21,32 +60,32 @@ if (!$MaUngVien) {
     $types = "";
     $values = [];
     
-    if (array_key_exists("HoTen", $_POST)) {
+    if ($HoTen !== null) {
         $fields[] = "HoTen = ?";
         $types .= "s";
         $values[] = $HoTen;
     }
-    if (array_key_exists("SoDienThoai", $_POST)) {
+    if ($SoDienThoai !== null) {
         $fields[] = "SoDienThoai = ?";
         $types .= "s";
         $values[] = $SoDienThoai;
     }
-    if (array_key_exists("AnhCV", $_POST)) {
+    if ($AnhCV !== null) {
         $fields[] = "AnhCV = ?";
         $types .= "s";
         $values[] = $AnhCV;
     }
-    if (array_key_exists("KyNang", $_POST)) {
+    if ($KyNang !== null) {
         $fields[] = "KyNang = ?";
         $types .= "s";
         $values[] = $KyNang;
     }
-    if (array_key_exists("KinhNghiem", $_POST)) {
+    if ($KinhNghiem !== null) {
         $fields[] = "KinhNghiem = ?";
         $types .= "s";
         $values[] = $KinhNghiem;
     }
-    if (array_key_exists("MaDanhMuc", $_POST)) {
+    if ($MaDanhMuc !== null) {
         $fields[] = "MaDanhMuc = ?";
         $types .= "i";
         $values[] = $MaDanhMuc;
@@ -60,7 +99,7 @@ if (!$MaUngVien) {
     } else {
         $sql = "UPDATE UngVien SET " . implode(", ", $fields) . " WHERE MaUngVien = ?";
         $types .= "i";
-        $values[] = $MaUngVien;
+        $values[] = $maUV;
         
         $stmt = $conn->prepare($sql);
         $stmt->bind_param($types, ...$values);
@@ -80,8 +119,11 @@ if (!$MaUngVien) {
     }
 }
 
-header('Content-Type: application/json; charset=utf-8');
-echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-
-$conn->close();
+echo json_encode($response, JSON_UNESCAPED_UNICODE);
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode(['ok' => false, 'error' => 'Lỗi server: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
+} finally {
+    if (isset($conn) && $conn instanceof mysqli) $conn->close();
+}
 ?>

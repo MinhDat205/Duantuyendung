@@ -101,10 +101,8 @@
   </main>
 
   <!-- =================== JS =================== -->
-  <script>
-    // ===== Config API =====
-    const ORIGIN   = (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://localhost:8080';
-    const API_BASE = `${ORIGIN}/Duantuyendung/API/`; // NHỚ có dấu "/" cuối
+  <script type="module">
+    import { API_BASE } from '../../assets/js/config.js';
     const API_SHOW_TD   = `${API_BASE}API_show_Nhatuyendung.php`;
     const API_UPDATE_TD = `${API_BASE}API_update_Nhatuyendung.php`;
 

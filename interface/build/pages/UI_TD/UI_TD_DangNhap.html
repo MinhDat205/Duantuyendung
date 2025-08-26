@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập Nhà Tuyển Dụng - Duantuyendung</title>
+    <link href="../assets/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="../assets/css/nucleo-svg.css" rel="stylesheet" />
+    <link href="../assets/css/argon-dashboard-tailwind.css" rel="stylesheet" />
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Open Sans', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 3rem;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            font-size: 2rem;
+            color: white;
+        }
+        
+        .title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #4a5568;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .message.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .message.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #feb2b2;
+        }
+        
+        .message.info {
+            background: #bee3f8;
+            color: #2a4365;
+            border: 1px solid #90cdf4;
+        }
+        
+        .back-link {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <i class="ni ni-building"></i>
+        </div>
+        
+        <h1 class="title">Đăng nhập Nhà Tuyển Dụng</h1>
+        <p class="subtitle">Vui lòng đăng nhập để tiếp tục</p>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label class="form-label" for="email">Email</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    class="form-input" 
+                    placeholder="Nhập email của bạn"
+                    required
+                />
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="password">Mật khẩu</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="form-input" 
+                    placeholder="Nhập mật khẩu"
+                    required
+                />
+            </div>
+            
+            <button type="submit" class="login-btn" id="loginBtn">
+                <span id="btnText">Đăng nhập</span>
+                <span id="btnLoading" class="loading" style="display: none;"></span>
+            </button>
+        </form>
+        
+        <div id="message" class="message" style="display: none;"></div>
+        
+        <div class="back-link">
+            <a href="../UI_SignUp_TD-UV.html">← Quay lại trang đăng ký/đăng nhập</a>
+        </div>
+    </div>
+
+    <script>
+        // Tính toán base paths
+        (function computeBases() {
+            const { origin, pathname } = window.location;
+            const marker = "/interface/";
+            const idx = pathname.indexOf(marker);
+            if (idx === -1) {
+                window.BASE_INTERFACE = origin + "/Duantuyendung/interface";
+            } else {
+                window.BASE_INTERFACE = origin + pathname.substring(0, idx + marker.length - 1);
+            }
+            window.API_BASE = window.BASE_INTERFACE + "/API/";
+            window.URL_TD_HOME = window.BASE_INTERFACE + "/build/pages/UI_TD/Sidenav_Nhatuyendung.php";
+        })();
+
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const btnText = document.getElementById('btnText');
+        const btnLoading = document.getElementById('btnLoading');
+        const messageDiv = document.getElementById('message');
+
+        function showMessage(text, type = 'info') {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+        }
+
+        function hideMessage() {
+            messageDiv.style.display = 'none';
+        }
+
+        function setLoading(loading) {
+            if (loading) {
+                loginBtn.disabled = true;
+                btnText.style.display = 'none';
+                btnLoading.style.display = 'inline-block';
+            } else {
+                loginBtn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoading.style.display = 'none';
+            }
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showMessage('Vui lòng nhập đầy đủ thông tin', 'error');
+                return;
+            }
+            
+            hideMessage();
+            setLoading(true);
+            
+            try {
+                const response = await fetch(API_BASE + 'auth_login.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    if (data.data.LoaiTaiKhoan === 'NhaTuyenDung') {
+                        // Lưu thông tin auth vào localStorage
+                        localStorage.setItem("auth", JSON.stringify({
+                            ok: true,
+                            email: data.data.Email || email,
+                            role: data.data.LoaiTaiKhoan,
+                            userId: data.data.MaTK || null,
+                            token: data.token || null
+                        }));
+                        
+                        showMessage('Đăng nhập thành công! Đang chuyển trang...', 'success');
+                        setTimeout(() => {
+                            window.location.href = BASE_URL + "interface/build/pages/UI_TD/UI_Nhatuyendung_Trangchu.html";
+                        }, 1000);
+                    } else {
+                        showMessage('Tài khoản này không phải Nhà Tuyển Dụng', 'error');
+                    }
+                } else {
+                    showMessage(data.error || 'Đăng nhập thất bại', 'error');
+                }
+            } catch (error) {
+                console.error('Lỗi kết nối:', error);
+                showMessage('Lỗi kết nối máy chủ', 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Focus vào ô email khi trang load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('email').focus();
+        });
+    </script>
+</body>
+</html>

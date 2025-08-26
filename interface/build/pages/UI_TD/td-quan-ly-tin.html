@@ -92,12 +92,8 @@
       </form>
     </div>
   </div>
-  <script>
-   
-const ORIGIN = (location.origin && location.origin.startsWith('http'))
-  ? location.origin : 'http://localhost:8080';
-// Lấy origin hiện tại (tự có :8080) rồi trỏ đúng thư mục php của bạn
-    const API_BASE = 'http://localhost:8080/Duantuyendung/API/';
+  <script type="module">
+    import { API_BASE } from '../../assets/js/config.js';
 
     const API_SHOW_TIN   = API_BASE + 'API_show_Tintuyendung.php';
   const API_INSERT_TIN = API_BASE + 'API_insert_Tintuyendung.php';

@@ -27,7 +27,7 @@
   <div class="absolute w-full bg-blue-500 min-h-75"></div>
 
   <aside class="fixed inset-y-0 my-4 w-full max-w-64 bg-white shadow-xl rounded-2xl xl:left-0 xl:translate-x-0 overflow-y-auto">
-    <div class="h-19"><a class="block px-8 py-6 font-semibold" href="../dashboard.html">Argon Dashboard</a></div>
+    <div class="h-19"><a class="block px-8 py-6 font-semibold" href="UI_Ungvien_Trangchu.html">Trang chủ UV</a></div>
     <hr class="h-px bg-gradient-to-r from-transparent via-black/40 to-transparent" />
     <ul class="flex flex-col">
       <li><a class="px-4 py-2 flex items-center m-2" href="./uv-ho-so.html">Hồ sơ Ứng Viên</a></li>
@@ -88,12 +88,18 @@
     </div>
   </main>
 
-  <script>
-    const ORIGIN   = (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://localhost:8080';
-    const API_BASE = `${ORIGIN}/Duantuyendung/API/`;
-    const API_SHOW_TIN   = `${API_BASE}API_show_Tintuyendung.php`;
-    const API_SEARCH_TIN = `${API_BASE}API_search_Tintuyendung_advanced.php`;
-    const API_INSERT_UT  = `${API_BASE}API_insert_Ungtuyen.php`;
+  <script type="module">
+    import { API_BASE, BASE_URL } from '../../assets/js/config.js';
+    
+    // Guard phiên
+    const auth = JSON.parse(localStorage.getItem("auth") || "null");
+    if (!auth?.ok || auth?.role !== "UngVien") {
+        window.location.href = BASE_URL + "interface/build/pages/UI_SignUp_TD-UV.html";
+    }
+    
+    const API_SHOW_TIN   = `${API_BASE}API_show_TinTuyenDung.php`;
+    const API_SEARCH_TIN = `${API_BASE}API_search_TinTuyenDung.php`;
+    const API_INSERT_UT  = `${API_BASE}API_apply_TinTuyenDung.php`;
     const API_DELETE_UT  = `${API_BASE}API_delete_Ungtuyen.php`;
     const API_SHOW_UT_BY_UV = `${API_BASE}API_show_Ungtuyen_byUV.php`;
 

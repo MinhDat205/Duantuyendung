@@ -17,7 +17,7 @@
   <div class="absolute w-full bg-blue-500 min-h-75"></div>
 
   <aside class="fixed inset-y-0 my-4 w-full max-w-64 bg-white shadow-xl rounded-2xl xl:left-0 xl:translate-x-0 overflow-y-auto">
-    <div class="h-19"><a class="block px-8 py-6 font-semibold" href="../dashboard.html">Argon Dashboard</a></div>
+    <div class="h-19"><a class="block px-8 py-6 font-semibold" href="UI_Ungvien_Trangchu.html">Trang chủ UV</a></div>
     <hr class="h-px bg-gradient-to-r from-transparent via-black/40 to-transparent" />
     <ul class="flex flex-col">
       <li><a class="px-4 py-2 flex items-center bg-blue-100 rounded-lg m-2" href="./uv-ho-so.html">Hồ sơ Ứng Viên</a></li>
@@ -100,10 +100,16 @@
     </div>
   </main>
 
-  <script>
-    const ORIGIN   = (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://localhost:8080';
-    const API_BASE = `${ORIGIN}/Duantuyendung/API/`;
-    const API_SHOW_UV   = `${API_BASE}API_show_Ungvien.php`;
+  <script type="module">
+    import { API_BASE, BASE_URL } from '../../assets/js/config.js';
+    
+    // Guard phiên
+    const auth = JSON.parse(localStorage.getItem("auth") || "null");
+    if (!auth?.ok || auth?.role !== "UngVien") {
+        window.location.href = BASE_URL + "interface/build/pages/UI_SignUp_TD-UV.html";
+    }
+    
+    const API_SHOW_UV   = `${API_BASE}API_show_UngVien.php`;
     const API_UPDATE_UV = `${API_BASE}API_update_Ungvien.php`;
 
     const tabView = document.getElementById('tab-view');
@@ -162,12 +168,29 @@
       if(!id){ alert('Nhập Mã Ứng Viên'); return; }
       document.getElementById('profile-view').innerHTML = `<div class=\"text-slate-400\">Đang tải…</div>`;
       try{
-        const js = await fetchJSON(`${API_SHOW_UV}`);
-        // API_show_Ungvien.php trả về MẢNG thuần không có status
-        const rows = Array.isArray(js) ? js : (js.data||[]);
-        const data = (rows||[]).find(r => String(r.MaUngVien)===String(id)) || null;
-        fillForm(data);
-        renderView(data);
+        // Thử với MaUngVien trước, nếu không được thì dùng MaTK
+        const js = await fetchJSON(`${API_SHOW_UV}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ MaUngVien: id })
+        });
+        if (js.ok && js.data) {
+          fillForm(js.data);
+          renderView(js.data);
+        } else {
+          // Thử với MaTK nếu MaUngVien không được
+          const js2 = await fetchJSON(`${API_SHOW_UV}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ MaTK: id })
+          });
+          if (js2.ok && js2.data) {
+            fillForm(js2.data);
+            renderView(js2.data);
+          } else {
+            document.getElementById('profile-view').innerHTML = `<div class=\"text-red-500\">${js2.error || 'Không tìm thấy dữ liệu'}</div>`;
+          }
+        }
       }catch(e){
         console.error(e);
         document.getElementById('profile-view').innerHTML = `<div class=\"text-red-500\">Lỗi tải dữ liệu</div>`;

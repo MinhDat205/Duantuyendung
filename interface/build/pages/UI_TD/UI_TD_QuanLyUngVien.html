@@ -85,10 +85,9 @@
   </main>
 
   <!-- ===== JS ===== -->
-  <script>
-    // Host cố định, dùng API thư mục bạn đã cấu hình
-    const API_HOST = 'http://localhost:8080';
-    const API_BASE = `${API_HOST}/Duantuyendung/API/`;
+  <script type="module">
+    import { API_BASE } from '../../assets/js/config.js';
+    
     const API_SHOW_UT   = `${API_BASE}API_show_Ungtuyen.php`;   // ?MaUngVien=...
     const API_UPDATE_UT = `${API_BASE}API_update_Ungtuyen.php`; // POST MaUngTuyen, TrangThai
 

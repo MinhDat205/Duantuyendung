@@ -448,6 +448,13 @@
                     </button>
                     <div id="signinMsg" class="msg"></div>
                   </form>
+                  
+                  <!-- Link đến trang đăng nhập Nhà Tuyển Dụng -->
+                  <div class="mt-4 text-center">
+                    <a href="UI_TD/UI_TD_DangNhap.html" class="text-sm text-blue-600 hover:underline">
+                      Đăng nhập với tư cách Nhà Tuyển Dụng
+                    </a>
+                  </div>
                 </div>
               </div>
               <p class="text-xs text-center text-slate-400 mt-3">
@@ -514,24 +521,14 @@
       async
     ></script>
 
-    <script>
-      // ====== TỰ TÍNH BASE PATHS ======
-      (function computeBases() {
-        const { origin, pathname } = window.location;
-        const marker = "/interface/";
-        const idx = pathname.indexOf(marker);
-        if (idx === -1)
-          window.BASE_INTERFACE = origin + "/Duantuyendung/interface";
-        else
-          window.BASE_INTERFACE =
-            origin + pathname.substring(0, idx + marker.length - 1);
-        window.API_BASE = window.BASE_INTERFACE + "/API/";
-        window.URL_UV_HOME =
-          window.BASE_INTERFACE + "/build/pages/UI_UV/UI_Ungvien_Trangchu.html";
-        window.URL_TD_HOME =
-          window.BASE_INTERFACE +
-          "/build/pages/UI_TD/UI_Nhatuyendung_Trangchu.html";
-      })();
+    <script type="module">
+      import { BASE_URL, API_BASE } from '../assets/js/config.js';
+      
+      // ====== SETUP BASE PATHS ======
+      window.BASE_INTERFACE = BASE_URL + "interface";
+      window.API_BASE = API_BASE;
+                  window.URL_UV_HOME = BASE_URL + "interface/build/pages/UI_UV/UI_Ungvien_Trangchu.html";
+      window.URL_TD_HOME = BASE_URL + "interface/build/pages/UI_TD/UI_Nhatuyendung_Trangchu.html";
 
       // ====== TAB ======
       const btnTabSignup = document.getElementById("btnTabSignup");
@@ -849,7 +846,17 @@
             signinMsg.className = "msg text-green-600";
             signinMsg.textContent =
               "Đăng nhập thành công! Đang chuyển trang...";
+            
+            // Lưu thông tin auth vào localStorage
             const role = js.data.LoaiTaiKhoan;
+            localStorage.setItem("auth", JSON.stringify({
+              ok: true,
+              role: role,
+              email: js.data.Email || document.getElementById("loginEmail").value.trim(),
+              userId: js.data.MaTK || null,
+              token: js.token || null
+            }));
+            
             window.location.href =
               role === "UngVien" ? window.URL_UV_HOME : window.URL_TD_HOME;
           } else {
