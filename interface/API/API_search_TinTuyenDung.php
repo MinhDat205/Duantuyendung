@@ -26,12 +26,12 @@ $json = json_decode($raw, true);
 $post = $_POST;
 
 try {
-    // Lấy các tham số tìm kiếm
-    $keyword = get_input(['keyword', 'tukhoa'], $json, $post);
-    $diaDiem = get_input(['DiaDiemLamViec', 'diaDiem'], $json, $post);
-    $maDanhMuc = get_input(['MaDanhMuc', 'danhMuc'], $json, $post);
-    $mucLuongMin = get_input(['mucLuongMin', 'luongMin'], $json, $post);
-    $mucLuongMax = get_input(['mucLuongMax', 'luongMax'], $json, $post);
+    // Lấy các tham số tìm kiếm (hỗ trợ alias theo spec)
+    $keyword    = get_input(['keyword', 'tukhoa'], $json, $post);
+    $diaDiem    = get_input(['diaDiem', 'DiaDiemLamViec'], $json, $post);
+    $maDanhMuc  = get_input(['MaDanhMuc', 'danhMuc'], $json, $post);
+    $mucLuongMin= get_input(['luongTu', 'mucLuongMin', 'luongMin'], $json, $post);
+    $mucLuongMax= get_input(['luongDen', 'mucLuongMax', 'luongMax'], $json, $post);
     
     // Xây dựng câu query
     $sql = "
@@ -93,16 +93,29 @@ try {
     
     $tinTuyenDungList = [];
     while ($row = $result->fetch_assoc()) {
-        $tinTuyenDungList[] = $row;
+        // Chuẩn hoá trường trả về
+        $mucLuong = (string)($row['MucLuong'] ?? '');
+        $parts = array_map('trim', explode('-', $mucLuong));
+        $luongTu = null; $luongDen = null;
+        if (count($parts) === 2) {
+            $luongTu = is_numeric($parts[0]) ? (int)$parts[0] : null;
+            $luongDen = is_numeric($parts[1]) ? (int)$parts[1] : null;
+        }
+        $tinTuyenDungList[] = [
+            'MaTin'     => (int)$row['MaTin'],
+            'TenCongTy' => $row['TenCongTy'] ?? '',
+            'TieuDe'    => $row['ChucDanh'] ?? '',
+            'MoTaNgan'  => mb_substr((string)($row['MoTaCongViec'] ?? ''), 0, 180),
+            'DiaDiem'   => $row['DiaDiemLamViec'] ?? '',
+            'LuongTu'   => $luongTu,
+            'LuongDen'  => $luongDen,
+            'NganhNghe' => $row['TenDanhMuc'] ?? ''
+        ];
     }
     $stmt->close();
     
-    // Trả về dữ liệu phù hợp với code UI
-    echo json_encode([
-        'status' => 'success',
-        'data' => $tinTuyenDungList,
-        'total' => count($tinTuyenDungList)
-    ], JSON_UNESCAPED_UNICODE);
+    // Trả về dữ liệu theo chuẩn
+    echo json_encode(['ok' => true, 'data' => $tinTuyenDungList], JSON_UNESCAPED_UNICODE);
     
 } catch (Throwable $e) {
     http_response_code(500);

@@ -527,7 +527,7 @@
       // ====== SETUP BASE PATHS ======
       window.BASE_INTERFACE = BASE_URL + "interface";
       window.API_BASE = API_BASE;
-                  window.URL_UV_HOME = BASE_URL + "interface/build/pages/UI_UV/UI_Ungvien_Trangchu.html";
+      window.URL_UV_HOME = BASE_URL + "interface/build/pages/UI_UV/uv-home.html";
       window.URL_TD_HOME = BASE_URL + "interface/build/pages/UI_TD/UI_Nhatuyendung_Trangchu.html";
 
       // ====== TAB ======
@@ -853,6 +853,13 @@
               ok: true,
               role: role,
               email: js.data.Email || document.getElementById("loginEmail").value.trim(),
+              MaTK: js.data.MaTK || null,
+              MaTaiKhoan: js.data.MaTK || null,
+              MaUngVien: js.data.MaUngVien || js.data.MaUngvien || null,
+              MaNTD: js.data.MaNTD || js.data.MaNhatuyendung || null,
+              HoTen: js.data.HoTen || null,
+              TenCongTy: js.data.TenCongTy || null,
+              LoaiTaiKhoan: js.data.LoaiTaiKhoan || null,
               userId: js.data.MaTK || null,
               token: js.token || null
             }));

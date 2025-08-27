@@ -46,17 +46,12 @@ try {
         $stmt->close();
     }
     
-    // Kiểm tra xem đã ứng tuyển chưa
-    $stmt = $conn->prepare("SELECT MaUngTuyen FROM UngTuyen WHERE MaUngVien = ? AND MaTin = ?");
+    // UPSERT logic
+    $stmt = $conn->prepare("SELECT MaUngTuyen, TrangThai FROM UngTuyen WHERE MaUngVien = ? AND MaTin = ? LIMIT 1");
     $stmt->bind_param('ii', $maUV, $maTin);
     $stmt->execute();
     $result = $stmt->get_result();
-    
-    if ($result->num_rows > 0) {
-        $stmt->close();
-        echo json_encode(['ok' => false, 'error' => 'Bạn đã ứng tuyển tin này rồi'], JSON_UNESCAPED_UNICODE);
-        exit();
-    }
+    $existing = $result->fetch_assoc();
     $stmt->close();
     
     // Kiểm tra tin tuyển dụng có tồn tại và đã duyệt không
@@ -72,34 +67,26 @@ try {
     }
     $stmt->close();
     
-    // Thêm đơn ứng tuyển
-    $ngayUngTuyen = date('Y-m-d H:i:s');
-    $trangThai = 'DangXet';
-    
-    $stmt = $conn->prepare("
-        INSERT INTO UngTuyen (MaUngVien, MaTin, NgayUngTuyen, TrangThai) 
-        VALUES (?, ?, ?, ?)
-    ");
-    $stmt->bind_param('iiss', $maUV, $maTin, $ngayUngTuyen, $trangThai);
-    
-    if ($stmt->execute()) {
-        $maUngTuyen = $conn->insert_id;
-        $stmt->close();
-        
-        echo json_encode([
-            'status' => 'success', 
-            'message' => 'Ứng tuyển thành công',
-            'data' => [
-                'MaUngTuyen' => $maUngTuyen,
-                'MaUngVien' => $maUV,
-                'MaTin' => $maTin,
-                'NgayUngTuyen' => $ngayUngTuyen,
-                'TrangThai' => $trangThai
-            ]
-        ], JSON_UNESCAPED_UNICODE);
+    // Nếu đã có bản ghi
+    if ($existing) {
+        if ($existing['TrangThai'] === 'Huy') {
+            // Hồi sinh đơn bị hủy
+            $stmt = $conn->prepare("UPDATE UngTuyen SET TrangThai='DangXet', NgayUngTuyen=NOW() WHERE MaUngVien=? AND MaTin=?");
+            $stmt->bind_param('ii', $maUV, $maTin);
+            $ok = $stmt->execute();
+            $stmt->close();
+            echo json_encode(['ok'=>true,'status'=>'applied']);
+        } else {
+            echo json_encode(['ok'=>true,'status'=>'already_applied']);
+        }
     } else {
+        // Thêm đơn ứng tuyển mới
+        $stmt = $conn->prepare("INSERT INTO UngTuyen (MaUngVien, MaTin, NgayUngTuyen, TrangThai) VALUES (?, ?, NOW(), 'DangXet')");
+        $stmt->bind_param('ii', $maUV, $maTin);
+        $ok = $stmt->execute();
         $stmt->close();
-        echo json_encode(['ok' => false, 'error' => 'Lỗi khi tạo đơn ứng tuyển'], JSON_UNESCAPED_UNICODE);
+        if ($ok) echo json_encode(['ok'=>true,'status'=>'applied']);
+        else echo json_encode(['ok'=>false,'error'=>'Lỗi khi tạo đơn ứng tuyển']);
     }
     
 } catch (Throwable $e) {

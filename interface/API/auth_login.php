@@ -64,9 +64,11 @@ try {
     $stmt->close();
 
     echo json_encode(['ok'=>true,'data'=>[
+      'MaTK'=>(int)$user['MaTK'],
       'MaTaiKhoan'=>(int)$user['MaTK'],
       'LoaiTaiKhoan'=>$user['LoaiTaiKhoan'],
       'Email'=>$user['Email'],
+      'MaUngVien'=>$u['MaUngvien'] ?? null,
       'MaUngvien'=>$u['MaUngvien'] ?? null,
       'HoTen'=>$u['HoTen'] ?? null
     ]], JSON_UNESCAPED_UNICODE);
@@ -80,9 +82,11 @@ try {
     $stmt->close();
 
     echo json_encode(['ok'=>true,'data'=>[
+      'MaTK'=>(int)$user['MaTK'],
       'MaTaiKhoan'=>(int)$user['MaTK'],
       'LoaiTaiKhoan'=>$user['LoaiTaiKhoan'],
       'Email'=>$user['Email'],
+      'MaNTD'=>$c['MaNTD'] ?? null,
       'MaNhatuyendung'=>$c['MaNTD'] ?? null,
       'TenCongTy'=>$c['TenCongTy'] ?? null
     ]], JSON_UNESCAPED_UNICODE);

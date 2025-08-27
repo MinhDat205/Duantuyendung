@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <title>UV • Tin đã ứng tuyển</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{--blue:#3b82f6;--blue-600:#2563eb;--bg:#f6f8fc;--text:#0f172a;--sub:#64748b;--card:#ffffff;--line:#e5e7eb}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Roboto,Arial}
+    .layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+    .sidebar{background:linear-gradient(180deg,var(--blue) 0%,var(--blue-600) 100%);color:#fff;padding:20px 16px}
+    .brand{display:flex;align-items:center;gap:10px;margin-bottom:16px}.brand .dot{width:12px;height:12px;border-radius:50%;background:#fff;opacity:.9}
+    .user{background:rgba(255,255,255,.12);border-radius:16px;padding:14px;text-align:center;margin-bottom:12px}
+    .user .avatar{width:56px;height:56px;border-radius:50%;background:#fff;color:var(--blue-600);display:inline-grid;place-content:center;font-weight:700;margin-bottom:6px}
+    .nav a,.nav button{display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;border-radius:10px;border:0;background:transparent;color:#fff;text-decoration:none;cursor:pointer}
+    .nav a:hover,.nav button:hover{background:rgba(255,255,255,.14)}
+    .main{padding:20px}
+    .list{display:grid;gap:12px}
+    .row{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;justify-content:space-between;gap:10px}
+    .meta{color:var(--sub);font-size:13px}
+    .btn{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer}
+    .btn.primary{background:var(--blue);color:#fff;border:0}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span><strong>Ứng viên</strong></div>
+    <div class="user">
+      <div class="avatar" id="uv-initial">UV</div>
+      <div id="uv-email" style="opacity:.9;font-size:13px">...</div>
+    </div>
+    <nav class="nav">
+      <a id="link-home" href="#">🏠 Trang chủ</a>
+      <a id="link-profile" href="#">🧾 Thông tin</a>
+      <a id="link-apps" href="#">📄 Tin đã ứng tuyển</a>
+      <button id="btn-logout">🚪 Đăng xuất</button>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <h3 style="margin-top:0">Tin đã ứng tuyển</h3>
+    <div id="list" class="list"></div>
+  </main>
+</div>
+
+<script type="module">
+  import { BASE_URL, API_BASE } from "../../assets/js/config.js";
+
+  // -------- Guard + helpers ----------
+  const authRaw = localStorage.getItem("auth");
+  const auth = authRaw ? JSON.parse(authRaw) : null;
+  const LOGIN_PAGE = BASE_URL + "interface/build/pages/UI_SignUp_TD-UV.html";
+  if (!auth || !auth.ok || (auth.LoaiTaiKhoan && auth.LoaiTaiKhoan !== "UngVien")) {
+    window.location.href = LOGIN_PAGE;
+  }
+  function getUVId(){
+    return Number(auth?.MaUngVien ?? auth?.MaUV ?? auth?.MaTK ?? auth?.userId ?? auth?.id ?? 0);
+  }
+  const UV_EMAIL = auth?.email || auth?.Email || auth?.Email || "";
+
+  // nav + header
+  const nav = {
+    home: BASE_URL + "interface/build/pages/UI_UV/uv-home.html",
+    profile: BASE_URL + "interface/build/pages/UI_UV/uv-profile.html",
+    apps: BASE_URL + "interface/build/pages/UI_UV/uv-my-applications.html",
+  };
+  document.getElementById("link-home").href = nav.home;
+  document.getElementById("link-profile").href = nav.profile;
+  document.getElementById("link-apps").href = nav.apps;
+  document.getElementById("btn-logout").onclick = ()=>{
+    localStorage.removeItem("auth");
+    window.location.href = LOGIN_PAGE;
+  };
+  document.getElementById("uv-email").textContent = UV_EMAIL;
+  document.getElementById("uv-initial").textContent = (UV_EMAIL||"UV").slice(0,2).toUpperCase();
+
+  async function post(path, body={}){
+    const res = await fetch(API_BASE + path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+    const data = await res.json().catch(()=>({ok:false,error:"Invalid JSON"}));
+    if(!data.ok) throw new Error(data.error||"API error");
+    return data;
+  }
+
+  async function loadApps(){
+    const r = await post("API_get_UngTuyen_ByUV_All.php",{ MaTK:getUVId(), MaUngVien:getUVId() });
+    const list = r.data||[];
+    const wrap = document.getElementById("list");
+    wrap.innerHTML = "";
+    if(!list.length){ wrap.innerHTML = `<div class="meta">Chưa có đơn nào.</div>`; return; }
+    list.forEach(item=>{
+      const row = document.createElement("div");
+      row.className = "row";
+      const statusText = item.TrangThai === 'Huy' ? 'Đã hủy' : 
+                        item.TrangThai === 'DangXet' ? 'Đang xét' :
+                        item.TrangThai === 'MoiPhongVan' ? 'Mời phỏng vấn' :
+                        item.TrangThai === 'TuChoi' ? 'Từ chối' : 'Khác';
+      const statusColor = item.TrangThai === 'Huy' ? '#ef4444' : 
+                         item.TrangThai === 'DangXet' ? '#3b82f6' :
+                         item.TrangThai === 'MoiPhongVan' ? '#22c55e' :
+                         item.TrangThai === 'TuChoi' ? '#f59e0b' : '#64748b';
+      const canCancel = item.TrangThai !== 'Huy';
+      row.innerHTML = `
+        <div>
+          <div style="font-weight:700">${item.TieuDe||""}</div>
+          <div class="meta">${item.TenCongTy||""} • ${item.NgayNop||""}</div>
+          <div class="meta" style="color:${statusColor};font-weight:500">${statusText}</div>
+        </div>
+        <div>
+          ${canCancel ? `<button class="btn" data-cancel="${item.MaTin}">Hủy</button>` : ''}
+        </div>
+      `;
+      wrap.appendChild(row);
+    });
+  }
+
+  document.getElementById("list").addEventListener("click", async (e)=>{
+    const cancel = e.target.closest("[data-cancel]");
+    if(cancel){
+      const id = Number(cancel.dataset.cancel);
+      try{
+        const r = await post("API_cancel_UngTuyen.php",{ MaTin:id, MaTK:getUVId(), MaUngVien:getUVId() });
+        if(r.ok){ 
+          await loadApps(); 
+          alert("Đã hủy ứng tuyển thành công!");
+        }
+      }catch(err){ alert(err.message); }
+    }
+  });
+
+  loadApps();
+</script>
+</body>
+</html>

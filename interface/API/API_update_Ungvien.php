@@ -119,7 +119,7 @@ try {
     }
 }
 
-echo json_encode($response, JSON_UNESCAPED_UNICODE);
+echo json_encode(['ok' => $response['status'] === 'success', 'message' => $response['message']], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['ok' => false, 'error' => 'Lỗi server: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
