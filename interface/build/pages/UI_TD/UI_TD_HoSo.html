@@ -1,251 +1,566 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hồ sơ Nhà Tuyển Dụng</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
 
-  <!-- Argon assets -->
-  <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
-  <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
-  <link href="../../assets/css/argon-dashboard-tailwind.css?v=1.0.1" rel="stylesheet" />
+    <title>Hồ sơ Nhà tuyển dụng</title>
 
-  <!-- Font Awesome: dùng CSS CDN để tránh lỗi 403 của kit -->
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-        referrerpolicy="no-referrer">
-</head>
+    <!-- Guard: chỉ cho NTD -->
+    <script>
+      (function () {
+        try {
+          const auth = JSON.parse(localStorage.getItem("auth") || "null");
+          if (!auth || !auth.ok || auth.role !== "NhaTuyenDung") {
+            window.location.href = "../UI_SignUp_TD-UV.html";
+          }
+        } catch {
+          window.location.href = "../UI_SignUp_TD-UV.html";
+        }
+      })();
+    </script>
 
-<body class="m-0 font-sans text-base antialiased leading-default bg-gray-50 text-slate-600">
-  <div class="absolute w-full bg-blue-500 min-h-75"></div>
+    <!-- Fonts & Icons -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700"
+      rel="stylesheet"
+    />
+    <script
+      src="https://kit.fontawesome.com/42d5adcbca.js"
+      crossorigin="anonymous"
+    ></script>
 
-  <!-- Sidebar Placeholder -->
-  <div id="td-sidenav"></div>
+    <!-- Argon assets -->
+    <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
+    <link
+      href="../../assets/css/argon-dashboard-tailwind.css?v=1.0.1"
+      rel="stylesheet"
+    />
 
-  <script type="module">
-    import { BASE_URL } from '../../assets/js/config.js';
-    fetch(BASE_URL + "interface/build/pages/UI_TD/Sidenav_Nhatuyendung.html")
-        .then(r => r.text())
-        .then(html => {
-            document.getElementById("td-sidenav").innerHTML = html;
-        });
-  </script>
+    <style>
+      .min-h-75 {
+        min-height: 18rem;
+      }
+      .form-input {
+        width: 100%;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.95rem;
+      }
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(45deg, #111827, #334155);
+        color: #fff;
+        padding: 0.6rem 1rem;
+        border-radius: 0.75rem;
+        font-weight: 700;
+      }
+      .hint {
+        font-size: 0.85rem;
+        color: #64748b;
+      }
 
-  <main class="relative h-full max-h-screen xl:ml-68 rounded-xl">
-    <nav class="relative flex items-center px-6 py-2 mx-6 rounded-2xl">
-      <h6 class="mb-0 font-bold text-white">Hồ sơ Nhà Tuyển Dụng</h6>
-    </nav>
+      /* ===== Toast (giống giao diện bạn tham khảo) ===== */
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        border: 2px solid rgba(255, 255, 255, 0.95);
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38),
+          0 10px 18px rgba(0, 0, 0, 0.25);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+    </style>
+  </head>
 
-    <div class="w-full px-6 py-6 mx-auto">
-      <div class="bg-white rounded-2xl shadow-xl">
-        <div class="p-6 pb-0 border-b flex gap-2">
-          <button id="tab-view-btn" class="px-4 py-2 text-sm font-semibold rounded-lg bg-slate-100">Xem</button>
-          <button id="tab-edit-btn" class="px-4 py-2 text-sm font-semibold rounded-lg border">Chỉnh sửa</button>
+  <body
+    class="m-0 font-sans antialiased font-normal text-base leading-default bg-gray-50 text-slate-500"
+  >
+    <!-- Profile header background -->
+    <div
+      class="absolute w-full top-0 min-h-75 bg-[url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/profile-layout-header.jpg')] bg-cover bg-center"
+    >
+      <span
+        class="absolute top-0 left-0 w-full h-full bg-blue-500 opacity-60"
+      ></span>
+    </div>
+
+    <!-- Sidenav placeholder (nhúng file) -->
+    <div id="sidenav-container" aria-label="Thanh điều hướng NTD"></div>
+    <script>
+      (async function loadSidenav() {
+        try {
+          const res = await fetch("Sidenav_Nhatuyendung.html", {
+            cache: "no-store",
+          });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const html = await res.text();
+          const host = document.getElementById("sidenav-container");
+          host.innerHTML = html;
+
+          // Gắn logout từ trang cha
+          const logoutBtn = host.querySelector("#btnLogout");
+          if (logoutBtn) {
+            logoutBtn.addEventListener("click", function (e) {
+              e.preventDefault();
+              try {
+                localStorage.removeItem("auth");
+                sessionStorage.clear();
+              } catch {}
+              window.location.href = "../../../API/API_logout_User.php";
+            });
+          }
+        } catch (e) {
+          console.error("Không thể tải Sidenav_Nhatuyendung.html", e);
+        }
+      })();
+
+      // Toast helper (giống giao diện tham khảo)
+      function showToast(msg, type = "success") {
+        const oldToast = document.querySelector(".toast");
+        if (oldToast) oldToast.remove();
+
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        let bg = "#16a34a";
+        let icon = '<i class="fas fa-check-circle"></i>';
+        if (type === "error") {
+          bg = "#dc2626";
+          icon = '<i class="fas fa-times-circle"></i>';
+        } else if (type === "warning") {
+          bg = "#f59e0b";
+          icon = '<i class="fas fa-exclamation-triangle"></i>';
+        } else if (type === "info") {
+          bg = "#2563eb";
+          icon = '<i class="fas fa-info-circle"></i>';
+        }
+        toast.style.backgroundColor = bg;
+        toast.innerHTML = `${icon} <span>${msg}</span>`;
+        document.body.appendChild(toast);
+
+        setTimeout(() => toast.classList.add("show"), 10);
+        setTimeout(() => {
+          toast.classList.remove("show");
+          setTimeout(() => toast.remove(), 250);
+        }, 2600);
+      }
+    </script>
+
+    <!-- Main wrapper (đẩy nội dung sang phải khi có sidenav) -->
+    <div
+      class="relative h-full max-h-screen transition-all duration-200 ease-in-out xl:ml-68"
+    >
+      <!-- Navbar “trong suốt” nằm trên ảnh -->
+      <nav
+        class="absolute z-20 flex items-center justify-between w-full px-6 py-2 -mt-56 text-white"
+      >
+        <div class="flex items-center justify-between w-full px-6 py-1 mx-auto">
+          <div>
+            <ol class="flex flex-wrap pt-1 pl-2 pr-4 bg-transparent rounded-lg">
+              <li class="leading-normal text-sm opacity-75">
+                <a class="opacity-75" href="UI_Nhatuyendung_Trangchu.html"
+                  >Trang chủ</a
+                >
+              </li>
+              <li
+                class="text-sm pl-2 capitalize leading-normal before:float-left before:pr-2 before:content-['/']"
+                aria-current="page"
+              >
+                Hồ sơ
+              </li>
+            </ol>
+            <h6 class="mb-2 ml-2 font-bold text-white">Hồ sơ Nhà tuyển dụng</h6>
+          </div>
+
+          <div class="hidden sm:block text-sm">
+            <i class="fa fa-user mr-1"></i>
+            <span id="ntdEmail" class="font-semibold">—</span>
+          </div>
         </div>
+      </nav>
 
-        <!-- Tab Xem -->
-        <div id="tab-view" class="p-6">
-          <div id="list-ntd" class="grid md:grid-cols-2 gap-4">
-            <div class="h-4 bg-slate-200 rounded animate-pulse md:col-span-2"></div>
+      <!-- Header card nhỏ (overview) -->
+      <div class="relative w-full mx-auto mt-60">
+        <div
+          class="relative flex flex-col flex-auto min-w-0 p-4 mx-6 overflow-hidden break-words bg-white border-0 shadow-3xl rounded-2xl bg-clip-border"
+        >
+          <div class="flex flex-wrap -mx-3 items-center">
+            <div class="w-auto px-3 my-auto">
+              <div class="h-full">
+                <h5 class="mb-1 text-slate-800" id="oTenCongTy">Công ty</h5>
+                <p
+                  class="mb-0 font-semibold leading-normal text-sm text-slate-500"
+                >
+                  <i class="ni ni-pin-3 mr-1"></i><span id="oDiaChi">—</span>
+                  <span class="mx-2">•</span>
+                  <i class="ni ni-mobile-button mr-1"></i
+                  ><span id="oSoDienThoai">—</span>
+                </p>
+              </div>
+            </div>
+      <!-- Nội dung chính -->
+      <div class="w-full p-6 mx-auto">
+        <div class="-mx-3">
+          <!-- Form chỉnh sửa hồ sơ (full width) -->
+          <div class="w-full max-w-full px-3">
+            <div
+              class="relative flex flex-col min-w-0 break-words bg-white border-0 shadow-xl rounded-2xl bg-clip-border"
+            >
+              <div class="border-black/12.5 rounded-t-2xl p-6 pb-0">
+                <div class="flex items-center">
+                  <p class="mb-0 font-semibold">Chỉnh sửa hồ sơ</p>
+                </div>
+              </div>
+
+              <div class="flex-auto p-6">
+                <p class="leading-normal uppercase text-sm text-slate-500">
+                  Thông tin công ty
+                </p>
+
+                <form id="formNTD">
+                  <div class="flex flex-wrap -mx-3">
+                    <div class="w-full max-w-full px-3 md:w-6/12">
+                      <div class="mb-4">
+                        <label
+                          class="inline-block mb-2 ml-1 font-bold text-xs text-slate-700"
+                          >Tên công ty</label
+                        >
+                        <input
+                          type="text"
+                          id="TenCongTy"
+                          class="form-input"
+                          placeholder="Nhập tên công ty"
+                        />
+                      </div>
+                    </div>
+                    <div class="w-full max-w-full px-3 md:w-6/12">
+                      <div class="mb-4">
+                        <label
+                          class="inline-block mb-2 ml-1 font-bold text-xs text-slate-700"
+                          >Số điện thoại</label
+                        >
+                        <input
+                          type="text"
+                          id="SoDienThoai"
+                          class="form-input"
+                          placeholder="VD: 0901234567"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="w-full max-w-full px-3">
+                      <div class="mb-4">
+                        <label
+                          class="inline-block mb-2 ml-1 font-bold text-xs text-slate-700"
+                          >Địa chỉ</label
+                        >
+                        <input
+                          type="text"
+                          id="DiaChi"
+                          class="form-input"
+                          placeholder="Địa chỉ công ty"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="w-full max-w-full px-3">
+                      <div class="mb-4">
+                        <label
+                          class="inline-block mb-2 ml-1 font-bold text-xs text-slate-700"
+                          >Giới thiệu / Thông tin công ty</label
+                        >
+                        <textarea
+                          id="ThongTinCongTy"
+                          rows="5"
+                          class="form-input"
+                          placeholder="Mô tả ngắn gọn về công ty..."
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-3">
+                    <button type="submit" class="btn-primary">
+                      <i class="ni ni-check-bold"></i> Lưu hồ sơ
+                    </button>
+                    <span id="msgNTD" class="hint"></span>
+                  </div>
+                </form>
+
+                <hr
+                  class="h-px my-6 bg-transparent border-0 opacity-25 bg-gradient-to-r from-transparent via-black/40 to-transparent"
+                />
+
+                <!-- Đổi mật khẩu -->
+                <p class="leading-normal uppercase text-sm text-slate-500">
+                  Đổi mật khẩu
+                </p>
+                <form id="formPW">
+                  <div class="flex flex-wrap -mx-3">
+                    <div class="w-full max-w-full px-3 md:w-6/12">
+                      <div class="mb-4">
+                        <label
+                          class="inline-block mb-2 ml-1 font-bold text-xs text-slate-700"
+                          >Mật khẩu mới</label
+                        >
+                        <input
+                          type="password"
+                          id="NewPassword"
+                          class="form-input"
+                          placeholder="********"
+                        />
+                      </div>
+                    </div>
+                    <div class="w-full max-w-full px-3 md:w-6/12">
+                      <div class="mb-4">
+                        <label
+                          class="inline-block mb-2 ml-1 font-bold text-xs text-slate-700"
+                          >Xác nhận mật khẩu</label
+                        >
+                        <input
+                          type="password"
+                          id="NewPassword2"
+                          class="form-input"
+                          placeholder="********"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <button type="submit" class="btn-primary">
+                      <i class="ni ni-lock-circle-open"></i> Cập nhật mật khẩu
+                    </button>
+                    <span id="msgPW" class="hint"></span>
+                  </div>
+                  <p class="hint mt-2">
+                    Gợi ý: tối thiểu 8 ký tự, gồm chữ hoa/thường, số và ký tự
+                    đặc biệt.
+                  </p>
+                </form>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Tab Chỉnh sửa -->
-        <div id="tab-edit" class="p-6 hidden">
-          <div class="grid gap-4 md:grid-cols-2">
-            <div class="md:col-span-2">
-              <label class="block text-xs font-bold mb-1">Chọn Nhà tuyển dụng (MaTK)</label>
-              <select id="sel-matk" class="w-full rounded-lg border px-3 py-2"></select>
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold mb-1">Email</label>
-              <div class="relative">
-                <i class="fa-solid fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                <input id="Email" class="w-full rounded-lg border pl-9 pr-3 py-2" placeholder="Email đăng nhập">
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold mb-1">Mật khẩu</label>
-              <div class="relative">
-                <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                <input id="MatKhau" type="password" class="w-full rounded-lg border pl-9 pr-3 py-2" placeholder="Mật khẩu mới">
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold mb-1">Loại tài khoản</label>
-              <select id="LoaiTaiKhoan" class="w-full rounded-lg border px-3 py-2">
-                <option value="NhaTuyenDung">NhaTuyenDung</option>
-                <option value="UngVien">UngVien</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-xs font-bold mb-1">Trạng thái</label>
-              <select id="TrangThai" class="w-full rounded-lg border px-3 py-2">
-                <option value="HoatDong">HoatDong</option>
-                <option value="BiKhoa">BiKhoa</option>
-              </select>
-            </div>
-
-            <div class="md:col-span-2 flex gap-2 pt-2">
-              <button id="btn-save" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-semibold">Lưu</button>
-              <button id="btn-cancel" type="button" class="px-4 py-2 bg-slate-100 rounded-lg text-sm font-semibold">Hủy</button>
+        <!-- Footer nhỏ -->
+        <footer class="pt-4">
+          <div class="w-full px-6 mx-auto">
+            <div class="text-center text-sm text-slate-500">
+              ©
+              <script>
+                document.write(new Date().getFullYear());
+              </script>
+              Duantuyendung
             </div>
           </div>
-        </div>
-        <!-- /Tab Chỉnh sửa -->
+        </footer>
       </div>
     </div>
-  </main>
 
-  <!-- =================== JS =================== -->
-  <script type="module">
-    import { API_BASE } from '../../assets/js/config.js';
-    const API_SHOW_TD   = `${API_BASE}API_show_Nhatuyendung.php`;
-    const API_UPDATE_TD = `${API_BASE}API_update_Nhatuyendung.php`;
+    <!-- plugin for scrollbar  -->
+    <script
+      src="../../assets/js/plugins/perfect-scrollbar.min.js"
+      async
+    ></script>
+    <!-- main script file  -->
+    <script
+      src="../../assets/js/argon-dashboard-tailwind.js?v=1.0.1"
+      async
+    ></script>
 
-    let NTD_LIST = [];
+    <!-- App logic -->
+    <script type="module">
+      import { API_BASE } from "../../assets/js/config.js";
 
-    // ===== Helpers: màu gradient + avatar chữ cái đầu =====
-    const GRADIENTS = [
-      'from-blue-600 to-cyan-400',
-      'from-emerald-500 to-teal-400',
-      'from-purple-600 to-pink-500',
-      'from-orange-500 to-amber-400',
-      'from-red-600 to-orange-500',
-      'from-indigo-600 to-sky-500'
-    ];
-    const hash = (s) => { let h=0; for (let i=0;i<(s||'').length;i++){ h=(h<<5)-h+s.charCodeAt(i); h|=0; } return Math.abs(h); };
-    const gradFor = (name) => GRADIENTS[ hash(name||'?') % GRADIENTS.length ];
-    const initials = (name) => (name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
-
-    // ===== Tabs =====
-    const tabView = document.getElementById('tab-view');
-    const tabEdit = document.getElementById('tab-edit');
-    document.getElementById('tab-view-btn').onclick = () => { tabView.classList.remove('hidden'); tabEdit.classList.add('hidden'); };
-    document.getElementById('tab-edit-btn').onclick = () => { tabEdit.classList.remove('hidden'); tabView.classList.add('hidden'); };
-    document.getElementById('btn-cancel').onclick   = () => { tabView.classList.remove('hidden'); tabEdit.classList.add('hidden'); };
-
-    // ===== Fetch helper: bắt lỗi JSON rõ ràng =====
-    async function fetchJSON(url, options = {}) {
-      const res  = await fetch(url, options);
-      const text = await res.text();
-      if (!res.ok) { alert(`HTTP ${res.status} @ ${url}\n\n${text.slice(0,300)}`); throw new Error(res.status); }
-      const ct = res.headers.get('content-type') || '';
-      if (!ct.includes('application/json')) { alert(`API không trả JSON @ ${url}\n\n${text.slice(0,300)}`); throw new Error('Not JSON'); }
-      return JSON.parse(text);
-    }
-
-    // ===== Load danh sách NTD =====
-    async function loadNTD(){
-      try{
-        const js = await fetchJSON(API_SHOW_TD);
-        if(js.status!=='success') throw new Error(js.message||'Lỗi tải dữ liệu');
-        NTD_LIST = js.data || [];
-
-        const wrap = document.getElementById('list-ntd');
-        wrap.innerHTML = NTD_LIST.map(it=>{
-          const ten   = it.TenCongTy || '-';
-          const email = it.Email || '-';
-          const sdt   = it.SoDienThoai || it.SDT || '-';
-          const dc    = it.DiaChi || '-';
-          const mota  = it.ThongTinCongTy || it.MoTa || '-';
-          const grad  = gradFor(ten);
-          const init  = initials(ten);
-
-          return `
-            <div class="p-5 rounded-xl border border-slate-200 bg-white/70 hover:shadow-lg hover:border-slate-300 transition">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-3">
-                  <div class="w-11 h-11 rounded-xl bg-gradient-to-br ${grad} text-white flex items-center justify-center font-bold shadow-sm">
-                    ${init}
-                  </div>
-                  <h6 class="font-extrabold text-lg text-slate-800 leading-tight">
-                    <span class="bg-gradient-to-r ${grad} bg-clip-text text-transparent drop-shadow-sm">
-                      ${ten}
-                    </span>
-                  </h6>
-                </div>
-                <span class="text-xs text-slate-400">MaTK: ${it.MaTK||'-'}</span>
-              </div>
-
-              <div class="grid md:grid-cols-2 gap-2 text-sm">
-                <div class="flex items-center gap-2">
-                  <i class="fa-solid fa-envelope text-slate-400 w-4 text-center"></i>
-                  <div><span class="text-slate-400">Email:</span> ${email}</div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <i class="fa-solid fa-phone text-slate-400 w-4 text-center"></i>
-                  <div><span class="text-slate-400">SĐT:</span> ${sdt}</div>
-                </div>
-                <div class="md:col-span-2 flex items-start gap-2">
-                  <i class="fa-solid fa-location-dot text-slate-400 w-4 text-center mt-0.5"></i>
-                  <div><span class="text-slate-400">Địa chỉ:</span> ${dc}</div>
-                </div>
-                <div class="md:col-span-2 flex items-start gap-2">
-                  <i class="fa-solid fa-circle-info text-slate-400 w-4 text-center mt-0.5"></i>
-                  <div class="w-full">
-                    <span class="text-slate-400">Giới thiệu:</span>
-                    <div class="mt-1 whitespace-pre-line">${mota}</div>
-                  </div>
-                </div>
-              </div>
-            </div>`;
-        }).join('');
-
-        // fill select
-        const sel = document.getElementById('sel-matk');
-        sel.innerHTML = NTD_LIST.map(it => `<option value="${it.MaTK}">${it.TenCongTy||'NTD'} — MaTK ${it.MaTK}</option>`).join('');
-        sel.onchange = () => {
-          const picked = NTD_LIST.find(x => String(x.MaTK) === String(sel.value));
-          document.getElementById('Email').value = picked?.Email || '';
-        };
-        sel.dispatchEvent(new Event('change'));
-      }catch(e){
-        console.error(e);
-        document.getElementById('list-ntd').innerHTML = `<div class="text-red-500">Lỗi tải dữ liệu</div>`;
-      }
-    }
-
-    // ===== Submit cập nhật =====
-    document.getElementById('btn-save').addEventListener('click', async ()=>{
-      const MaTK         = document.getElementById('sel-matk').value;
-      const Email        = document.getElementById('Email').value.trim();
-      const MatKhau      = document.getElementById('MatKhau').value.trim();
-      const LoaiTaiKhoan = document.getElementById('LoaiTaiKhoan').value;
-      const TrangThai    = document.getElementById('TrangThai').value;
-
-      const fd = new FormData();
-      fd.append('MaTK', MaTK);
-      if (Email)        fd.append('Email', Email);
-      if (MatKhau)      fd.append('MatKhau', MatKhau);
-      if (LoaiTaiKhoan) { fd.append('LoaiTaiKhoan', LoaiTaiKhoan); fd.append('LoaiTK', LoaiTaiKhoan); } // tương thích API
-      if (TrangThai)    fd.append('TrangThai', TrangThai);
-
-      try{
-        const js = await fetchJSON(API_UPDATE_TD, { method:'POST', body: fd });
-        if(js.status === 'success'){
-          alert('Cập nhật thành công');
-          document.getElementById('MatKhau').value = '';
-          tabView.classList.remove('hidden'); tabEdit.classList.add('hidden');
-          loadNTD();
-        }else{
-          alert(js.message || 'Cập nhật thất bại');
+      // ===== State/Auth =====
+      const auth = (() => {
+        try {
+          return JSON.parse(localStorage.getItem("auth") || "null");
+        } catch {
+          return null;
         }
-      }catch(e){
-        console.error(e);
-        alert('Lỗi API');
+      })();
+      const MaTK = auth?.userId || auth?.MaTK || null;
+      if (!MaTK) {
+        window.location.href = "../UI_SignUp_TD-UV.html";
       }
-    });
 
-    document.addEventListener('DOMContentLoaded', loadNTD);
-  </script>
+      // Header email
+      const emailStr = auth?.email || auth?.Email || "—";
+      document.getElementById("ntdEmail").textContent = emailStr;
 
-  <!-- Argon scripts -->
-  <script src="../../assets/js/plugins/perfect-scrollbar.min.js" async></script>
-  <script src="../../assets/js/argon-dashboard-tailwind.js?v=1.0.1" async></script>
-</body>
+      // Form elements
+      const TenCongTy = document.getElementById("TenCongTy");
+      const SoDienThoai = document.getElementById("SoDienThoai");
+      const DiaChi = document.getElementById("DiaChi");
+      const ThongTinCongTy = document.getElementById("ThongTinCongTy");
+      const msgNTD = document.getElementById("msgNTD");
+
+      const msgPW = document.getElementById("msgPW");
+      const NewPassword = document.getElementById("NewPassword");
+      const NewPassword2 = document.getElementById("NewPassword2");
+
+      // Overview elements
+      const oTenCongTy = document.getElementById("oTenCongTy");
+      const oDiaChi = document.getElementById("oDiaChi");
+      const oSoDienThoai = document.getElementById("oSoDienThoai");
+
+      let MaNTD = null;
+
+      // ===== Load profile (theo MaTK) =====
+      async function loadProfile() {
+        msgNTD.textContent = "Đang tải hồ sơ...";
+        try {
+          const url =
+            API_BASE +
+            "API_show_Nhatuyendung.php?MaTK=" +
+            encodeURIComponent(MaTK);
+          const rs = await fetch(url, { cache: "no-store" });
+          const js = await rs.json();
+
+          const me =
+            js?.status === "success" && Array.isArray(js.data)
+              ? js.data[0]
+              : null;
+          if (!me) {
+            msgNTD.textContent = "";
+            showToast("Chưa có hồ sơ NTD cho tài khoản này!", "warning");
+            return;
+          }
+
+          MaNTD = Number(me.MaNTD);
+
+          // Fill form
+          TenCongTy.value = me.TenCongTy || "";
+          SoDienThoai.value = me.SoDienThoai || "";
+          DiaChi.value = me.DiaChi || "";
+          ThongTinCongTy.value = me.ThongTinCongTy || "";
+
+          // Fill overview
+          oTenCongTy.textContent = me.TenCongTy || "Công ty";
+          oDiaChi.textContent = me.DiaChi || "—";
+          oSoDienThoai.textContent = me.SoDienThoai || "—";
+
+          // Email hiển thị (nếu API trả về)
+          if (me.Email) {
+            document.getElementById("ntdEmail").textContent = me.Email;
+          }
+
+          msgNTD.textContent = "";
+        } catch (e) {
+          console.error(e);
+          msgNTD.textContent = "";
+          showToast("Lỗi kết nối khi tải hồ sơ!", "error");
+        }
+      }
+      await loadProfile();
+
+      // ===== Save profile =====
+      document
+        .getElementById("formNTD")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          if (!MaNTD) {
+            showToast("Không xác định được MaNTD!", "error");
+            return;
+          }
+
+          msgNTD.textContent = "Đang lưu...";
+
+          const payload = {
+            MaNTD,
+            TenCongTy: TenCongTy.value.trim(),
+            SoDienThoai: SoDienThoai.value.trim(),
+            DiaChi: DiaChi.value.trim(),
+            ThongTinCongTy: ThongTinCongTy.value.trim(),
+          };
+
+          try {
+            const rs = await fetch(API_BASE + "API_update_Nhatuyendung.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            const js = await rs.json();
+            msgNTD.textContent = "";
+
+            if (js?.status === "success") {
+              // Cập nhật quick overview ngay
+              oTenCongTy.textContent = payload.TenCongTy || "Công ty";
+              oDiaChi.textContent = payload.DiaChi || "—";
+              oSoDienThoai.textContent = payload.SoDienThoai || "—";
+
+              showToast("Đã lưu hồ sơ!", "success");
+            } else {
+              showToast(js?.message || "Lưu hồ sơ thất bại!", "error");
+            }
+          } catch {
+            msgNTD.textContent = "";
+            showToast("Lỗi kết nối máy chủ khi lưu!", "error");
+          }
+        });
+
+      // ===== Change password =====
+      document
+        .getElementById("formPW")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const p1 = NewPassword.value;
+          const p2 = NewPassword2.value;
+
+          if (!p1 || p1.length < 8) {
+            showToast("Mật khẩu tối thiểu 8 ký tự!", "warning");
+            return;
+          }
+          if (p1 !== p2) {
+            showToast("Xác nhận mật khẩu không khớp!", "warning");
+            return;
+          }
+
+          msgPW.textContent = "Đang cập nhật mật khẩu...";
+          try {
+            const fd = new FormData();
+            fd.append("MaTK", MaTK);
+            fd.append("MatKhau", p1);
+
+            const rs = await fetch(API_BASE + "API_update_Taikhoan.php", {
+              method: "POST",
+              body: fd,
+            });
+            const js = await rs.json();
+
+            msgPW.textContent = "";
+
+            if (js?.status === "success") {
+              NewPassword.value = "";
+              NewPassword2.value = "";
+              showToast("Đã đổi mật khẩu!", "success");
+            } else {
+              showToast(js?.message || "Đổi mật khẩu thất bại!", "error");
+            }
+          } catch {
+            msgPW.textContent = "";
+            showToast("Lỗi kết nối máy chủ khi đổi mật khẩu!", "error");
+          }
+        });
+    </script>
+  </body>
 </html>

@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Quản lý ứng viên ứng tuyển | Nhà tuyển dụng</title>
+
+    <!-- Guard: chỉ cho NTD -->
+    <script>
+      (function () {
+        try {
+          const auth = JSON.parse(localStorage.getItem("auth") || "null");
+          if (!auth || !auth.ok || auth.role !== "NhaTuyenDung") {
+            window.location.href = "../UI_SignUp_TD-UV.html";
+          }
+        } catch {
+          window.location.href = "../UI_SignUp_TD-UV.html";
+        }
+      })();
+    </script>
+
+    <!-- Fonts & Icons -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700"
+      rel="stylesheet"
+    />
+    <script
+      src="https://kit.fontawesome.com/42d5adcbca.js"
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- Argon / Tailwind assets -->
+    <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
+    <link
+      href="../../assets/css/argon-dashboard-tailwind.css?v=1.0.1"
+      rel="stylesheet"
+    />
+
+    <style>
+      .min-h-75 {
+        min-height: 18rem;
+      }
+      .form-input {
+        width: 100%;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.95rem;
+      }
+      .btn {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 0.5rem 0.85rem;
+      }
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(45deg, #111827, #334155);
+        color: #fff;
+        border: none;
+        padding: 0.6rem 1rem;
+        border-radius: 0.75rem;
+        font-weight: 700;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+      }
+      /* Toast */
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        border: 2px solid rgba(255, 255, 255, 0.95);
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38),
+          0 10px 18px rgba(0, 0, 0, 0.25);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+
+      /* Modal */
+      .modal-portal {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: none;
+      }
+      .modal-portal.show {
+        display: flex;
+      }
+      .modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+      }
+      .modal-card {
+        position: relative;
+        margin: auto;
+        width: min(860px, 92vw);
+        max-height: 85vh;
+        background: #fff;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      }
+      .modal-body-scroll {
+        padding: 1rem 1.25rem;
+        overflow-y: auto;
+        max-height: calc(85vh - 56px);
+      }
+      html.lock-scroll,
+      body.lock-scroll {
+        overflow: hidden;
+      }
+      .cv-img {
+        max-height: 300px;
+        object-fit: contain;
+        border: 1px dashed #e5e7eb;
+        border-radius: 12px;
+        padding: 6px;
+      }
+    </style>
+  </head>
+
+  <body
+    class="m-0 font-sans antialiased font-normal text-base leading-default bg-gray-50 text-slate-600"
+  >
+    <!-- Header bg -->
+    <div
+      class="absolute w-full top-0 min-h-75 bg-[url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/profile-layout-header.jpg')] bg-cover bg-center"
+    >
+      <span
+        class="absolute top-0 left-0 w-full h-full bg-blue-500 opacity-60"
+      ></span>
+    </div>
+
+    <!-- Sidenav -->
+    <div id="sidenav-container" aria-label="Thanh điều hướng NTD"></div>
+    <script>
+      (async function loadSidenav() {
+        try {
+          const res = await fetch("Sidenav_Nhatuyendung.html", {
+            cache: "no-store",
+          });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const html = await res.text();
+          const host = document.getElementById("sidenav-container");
+          host.innerHTML = html;
+
+          const logoutBtn = host.querySelector("#btnLogout");
+          if (logoutBtn) {
+            logoutBtn.addEventListener("click", function (e) {
+              e.preventDefault();
+              try {
+                localStorage.removeItem("auth");
+                sessionStorage.clear();
+              } catch {}
+              window.location.href = "../../../API/API_logout_User.php";
+            });
+          }
+        } catch (e) {
+          console.error("Không thể tải Sidenav_Nhatuyendung.html", e);
+        }
+      })();
+
+      function showToast(msg, type = "success") {
+        const old = document.querySelector(".toast");
+        if (old) old.remove();
+        const el = document.createElement("div");
+        el.className = "toast";
+        let bg = "#16a34a",
+          icon = '<i class="fas fa-check-circle"></i>';
+        if (type === "error") {
+          bg = "#dc2626";
+          icon = '<i class="fas fa-times-circle"></i>';
+        } else if (type === "warning") {
+          bg = "#f59e0b";
+          icon = '<i class="fas fa-exclamation-triangle"></i>';
+        } else if (type === "info") {
+          bg = "#2563eb";
+          icon = '<i class="fas fa-info-circle"></i>';
+        }
+        el.style.backgroundColor = bg;
+        el.innerHTML = icon + " <span>" + msg + "</span>";
+        document.body.appendChild(el);
+        setTimeout(() => el.classList.add("show"), 10);
+        setTimeout(() => {
+          el.classList.remove("show");
+          setTimeout(() => el.remove(), 250);
+        }, 2600);
+      }
+    </script>
+
+    <!-- Main wrapper -->
+    <div
+      class="relative h-full max-h-screen transition-all duration-200 ease-in-out xl:ml-68"
+    >
+      <!-- Navbar overlay -->
+      <nav
+        class="absolute z-20 flex items-center justify-between w-full px-6 py-2 -mt-56 text-white"
+      >
+        <div class="flex items-center justify-between w-full px-6 py-1 mx-auto">
+          <div>
+            <ol class="flex flex-wrap pt-1 pl-2 pr-4 bg-transparent rounded-lg">
+              <li class="leading-normal text-sm opacity-75">
+                <a class="opacity-75" href="UI_Nhatuyendung_Trangchu.html"
+                  >Trang chủ</a
+                >
+              </li>
+              <li
+                class="text-sm pl-2 capitalize leading-normal before:float-left before:pr-2 before:content-['/']"
+              >
+                Quản lý ứng viên ứng tuyển
+              </li>
+            </ol>
+            <h6 class="mb-2 ml-2 font-bold text-white">Ứng viên ứng tuyển</h6>
+          </div>
+          <div class="hidden sm:block text-sm">
+            <i class="fa fa-user mr-1"></i>
+            <span id="ntdEmail" class="font-semibold">—</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Header small card -->
+      <div class="relative w-full mx-auto mt-60">
+        <div
+          class="relative flex flex-col flex-auto min-w-0 p-4 mx-6 overflow-hidden break-words bg-white border-0 shadow-3xl rounded-2xl bg-clip-border"
+        >
+          <div class="flex flex-wrap -mx-3 items-center">
+            <div class="w-auto px-3 my-auto">
+              <div class="h-full">
+                <h5 class="mb-1 text-slate-800" id="oTenCongTy">
+                  Nhà tuyển dụng
+                </h5>
+                <p
+                  class="mb-0 font-semibold leading-normal text-sm text-slate-500"
+                >
+                  <i class="ni ni-email-83 mr-1"></i><span id="oEmail">—</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="w-full p-6 mx-auto">
+        <div class="flex flex-wrap -mx-3">
+          <!-- Bộ lọc & chọn tin -->
+          <div class="w-full max-w-full px-3">
+            <div
+              class="relative flex flex-col min-w-0 break-words bg-white border-0 shadow-xl rounded-2xl bg-clip-border"
+            >
+              <div class="p-6 pb-0">
+                <div
+                  class="flex flex-col gap-3 md:flex-row md:items-end md:gap-4"
+                >
+                  <div class="md:w-1/2">
+                    <label class="block text-sm mb-1">Chọn tin</label>
+                    <select id="selectTin" class="form-input">
+                      <option value="">— Chọn tin tuyển dụng —</option>
+                    </select>
+                    <p class="text-xs text-slate-400 mt-1">
+                      Nguồn: API_show_Tintuyendung.php?scope=admin (lọc theo
+                      MaNTD).
+                    </p>
+                  </div>
+                  <div class="md:flex-1 flex gap-2">
+                    <div class="relative flex-1">
+                      <span
+                        class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                        ><i class="fas fa-search"></i
+                      ></span>
+                      <input
+                        id="searchInput"
+                        type="text"
+                        placeholder="Tìm theo tên/ email/ SĐT/ trạng thái..."
+                        class="pl-9 form-input"
+                      />
+                    </div>
+                    <select id="filterTrangThai" class="form-input md:w-48">
+                      <option value="">— Tất cả trạng thái —</option>
+                      <option value="DangXet">Đang xét</option>
+                      <option value="MoiPhongVan">Đã duyệt (mời PV)</option>
+                      <option value="TuChoi">Từ chối</option>
+                    </select>
+                    <button id="btnReload" class="btn hover:bg-gray-50">
+                      <i class="fas fa-sync mr-1"></i>Tải lại
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex-auto px-0 pt-0 pb-2">
+                <div class="p-0 overflow-x-auto">
+                  <table
+                    class="items-center w-full mb-0 align-top border-collapse text-slate-600"
+                  >
+                    <thead>
+                      <tr class="text-slate-400">
+                        <th
+                          class="px-6 py-3 text-left text-xxs font-bold uppercase"
+                        >
+                          Ứng viên
+                        </th>
+                        <th
+                          class="px-6 py-3 text-left text-xxs font-bold uppercase"
+                        >
+                          Liên hệ
+                        </th>
+                        <th
+                          class="px-6 py-3 text-left text-xxs font-bold uppercase"
+                        >
+                          Ngày ứng tuyển
+                        </th>
+                        <th
+                          class="px-6 py-3 text-center text-xxs font-bold uppercase"
+                        >
+                          Trạng thái
+                        </th>
+                        <th
+                          class="px-6 py-3 text-center text-xxs font-bold uppercase"
+                        >
+                          Thao tác
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody id="appsBody"></tbody>
+                  </table>
+
+                  <div class="flex items-center justify-between px-6 py-4">
+                    <div class="text-xs text-slate-400" id="countLabel">—</div>
+                    <div class="flex gap-2">
+                      <button
+                        id="prevPage"
+                        class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Trước
+                      </button>
+                      <button
+                        id="nextPage"
+                        class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Sau
+                      </button>
+                    </div>
+                  </div>
+
+                  <div id="emptyState" class="px-6 pb-6 hidden">
+                    <div
+                      class="p-6 rounded-xl border text-center text-slate-500"
+                    >
+                      Chưa có ứng viên nào cho tin này.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /table -->
+        </div>
+
+        <footer class="pt-4">
+          <div class="w-full px-6 mx-auto">
+            <div class="text-center text-sm text-slate-500">
+              ©
+              <script>
+                document.write(new Date().getFullYear());
+              </script>
+              Duantuyendung
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <!-- ========= MODAL HỒ SƠ ỨNG VIÊN ========= -->
+    <div id="portal" class="modal-portal" aria-hidden="true">
+      <div class="modal-backdrop" data-close="modal"></div>
+
+      <div
+        class="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitle"
+      >
+        <div class="flex items-center px-6 py-4 border-b">
+          <h3 id="modalTitle" class="flex-1 text-lg font-semibold text-center">
+            Hồ sơ ứng viên
+          </h3>
+          <button
+            id="btnCloseModal"
+            class="text-slate-500 hover:text-slate-700 btn"
+            aria-label="Đóng"
+          >
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="modal-body-scroll">
+          <div class="grid md:grid-cols-3 gap-4">
+            <div class="md:col-span-2">
+              <div class="mb-3">
+                <div class="text-sm text-slate-500">Họ tên</div>
+                <div class="font-semibold text-slate-800" id="pHoTen">—</div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <div class="text-sm text-slate-500">Email</div>
+                  <div
+                    class="font-semibold text-slate-800 break-all"
+                    id="pEmail"
+                  >
+                    —
+                  </div>
+                </div>
+                <div>
+                  <div class="text-sm text-slate-500">Số điện thoại</div>
+                  <div class="font-semibold text-slate-800" id="pSdt">—</div>
+                </div>
+              </div>
+              <div class="mt-4">
+                <div class="text-sm text-slate-500">Kỹ năng</div>
+                <div class="whitespace-pre-wrap" id="pKyNang">—</div>
+              </div>
+              <div class="mt-4">
+                <div class="text-sm text-slate-500">Kinh nghiệm</div>
+                <div class="whitespace-pre-wrap" id="pKinhNghiem">—</div>
+              </div>
+            </div>
+
+            <div>
+              <div class="text-sm text-slate-500 mb-1">
+                Ảnh/ File CV (nếu có)
+              </div>
+              <img id="pCvImg" class="cv-img w-full" alt="CV" />
+              <div id="pCvNote" class="text-xs text-slate-400 mt-1">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ========= /MODAL ========= -->
+
+    <!-- plugin for scrollbar  -->
+    <script
+      src="../../assets/js/plugins/perfect-scrollbar.min.js"
+      async
+    ></script>
+    <!-- main script file  -->
+    <script
+      src="../../assets/js/argon-dashboard-tailwind.js?v=1.0.1"
+      async
+    ></script>
+
+    <!-- App logic -->
+    <script type="module">
+      import { API_BASE } from "../../assets/js/config.js";
+
+      const auth = (() => {
+        try {
+          return JSON.parse(localStorage.getItem("auth") || "null");
+        } catch {
+          return null;
+        }
+      })();
+      const MaTK = auth?.userId || auth?.MaTK || null;
+      const emailStr = auth?.email || auth?.Email || "—";
+      document.getElementById("ntdEmail").textContent = emailStr;
+      document.getElementById("oEmail").textContent = emailStr;
+
+      const oTenCongTy = document.getElementById("oTenCongTy");
+      const selectTin = document.getElementById("selectTin");
+      const appsBody = document.getElementById("appsBody");
+      const countLabel = document.getElementById("countLabel");
+      const emptyState = document.getElementById("emptyState");
+      const searchInput = document.getElementById("searchInput");
+      const filterTrangThai = document.getElementById("filterTrangThai");
+      const btnReload = document.getElementById("btnReload");
+      const prevPage = document.getElementById("prevPage");
+      const nextPage = document.getElementById("nextPage");
+
+      // Modal elements
+      const portal = document.getElementById("portal");
+      const btnCloseModal = document.getElementById("btnCloseModal");
+      const pHoTen = document.getElementById("pHoTen");
+      const pEmail = document.getElementById("pEmail");
+      const pSdt = document.getElementById("pSdt");
+      const pKyNang = document.getElementById("pKyNang");
+      const pKinhNghiem = document.getElementById("pKinhNghiem");
+      const pCvImg = document.getElementById("pCvImg");
+      const pCvNote = document.getElementById("pCvNote");
+
+      let MaNTD = null;
+      let jobs = []; // {MaTin, ChucDanh}
+      let rawApps = []; // ứng tuyển thô
+      let viewApps = []; // đã lọc
+      let page = 1;
+      const pageSize = 10;
+
+      // ===== Helpers =====
+      const statusBadge = (s) => {
+        const v = String(s || "").trim();
+        if (v === "MoiPhongVan")
+          return '<span class="badge" style="background:#34d399; color:#052e16;">Đã duyệt</span>';
+        if (v === "TuChoi")
+          return '<span class="badge" style="background:#fca5a5; color:#7f1d1d;">Từ chối</span>';
+        return '<span class="badge" style="background:#fde68a; color:#78350f;">Đang xét</span>';
+      };
+      const fmtDateTime = (iso) => {
+        if (!iso) return "—";
+        const d = new Date(String(iso).replace(" ", "T"));
+        if (isNaN(d)) return iso;
+        return d.toLocaleString("vi-VN");
+      };
+      function paginate(arr, p, size) {
+        const s = (p - 1) * size;
+        return arr.slice(s, s + size);
+      }
+      async function getJSON(url, opts = {}) {
+        const rs = await fetch(url, opts);
+        const ct = rs.headers.get("Content-Type") || "";
+        if (!rs.ok) throw new Error("HTTP " + rs.status);
+        return ct.includes("application/json") ? rs.json() : null;
+      }
+
+      // ===== Load NTD profile (MaNTD + tên công ty) =====
+      async function loadNTDProfile() {
+        const url =
+          API_BASE +
+          "API_show_Nhatuyendung.php?MaTK=" +
+          encodeURIComponent(MaTK);
+        const js = await getJSON(url);
+        const me =
+          js?.status === "success" && Array.isArray(js.data)
+            ? js.data[0]
+            : null;
+        if (!me) return;
+        MaNTD = Number(me.MaNTD);
+        oTenCongTy.textContent = me.TenCongTy || "Nhà tuyển dụng";
+      }
+
+      // ===== Load jobs (drop-down) =====
+      async function loadJobs() {
+        const url = API_BASE + "API_show_Tintuyendung.php?scope=admin";
+        const list = await getJSON(url);
+        const arr = Array.isArray(list) ? list : list?.data || [];
+        jobs = (arr || []).filter((r) => String(r.MaNTD) === String(MaNTD));
+        // render select
+        selectTin.innerHTML =
+          '<option value="">— Chọn tin tuyển dụng —</option>' +
+          jobs
+            .map(
+              (j) =>
+                `<option value="${j.MaTin}">#${j.MaTin} · ${
+                  j.ChucDanh || "(không tiêu đề)"
+                } · ${fmtDateTime(j.NgayDang)}</option>`
+            )
+            .join("");
+      }
+
+      // ===== Load applications for a job =====
+      async function loadApplications(maTin) {
+        if (!maTin) {
+          rawApps = [];
+          applyFilters();
+          return;
+        }
+
+        // Kỳ vọng: API_show_Ungtuyen.php hỗ trợ ?MaTin=...
+        const url =
+          API_BASE + "API_show_Ungtuyen.php?MaTin=" + encodeURIComponent(maTin);
+        let js = null;
+        try {
+          js = await getJSON(url);
+        } catch (e) {
+          console.error(e);
+          showToast("Không tải được danh sách ứng tuyển!", "error");
+          rawApps = [];
+          applyFilters();
+          return;
+        }
+
+        let arr = [];
+        if (Array.isArray(js)) arr = js;
+        else if (js && js.ok && Array.isArray(js.data)) arr = js.data;
+
+        // Chuẩn hóa trường tối thiểu
+        rawApps = (arr || []).map((x) => ({
+          MaUngTuyen: x.MaUngTuyen ?? x.id ?? null,
+          MaUngVien: x.MaUngVien ?? x.UngVienId ?? null,
+          NgayUngTuyen: x.NgayUngTuyen ?? x.CreatedAt ?? x.created_at ?? "",
+          TrangThai: x.TrangThai ?? "DangXet",
+          // Thông tin có thể đã join sẵn:
+          HoTen: x.HoTen ?? x.Ten ?? null,
+          Email: x.Email ?? null,
+          SoDienThoai: x.SoDienThoai ?? x.SDT ?? null,
+        }));
+
+        // Với bản ghi thiếu info người ứng tuyển → fetch bổ sung (song song)
+        const needFetch = rawApps.filter(
+          (r) => !(r.HoTen && (r.Email || r.SoDienThoai)) && r.MaUngVien
+        );
+        if (needFetch.length) {
+          try {
+            const jobs = needFetch.map(async (r) => {
+              const rs = await fetch(API_BASE + "API_show_Ungvien.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ MaUngVien: r.MaUngVien }),
+              });
+              const js = await rs.json();
+              if (js && js.ok && js.data) {
+                r.HoTen = r.HoTen || js.data.HoTen || null;
+                r.Email = r.Email || js.data.Email || null;
+                r.SoDienThoai = r.SoDienThoai || js.data.SoDienThoai || null;
+              }
+            });
+            await Promise.allSettled(jobs);
+          } catch {}
+        }
+
+        applyFilters();
+      }
+
+      function applyFilters() {
+        const q = (searchInput.value || "").trim().toLowerCase();
+        const st = filterTrangThai.value;
+
+        viewApps = rawApps.filter((r) => {
+          const hitQ =
+            !q ||
+            String(r.HoTen || "")
+              .toLowerCase()
+              .includes(q) ||
+            String(r.Email || "")
+              .toLowerCase()
+              .includes(q) ||
+            String(r.SoDienThoai || "")
+              .toLowerCase()
+              .includes(q) ||
+            String(r.TrangThai || "")
+              .toLowerCase()
+              .includes(q);
+          const hitSt = !st || r.TrangThai === st;
+          return hitQ && hitSt;
+        });
+
+        page = 1;
+        renderApps();
+      }
+
+      function renderApps() {
+        appsBody.innerHTML = "";
+        const rows = paginate(viewApps, page, pageSize);
+
+        if (!rows.length) emptyState.classList.remove("hidden");
+        else emptyState.classList.add("hidden");
+
+        rows.forEach((r) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="px-6 py-3 border-b">
+              <div class="flex flex-col">
+                <span class="text-sm font-semibold text-slate-700">${
+                  r.HoTen || "(Ẩn danh)"
+                }</span>
+                <span class="text-xs text-slate-400">#UV${
+                  r.MaUngVien || "?"
+                }</span>
+              </div>
+            </td>
+            <td class="px-6 py-3 border-b">
+              <div class="text-sm">${r.Email || "—"}</div>
+              <div class="text-xs text-slate-400">${r.SoDienThoai || "—"}</div>
+            </td>
+            <td class="px-6 py-3 border-b">
+              <span class="text-sm">${fmtDateTime(r.NgayUngTuyen)}</span>
+            </td>
+            <td class="px-6 py-3 text-center border-b">${statusBadge(
+              r.TrangThai
+            )}</td>
+            <td class="px-6 py-3 text-center border-b">
+              <div class="flex items-center gap-2 justify-center">
+                <button class="px-2 py-1 rounded-lg text-xs border hover:bg-gray-50" data-act="view" data-uv="${
+                  r.MaUngVien || ""
+                }">
+                  <i class="fas fa-id-card mr-1"></i> Hồ sơ
+                </button>
+                <button class="px-2 py-1 rounded-lg text-xs border hover:bg-emerald-50 text-emerald-700" data-act="approve" data-id="${
+                  r.MaUngTuyen
+                }">
+                  <i class="fas fa-check mr-1"></i> Duyệt
+                </button>
+                <button class="px-2 py-1 rounded-lg text-xs border hover:bg-rose-50 text-rose-600" data-act="reject" data-id="${
+                  r.MaUngTuyen
+                }">
+                  <i class="fas fa-times mr-1"></i> Từ chối
+                </button>
+              </div>
+            </td>
+          `;
+          appsBody.appendChild(tr);
+        });
+
+        const totalPages = Math.max(1, Math.ceil(viewApps.length / pageSize));
+        countLabel.textContent = `${viewApps.length} ứng viên`;
+        prevPage.disabled = page <= 1;
+        nextPage.disabled = page >= totalPages;
+      }
+
+      // ===== Actions =====
+      selectTin.addEventListener("change", (e) => {
+        const id = e.target.value;
+        loadApplications(id);
+      });
+      searchInput.addEventListener("input", applyFilters);
+      filterTrangThai.addEventListener("change", applyFilters);
+      btnReload.addEventListener("click", () => {
+        const id = selectTin.value;
+        loadApplications(id);
+      });
+      prevPage.addEventListener("click", () => {
+        if (page > 1) {
+          page--;
+          renderApps();
+        }
+      });
+      nextPage.addEventListener("click", () => {
+        const totalPages = Math.max(1, Math.ceil(viewApps.length / pageSize));
+        if (page < totalPages) {
+          page++;
+          renderApps();
+        }
+      });
+
+      document.addEventListener("click", async (e) => {
+        const btn = e.target.closest("[data-act]");
+        if (!btn) return;
+
+        const act = btn.dataset.act;
+
+        // Xem hồ sơ
+        if (act === "view") {
+          const maUV = btn.dataset.uv;
+          if (!maUV) return;
+          await openProfileModal(maUV);
+          return;
+        }
+
+        // Duyệt / Từ chối
+        if (act === "approve" || act === "reject") {
+          const id = btn.dataset.id;
+          if (!id) return;
+
+          const next = act === "approve" ? "MoiPhongVan" : "TuChoi";
+          const oldHTML = btn.innerHTML;
+          btn.disabled = true;
+          btn.style.opacity = ".6";
+          btn.innerHTML =
+            '<i class="fas fa-spinner fa-spin mr-1"></i> Đang lưu...';
+
+          try {
+            // API_update_Ungtuyen.php — POST JSON: {MaUngTuyen, TrangThai}
+            const rs = await fetch(API_BASE + "API_update_Ungtuyen.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ MaUngTuyen: id, TrangThai: next }),
+            });
+            const js = await rs.json();
+            if (js?.status === "success") {
+              showToast("Cập nhật trạng thái thành công!");
+              // cập nhật local
+              const i = rawApps.findIndex(
+                (x) => String(x.MaUngTuyen) === String(id)
+              );
+              if (i > -1) rawApps[i].TrangThai = next;
+              applyFilters();
+            } else {
+              showToast(js?.message || "Cập nhật thất bại!", "error");
+            }
+          } catch (err) {
+            console.error(err);
+            showToast("Lỗi kết nối khi cập nhật!", "error");
+          } finally {
+            btn.disabled = false;
+            btn.style.opacity = "1";
+            btn.innerHTML = oldHTML;
+          }
+          return;
+        }
+      });
+
+      // ===== Modal control & load profile =====
+      function setModal(open) {
+        if (open) {
+          portal.classList.add("show");
+          portal.setAttribute("aria-hidden", "false");
+          document.documentElement.classList.add("lock-scroll");
+          document.body.classList.add("lock-scroll");
+        } else {
+          portal.classList.remove("show");
+          portal.setAttribute("aria-hidden", "true");
+          document.documentElement.classList.remove("lock-scroll");
+          document.body.classList.remove("lock-scroll");
+        }
+      }
+      document
+        .getElementById("btnCloseModal")
+        .addEventListener("click", () => setModal(false));
+      portal.addEventListener("click", (e) => {
+        if (e.target.dataset.close === "modal") setModal(false);
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && portal.classList.contains("show"))
+          setModal(false);
+      });
+
+      async function openProfileModal(maUV) {
+        // Reset UI
+        pHoTen.textContent = "—";
+        pEmail.textContent = "—";
+        pSdt.textContent = "—";
+        pKyNang.textContent = "—";
+        pKinhNghiem.textContent = "—";
+        pCvImg.src = "";
+        pCvImg.style.display = "none";
+        pCvNote.textContent = "—";
+
+        setModal(true);
+
+        try {
+          const rs = await fetch(API_BASE + "API_show_Ungvien.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ MaUngVien: Number(maUV) }),
+          });
+          const js = await rs.json();
+          if (js?.ok && js.data) {
+            const d = js.data;
+            pHoTen.textContent = d.HoTen || "—";
+            pEmail.textContent = d.Email || "—";
+            pSdt.textContent = d.SoDienThoai || "—";
+            pKyNang.textContent = d.KyNang || "—";
+            pKinhNghiem.textContent = d.KinhNghiem || "—";
+
+            if (d.AnhCV) {
+              const base = window.BASE_INTERFACE || "/Duantuyendung/interface"; // fallback
+              pCvImg.src = base + "/" + d.AnhCV.replace(/^\/+/, "");
+              pCvImg.style.display = "block";
+              pCvNote.textContent =
+                "Nhấn chuột phải để mở ảnh CV trong tab mới nếu cần phóng to.";
+            } else {
+              pCvImg.style.display = "none";
+              pCvNote.textContent = "Ứng viên chưa tải ảnh/ file CV.";
+            }
+          } else {
+            showToast(js?.error || "Không tải được hồ sơ ứng viên!", "error");
+          }
+        } catch (e) {
+          console.error(e);
+          showToast("Lỗi kết nối khi tải hồ sơ ứng viên!", "error");
+        }
+      }
+
+      // ===== Init =====
+      (async function init() {
+        try {
+          await loadNTDProfile();
+          if (!MaNTD) {
+            showToast("Không tìm thấy hồ sơ NTD cho tài khoản này!", "warning");
+            return;
+          }
+          await loadJobs();
+        } catch (e) {
+          console.error(e);
+          showToast("Lỗi khởi tạo trang!", "error");
+        }
+      })();
+    </script>
+  </body>
+</html>
