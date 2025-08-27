@@ -1,202 +1,750 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quản lý tin tuyển dụng</title>
-  <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
-  <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
-  <link href="../../assets/css/argon-dashboard-tailwind.css?v=1.0.1" rel="stylesheet" />
-  <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
-  <style>.btn-xs{padding:.25rem .5rem;border:1px solid;border-radius:.3rem;font-size:.75rem}</style>
-</head>
-<body class="bg-gray-50 text-slate-500">
-  <div class="absolute w-full bg-blue-500 min-h-75"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Quản lý tin tuyển dụng | Nhà tuyển dụng</title>
 
-  <!-- Sidebar Placeholder -->
-  <div id="td-sidenav"></div>
+    <!-- Guard: chỉ cho NTD -->
+    <script>
+      (function () {
+        try {
+          const auth = JSON.parse(localStorage.getItem("auth") || "null");
+          if (!auth || !auth.ok || auth.role !== "NhaTuyenDung") {
+            window.location.href = "../UI_SignUp_TD-UV.html";
+          }
+        } catch {
+          window.location.href = "../UI_SignUp_TD-UV.html";
+        }
+      })();
+    </script>
 
-  <script type="module">
-    import { BASE_URL } from '../../assets/js/config.js';
-    fetch(BASE_URL + "interface/build/pages/UI_TD/Sidenav_Nhatuyendung.html")
-        .then(r => r.text())
-        .then(html => {
-            document.getElementById("td-sidenav").innerHTML = html;
-        });
-  </script>
+    <!-- Fonts & Icons -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700"
+      rel="stylesheet"
+    />
+    <script
+      src="https://kit.fontawesome.com/42d5adcbca.js"
+      crossorigin="anonymous"
+    ></script>
 
-  <main class="relative h-full max-h-screen xl:ml-68 rounded-xl">
-    <nav class="relative flex items-center px-6 py-2 mx-6 rounded-2xl">
-      <h6 class="mb-0 font-bold text-white">Quản Lý Tin Tuyển Dụng</h6>
-    </nav>
+    <!-- Argon / Tailwind assets -->
+    <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
+    <link
+      href="../../assets/css/argon-dashboard-tailwind.css?v=1.0.1"
+      rel="stylesheet"
+    />
 
-    <div class="w-full px-6 py-6 mx-auto">
-      <!-- Bảng -->
-      <div class="bg-white shadow-xl rounded-2xl p-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-          <h6 class="font-semibold text-slate-700">Danh sách tin tuyển dụng</h6>
-          <div class="flex gap-2">
-            <input id="search" class="border rounded-lg px-3 py-2 text-sm" placeholder="Tìm theo chức danh...">
-            <button onclick="toggleAdd()" class="px-4 py-2 text-sm bg-blue-500 text-white rounded-lg">+ Thêm tin</button>
+    <style>
+      .min-h-75 {
+        min-height: 18rem;
+      }
+      .form-input {
+        width: 100%;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.95rem;
+      }
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(45deg, #111827, #334155);
+        color: #fff;
+        padding: 0.6rem 1rem;
+        border-radius: 0.75rem;
+        font-weight: 700;
+      }
+      .btn-ghost {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 0.5rem 0.85rem;
+      }
+      .hint {
+        font-size: 0.85rem;
+        color: #64748b;
+      }
+
+      /* Toast thống nhất với giao diện bạn đưa */
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        border: 2px solid rgba(255, 255, 255, 0.95);
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38),
+          0 10px 18px rgba(0, 0, 0, 0.25);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+      }
+    </style>
+  </head>
+
+  <body
+    class="m-0 font-sans antialiased font-normal text-base leading-default bg-gray-50 text-slate-600"
+  >
+    <!-- Header bg -->
+    <div
+      class="absolute w-full top-0 min-h-75 bg-[url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/profile-layout-header.jpg')] bg-cover bg-center"
+    >
+      <span
+        class="absolute top-0 left-0 w-full h-full bg-blue-500 opacity-60"
+      ></span>
+    </div>
+
+    <!-- Sidenav -->
+    <div id="sidenav-container" aria-label="Thanh điều hướng NTD"></div>
+    <script>
+      (async function loadSidenav() {
+        try {
+          const res = await fetch("Sidenav_Nhatuyendung.html", {
+            cache: "no-store",
+          });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const html = await res.text();
+          const host = document.getElementById("sidenav-container");
+          host.innerHTML = html;
+
+          const logoutBtn = host.querySelector("#btnLogout");
+          if (logoutBtn) {
+            logoutBtn.addEventListener("click", function (e) {
+              e.preventDefault();
+              try {
+                localStorage.removeItem("auth");
+                sessionStorage.clear();
+              } catch {}
+              window.location.href = "../../../API/API_logout_User.php";
+            });
+          }
+        } catch (e) {
+          console.error("Không thể tải Sidenav_Nhatuyendung.html", e);
+        }
+      })();
+
+      function showToast(msg, type = "success") {
+        const old = document.querySelector(".toast");
+        if (old) old.remove();
+        const el = document.createElement("div");
+        el.className = "toast";
+        let bg = "#16a34a",
+          icon = '<i class="fas fa-check-circle"></i>';
+        if (type === "error") {
+          bg = "#dc2626";
+          icon = '<i class="fas fa-times-circle"></i>';
+        } else if (type === "warning") {
+          bg = "#f59e0b";
+          icon = '<i class="fas fa-exclamation-triangle"></i>';
+        } else if (type === "info") {
+          bg = "#2563eb";
+          icon = '<i class="fas fa-info-circle"></i>';
+        }
+        el.style.backgroundColor = bg;
+        el.innerHTML = icon + " <span>" + msg + "</span>";
+        document.body.appendChild(el);
+        setTimeout(() => el.classList.add("show"), 10);
+        setTimeout(() => {
+          el.classList.remove("show");
+          setTimeout(() => el.remove(), 250);
+        }, 2600);
+      }
+    </script>
+
+    <!-- Main wrapper -->
+    <div
+      class="relative h-full max-h-screen transition-all duration-200 ease-in-out xl:ml-68"
+    >
+      <!-- Navbar overlay -->
+      <nav
+        class="absolute z-20 flex items-center justify-between w-full px-6 py-2 -mt-56 text-white"
+      >
+        <div class="flex items-center justify-between w-full px-6 py-1 mx-auto">
+          <div>
+            <ol class="flex flex-wrap pt-1 pl-2 pr-4 bg-transparent rounded-lg">
+              <li class="leading-normal text-sm opacity-75">
+                <a class="opacity-75" href="UI_Nhatuyendung_Trangchu.html"
+                  >Trang chủ</a
+                >
+              </li>
+              <li
+                class="text-sm pl-2 capitalize leading-normal before:float-left before:pr-2 before:content-['/']"
+                aria-current="page"
+              >
+                Quản lý tin tuyển dụng
+              </li>
+            </ol>
+            <h6 class="mb-2 ml-2 font-bold text-white">
+              Tin tuyển dụng của bạn
+            </h6>
+          </div>
+          <div class="hidden sm:block text-sm">
+            <i class="fa fa-user mr-1"></i>
+            <span id="ntdEmail" class="font-semibold">—</span>
           </div>
         </div>
+      </nav>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-slate-600">
-            <thead>
-              <tr class="text-xxs uppercase text-slate-400">
-                <th class="px-6 py-3 text-left">Chức danh</th>
-                <th class="px-6 py-3 text-left">Ngày đăng</th>
-                <th class="px-6 py-3 text-left">Mức lương</th>
-                <th class="px-6 py-3 text-left">Địa điểm</th>
-                <th class="px-6 py-3 text-right">Hành động</th>
-              </tr>
-            </thead>
-            <tbody id="tin-table" class="border-t">
-              <tr><td colspan="5" class="px-6 py-4 text-slate-400">Đang tải...</td></tr>
-            </tbody>
-          </table>
+      <!-- Header small card -->
+      <div class="relative w-full mx-auto mt-60">
+        <div
+          class="relative flex flex-col flex-auto min-w-0 p-4 mx-6 overflow-hidden break-words bg-white border-0 shadow-3xl rounded-2xl bg-clip-border"
+        >
+          <div class="flex flex-wrap -mx-3 items-center">
+            <div class="w-auto px-3 my-auto">
+              <div class="h-full">
+                <h5 class="mb-1 text-slate-800" id="oTenCongTy">
+                  Nhà tuyển dụng
+                </h5>
+                <p
+                  class="mb-0 font-semibold leading-normal text-sm text-slate-500"
+                >
+                  <i class="ni ni-email-83 mr-1"></i><span id="oEmail">—</span>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Form thêm -->
-      <div id="form-add-wrap" class="hidden bg-white shadow-xl rounded-2xl p-6 mt-6">
-        <h6 class="font-semibold mb-4">Thêm tin tuyển dụng</h6>
-        <form id="form-add" class="grid gap-4 md:grid-cols-2">
-          <input name="MaNTD" placeholder="Mã NTD" class="border rounded-lg px-3 py-2" required>
-          <input name="ChucDanh" placeholder="Chức danh" class="border rounded-lg px-3 py-2" required>
-          <input name="MucLuong" placeholder="Mức lương" class="border rounded-lg px-3 py-2">
-          <input name="DiaDiemLamViec" placeholder="Địa điểm" class="border rounded-lg px-3 py-2">
-          <textarea name="MoTaCongViec" placeholder="Mô tả công việc" class="border rounded-lg px-3 py-2 md:col-span-2"></textarea>
-          <textarea name="YeuCau" placeholder="Yêu cầu" class="border rounded-lg px-3 py-2 md:col-span-2"></textarea>
-          <button class="px-4 py-2 bg-blue-500 text-white rounded-lg md:col-span-2">Lưu</button>
-        </form>
+      <!-- Content -->
+      <div class="w-full p-6 mx-auto">
+        <div class="flex flex-wrap -mx-3">
+          <!-- Form tạo tin -->
+          <div class="w-full max-w-full px-3 lg:w-5/12">
+            <div
+              class="relative flex flex-col min-w-0 break-words bg-white border-0 shadow-xl rounded-2xl bg-clip-border"
+            >
+              <div class="rounded-t-2xl p-6 pb-0">
+                <p class="mb-0 font-semibold">Tạo tin tuyển dụng</p>
+              </div>
+              <div class="flex-auto p-6">
+                <form id="formCreate">
+                  <div class="mb-4">
+                    <label
+                      class="inline-block mb-2 ml-1 font-bold text-xs text-slate-700"
+                      >Chức danh <span class="text-rose-600">*</span></label
+                    >
+                    <input
+                      type="text"
+                      id="ChucDanh"
+                      class="form-input"
+                      placeholder="VD: Lập trình viên Frontend"
+                      required
+                    />
+                  </div>
+
+                  <div class="flex gap-4 flex-wrap">
+                    <div class="flex-1 min-w-[180px]">
+                      <label
+                        class="inline-block mb-2 ml-1 font-bold text-xs text-slate-700"
+                        >Mức lương</label
+                      >
+                      <input
+                        type="text"
+                        id="MucLuong"
+                        class="form-input"
+                        placeholder="VD: 12–20 triệu"
+                      />
+                    </div>
+                    <div class="flex-1 min-w-[180px]">
+                      <label
+                        class="inline-block mb-2 ml-1 font-bold text-xs text-slate-700"
+                        >Địa điểm làm việc</label
+                      >
+                      <input
+                        type="text"
+                        id="DiaDiemLamViec"
+                        class="form-input"
+                        placeholder="VD: Hà Nội / HCM / Remote"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="mt-4">
+                    <label
+                      class="inline-block mb-2 ml-1 font-bold text-xs text-slate-700"
+                      >Mô tả công việc</label
+                    >
+                    <textarea
+                      id="MoTaCongViec"
+                      rows="4"
+                      class="form-input"
+                      placeholder="Mô tả nhiệm vụ chính, phúc lợi, môi trường làm việc..."
+                    ></textarea>
+                  </div>
+
+                  <div class="mt-4">
+                    <label
+                      class="inline-block mb-2 ml-1 font-bold text-xs text-slate-700"
+                      >Yêu cầu</label
+                    >
+                    <textarea
+                      id="YeuCau"
+                      rows="4"
+                      class="form-input"
+                      placeholder="Kinh nghiệm, kỹ năng, công cụ..."
+                    ></textarea>
+                  </div>
+
+                  <div class="mt-5 flex items-center gap-3">
+                    <button type="submit" class="btn-primary">
+                      <i class="ni ni-send"></i> Đăng tin
+                    </button>
+                    <span id="msgCreate" class="hint"></span>
+                  </div>
+                  <p class="hint mt-2">
+                    Tin mới sẽ có trạng thái <b>“Chờ duyệt”</b>.
+                  </p>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Danh sách tin -->
+          <div class="w-full max-w-full px-3 mt-6 lg:mt-0 lg:w-7/12">
+            <div
+              class="relative flex flex-col min-w-0 break-words bg-white border-0 shadow-xl rounded-2xl bg-clip-border"
+            >
+              <div class="p-6 pb-0 flex items-center justify-between">
+                <h6>Tin đã đăng</h6>
+                <div class="flex items-center gap-2">
+                  <div class="relative">
+                    <span
+                      class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                      ><i class="fas fa-search"></i
+                    ></span>
+                    <input
+                      id="searchInput"
+                      type="text"
+                      placeholder="Tìm theo chức danh, địa điểm, trạng thái..."
+                      class="pl-9 text-sm rounded-lg border border-gray-300 bg-white py-2 pr-3 text-gray-700 focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                  <button id="btnReload" class="btn-ghost hover:bg-gray-50">
+                    <i class="fas fa-sync mr-1"></i>Tải lại
+                  </button>
+                </div>
+              </div>
+              <div class="flex-auto px-0 pt-0 pb-2">
+                <div class="p-0 overflow-x-auto">
+                  <table
+                    class="items-center w-full mb-0 align-top border-collapse text-slate-600"
+                  >
+                    <thead>
+                      <tr class="text-slate-400">
+                        <th
+                          class="px-6 py-3 text-left text-xxs font-bold uppercase"
+                        >
+                          Chức danh
+                        </th>
+                        <th
+                          class="px-6 py-3 text-left text-xxs font-bold uppercase"
+                        >
+                          Lương / Địa điểm
+                        </th>
+                        <th
+                          class="px-6 py-3 text-left text-xxs font-bold uppercase"
+                        >
+                          Ngày đăng
+                        </th>
+                        <th
+                          class="px-6 py-3 text-center text-xxs font-bold uppercase"
+                        >
+                          Trạng thái
+                        </th>
+                        <th
+                          class="px-6 py-3 text-center text-xxs font-bold uppercase"
+                        >
+                          Thao tác
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody id="jobsBody"></tbody>
+                  </table>
+
+                  <div class="flex items-center justify-between px-6 py-4">
+                    <div class="text-xs text-slate-400" id="countLabel">—</div>
+                    <div class="flex gap-2">
+                      <button
+                        id="prevPage"
+                        class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Trước
+                      </button>
+                      <button
+                        id="nextPage"
+                        class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Sau
+                      </button>
+                    </div>
+                  </div>
+
+                  <div id="emptyState" class="px-6 pb-6 hidden">
+                    <div
+                      class="p-6 rounded-xl border text-center text-slate-500"
+                    >
+                      Chưa có tin nào. Hãy tạo tin ở khung bên trái nhé!
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /list -->
+        </div>
+
+        <footer class="pt-4">
+          <div class="w-full px-6 mx-auto">
+            <div class="text-center text-sm text-slate-500">
+              ©
+              <script>
+                document.write(new Date().getFullYear());
+              </script>
+              Duantuyendung
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
-  </main>
 
-  <!-- Modal sửa -->
-  <div id="modal-edit" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
-      <h6 class="font-semibold mb-4">Sửa tin tuyển dụng</h6>
-      <form id="form-edit" class="grid gap-4 md:grid-cols-2">
-        <input type="hidden" name="MaTin" id="edit-MaTin">
-        <input name="ChucDanh" id="edit-ChucDanh" placeholder="Chức danh" class="border rounded-lg px-3 py-2 md:col-span-2">
-        <input name="MucLuong" id="edit-MucLuong" placeholder="Mức lương" class="border rounded-lg px-3 py-2">
-        <input name="DiaDiemLamViec" id="edit-DiaDiemLamViec" placeholder="Địa điểm" class="border rounded-lg px-3 py-2">
-        <textarea name="MoTaCongViec" id="edit-MoTaCongViec" placeholder="Mô tả" class="border rounded-lg px-3 py-2 md:col-span-2"></textarea>
-        <textarea name="YeuCau" id="edit-YeuCau" placeholder="Yêu cầu" class="border rounded-lg px-3 py-2 md:col-span-2"></textarea>
-        <input name="TrangThai" id="edit-TrangThai" placeholder="TrangThai (ChoDuyet/DaDuyet/TuChoi)" class="border rounded-lg px-3 py-2 md:col-span-2">
-        <div class="md:col-span-2 flex justify-end gap-2">
-          <button id="btn-close-edit" type="button" class="px-4 py-2 bg-gray-200 rounded-lg">Hủy</button>
-          <button class="px-4 py-2 bg-blue-500 text-white rounded-lg">Lưu</button>
-        </div>
-      </form>
-    </div>
-  </div>
-  <script type="module">
-    import { API_BASE } from '../../assets/js/config.js';
+    <!-- plugin for scrollbar  -->
+    <script
+      src="../../assets/js/plugins/perfect-scrollbar.min.js"
+      async
+    ></script>
+    <!-- main script file  -->
+    <script
+      src="../../assets/js/argon-dashboard-tailwind.js?v=1.0.1"
+      async
+    ></script>
 
-    const API_SHOW_TIN   = API_BASE + 'API_show_Tintuyendung.php';
-  const API_INSERT_TIN = API_BASE + 'API_insert_Tintuyendung.php';
-  const API_UPDATE_TIN = API_BASE + 'API_update_Tintuyendung.php';
-  const API_DELETE_TIN = API_BASE + 'API_delete_Tintuyendung.php';
-    let TIN_LIST = [];
-    function toggleAdd(){ document.getElementById('form-add-wrap').classList.toggle('hidden'); }
+    <!-- App logic -->
+    <script type="module">
+      import { API_BASE } from "../../assets/js/config.js";
 
-    async function loadTin(){
-      try{
-        const res = await fetch(API_SHOW_TIN);
-        const js  = await res.json();
-        if(js.status!=='success') throw new Error(js.message||'Lỗi tải dữ liệu');
-        TIN_LIST = js.data||[];
-        renderTable();
-      }catch(e){
-        document.getElementById('tin-table').innerHTML =
-          `<tr><td colspan="5" class="px-6 py-4 text-red-500">${e.message}</td></tr>`;
+      // ===== Auth & Header =====
+      const auth = (() => {
+        try {
+          return JSON.parse(localStorage.getItem("auth") || "null");
+        } catch {
+          return null;
+        }
+      })();
+      const MaTK = auth?.userId || auth?.MaTK || null;
+      const emailStr = auth?.email || auth?.Email || "—";
+      document.getElementById("ntdEmail").textContent = emailStr;
+      document.getElementById("oEmail").textContent = emailStr;
+
+      // ===== Elements =====
+      const ChucDanh = document.getElementById("ChucDanh");
+      const MucLuong = document.getElementById("MucLuong");
+      const DiaDiemLamViec = document.getElementById("DiaDiemLamViec");
+      const MoTaCongViec = document.getElementById("MoTaCongViec");
+      const YeuCau = document.getElementById("YeuCau");
+      const msgCreate = document.getElementById("msgCreate");
+
+      const jobsBody = document.getElementById("jobsBody");
+      const countLabel = document.getElementById("countLabel");
+      const emptyState = document.getElementById("emptyState");
+      const searchInput = document.getElementById("searchInput");
+      const btnReload = document.getElementById("btnReload");
+      const prevPage = document.getElementById("prevPage");
+      const nextPage = document.getElementById("nextPage");
+      const oTenCongTy = document.getElementById("oTenCongTy");
+
+      let MaNTD = null;
+      let rawJobs = [];
+      let viewJobs = [];
+      let page = 1;
+      const pageSize = 8;
+
+      const statusBadge = (s) => {
+        const v = String(s || "").trim();
+        if (v === "DaDuyet")
+          return '<span class="badge" style="background:#34d399; color:#052e16;">Đã duyệt</span>';
+        if (v === "TuChoi")
+          return '<span class="badge" style="background:#fca5a5; color:#7f1d1d;">Từ chối</span>';
+        return '<span class="badge" style="background:#fde68a; color:#78350f;">Chờ duyệt</span>';
+      };
+      const fmtDate = (iso) => {
+        if (!iso) return "—";
+        const d = new Date(String(iso).replace(" ", "T"));
+        if (isNaN(d)) return iso;
+        return d.toLocaleString("vi-VN");
+      };
+
+      async function getJSON(url) {
+        const rs = await fetch(url, { cache: "no-store" });
+        const ct = rs.headers.get("Content-Type") || "";
+        if (!rs.ok) throw new Error("HTTP " + rs.status);
+        return ct.includes("application/json") ? rs.json() : null;
       }
-    }
 
-    function renderTable(){
-      const q = (document.getElementById('search').value||'').toLowerCase();
-      const list = TIN_LIST.filter(t => (t.ChucDanh||'').toLowerCase().includes(q));
-
-      const tb = document.getElementById('tin-table');
-      if(!list.length){
-        tb.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-slate-400">Không có dữ liệu</td></tr>`;
-        return;
+      // 1) Lấy MaNTD + tên công ty
+      async function loadProfile() {
+        const url =
+          API_BASE +
+          "API_show_Nhatuyendung.php?MaTK=" +
+          encodeURIComponent(MaTK);
+        const js = await getJSON(url);
+        const me =
+          js?.status === "success" && Array.isArray(js.data)
+            ? js.data[0]
+            : null;
+        if (!me) return;
+        MaNTD = Number(me.MaNTD);
+        oTenCongTy.textContent = me.TenCongTy || "Nhà tuyển dụng";
       }
-      tb.innerHTML = list.map(t=>`
-        <tr class="border-b">
-          <td class="px-6 py-3">${t.ChucDanh||''}</td>
-          <td class="px-6 py-3">${t.NgayDang||''}</td>
-          <td class="px-6 py-3">${t.MucLuong||''}</td>
-          <td class="px-6 py-3">${t.DiaDiemLamViec||''}</td>
-          <td class="px-6 py-3 text-right">
-            <button onclick="openEdit(${t.MaTin})" class="btn-xs border-blue-400 text-blue-600">Sửa</button>
-            <button onclick="delTin(${t.MaTin})" class="btn-xs border-red-400 text-red-600">Xóa</button>
-          </td>
-        </tr>`).join('');
-    }
 
-    async function addTin(e){
-      e.preventDefault();
-      const fd = new FormData(document.getElementById('form-add'));
-      try{
-        const res = await fetch(API_INSERT_TIN,{method:'POST',body:fd});
-        const js  = await res.json();
-        if(js.status==='success'){ alert(js.message); document.getElementById('form-add').reset(); toggleAdd(); loadTin(); }
-        else alert(js.message||'Thêm thất bại');
-      }catch(_){ alert('Lỗi API thêm tin'); }
-    }
+      // 2) Tải danh sách tin bằng API_show_Tintuyendung.php (scope=admin), rồi lọc theo MaNTD
+      async function loadJobs() {
+        if (!MaNTD) return;
+        const url = API_BASE + "API_show_Tintuyendung.php?scope=admin";
+        let js = null;
+        try {
+          js = await getJSON(url);
+        } catch (e) {
+          console.error(e);
+          showToast("Không tải được danh sách tin!", "error");
+          return;
+        }
 
-    function openEdit(id){
-      const t = TIN_LIST.find(x=>String(x.MaTin)===String(id));
-      if(!t){ alert('Không tìm thấy tin'); return; }
-      document.getElementById('edit-MaTin').value = t.MaTin;
-      document.getElementById('edit-ChucDanh').value = t.ChucDanh||'';
-      document.getElementById('edit-MoTaCongViec').value = t.MoTaCongViec||'';
-      document.getElementById('edit-YeuCau').value = t.YeuCau||'';
-      document.getElementById('edit-MucLuong').value = t.MucLuong||'';
-      document.getElementById('edit-DiaDiemLamViec').value = t.DiaDiemLamViec||'';
-      document.getElementById('edit-TrangThai').value = t.TrangThai||'';
-      document.getElementById('modal-edit').classList.remove('hidden');
-    }
+        let arr = [];
+        // API có 2 dạng: mảng [] hoặc {ok:true,data:[...]} khi xem 1 tin; ở đây scope list => thường là mảng
+        if (Array.isArray(js)) arr = js;
+        else if (js && js.ok && Array.isArray(js.data)) arr = js.data; // dự phòng
 
-    async function saveEdit(e){
-      e.preventDefault();
-      const fd = new FormData(document.getElementById('form-edit'));
-      try{
-        const res = await fetch(API_UPDATE_TIN,{method:'POST',body:fd});
-        const js  = await res.json();
-        if(js.status==='success'){ alert(js.message); closeEdit(); loadTin(); }
-        else alert(js.message||'Cập nhật thất bại');
-      }catch(_){ alert('Lỗi API cập nhật'); }
-    }
+        // Chuẩn hoá + lọc theo MaNTD
+        rawJobs = (arr || [])
+          .filter((x) => String(x.MaNTD) === String(MaNTD))
+          .map((x) => ({
+            MaTin: x.MaTin ?? null,
+            ChucDanh: x.ChucDanh ?? "",
+            MucLuong: x.MucLuong ?? "",
+            DiaDiemLamViec: x.DiaDiemLamViec ?? x.DiaDiem ?? "",
+            MoTaCongViec: x.MoTaCongViec ?? "",
+            YeuCau: x.YeuCau ?? "",
+            TrangThai: x.TrangThai ?? "ChoDuyet",
+            NgayDang: x.NgayDang ?? x.created_at ?? x.CreatedAt ?? "",
+          }));
 
-    async function delTin(id){
-      if(!confirm('Xóa tin này?')) return;
-      const fd = new FormData(); fd.append('MaTin',id);
-      try{
-        const res = await fetch(API_DELETE_TIN,{method:'POST',body:fd});
-        const js  = await res.json();
-        if(js.status==='success'){ alert(js.message); loadTin(); }
-        else alert(js.message||'Xóa thất bại');
-      }catch(_){ alert('Lỗi API xóa'); }
-    }
+        applyFilters();
+      }
 
-    function closeEdit(){ document.getElementById('modal-edit').classList.add('hidden'); }
+      function applyFilters() {
+        const q = (searchInput.value || "").trim().toLowerCase();
+        viewJobs = rawJobs.filter((j) => {
+          const t1 = String(j.ChucDanh || "").toLowerCase();
+          const t2 = String(j.DiaDiemLamViec || "").toLowerCase();
+          const t3 = String(j.TrangThai || "").toLowerCase();
+          return !q || t1.includes(q) || t2.includes(q) || t3.includes(q);
+        });
+        page = 1;
+        renderJobs();
+      }
 
-    document.addEventListener('DOMContentLoaded', ()=>{
-      loadTin();
-      document.getElementById('form-add').onsubmit  = addTin;
-      document.getElementById('form-edit').onsubmit = saveEdit;
-      document.getElementById('btn-close-edit').onclick = closeEdit;
-      document.getElementById('search').addEventListener('input', renderTable);
-    });
-  </script>
+      function paginate(arr, p, size) {
+        const s = (p - 1) * size;
+        return arr.slice(s, s + size);
+      }
 
-  <script src="../../assets/js/plugins/perfect-scrollbar.min.js" async></script>
-  <script src="../../assets/js/argon-dashboard-tailwind.js?v=1.0.1" async></script>
-</body>
+      function renderJobs() {
+        jobsBody.innerHTML = "";
+        const rows = paginate(viewJobs, page, pageSize);
+        if (!rows.length) {
+          emptyState.classList.remove("hidden");
+        } else {
+          emptyState.classList.add("hidden");
+        }
+
+        rows.forEach((row) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="px-6 py-3 border-b">
+              <div class="flex flex-col">
+                <span class="text-sm font-semibold text-slate-700">${
+                  row.ChucDanh || ""
+                }</span>
+                <span class="text-xs text-slate-400 line-clamp-2">${(
+                  row.MoTaCongViec || ""
+                ).replace(/\n/g, " ")}</span>
+              </div>
+            </td>
+            <td class="px-6 py-3 border-b">
+              <div class="flex flex-col">
+                <span class="text-sm">${row.MucLuong || "—"}</span>
+                <span class="text-xs text-slate-400">${
+                  row.DiaDiemLamViec || "—"
+                }</span>
+              </div>
+            </td>
+            <td class="px-6 py-3 border-b">
+              <span class="text-sm">${fmtDate(row.NgayDang)}</span>
+            </td>
+            <td class="px-6 py-3 text-center border-b">
+              ${statusBadge(row.TrangThai)}
+            </td>
+            <td class="px-6 py-3 text-center border-b">
+              <button class="px-2 py-1.5 rounded-lg text-xs border hover:bg-rose-50 text-rose-600" data-act="delete" data-id="${
+                row.MaTin
+              }">
+                <i class="fas fa-trash mr-1"></i> Xoá
+              </button>
+            </td>
+          `;
+          jobsBody.appendChild(tr);
+        });
+
+        const totalPages = Math.max(1, Math.ceil(viewJobs.length / pageSize));
+        countLabel.textContent = `${viewJobs.length} tin tuyển dụng`;
+        prevPage.disabled = page <= 1;
+        nextPage.disabled = page >= totalPages;
+      }
+
+      // ===== Create job =====
+      document
+        .getElementById("formCreate")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          if (!MaNTD) {
+            showToast("Không xác định được MaNTD!", "error");
+            return;
+          }
+
+          const cd = ChucDanh.value.trim();
+          if (!cd) {
+            showToast("Vui lòng nhập Chức danh!", "warning");
+            return;
+          }
+
+          msgCreate.textContent = "Đang đăng tin...";
+          try {
+            const fd = new FormData();
+            fd.append("MaNTD", MaNTD);
+            fd.append("ChucDanh", cd);
+            fd.append("MoTaCongViec", MoTaCongViec.value.trim());
+            fd.append("YeuCau", YeuCau.value.trim());
+            fd.append("MucLuong", MucLuong.value.trim());
+            fd.append("DiaDiemLamViec", DiaDiemLamViec.value.trim());
+            fd.append("TrangThai", "ChoDuyet");
+
+            const rs = await fetch(API_BASE + "API_insert_Tintuyendung.php", {
+              method: "POST",
+              body: fd,
+            });
+            const js = await rs.json();
+            msgCreate.textContent = "";
+
+            if (js?.status === "success") {
+              showToast("Đăng tin thành công! Chờ duyệt.", "success");
+              // reset form
+              ChucDanh.value = "";
+              MucLuong.value = "";
+              DiaDiemLamViec.value = "";
+              MoTaCongViec.value = "";
+              YeuCau.value = "";
+              await loadJobs();
+            } else {
+              showToast(js?.message || "Đăng tin thất bại!", "error");
+            }
+          } catch (err) {
+            msgCreate.textContent = "";
+            showToast("Lỗi kết nối máy chủ khi đăng tin!", "error");
+          }
+        });
+
+      // ===== Delete job =====
+      document.addEventListener("click", async (e) => {
+        const btn = e.target.closest("[data-act='delete']");
+        if (!btn) return;
+        const id = btn.dataset.id;
+        if (!id) return;
+
+        if (!confirm("Bạn chắc chắn muốn xoá tin #" + id + " ?")) return;
+
+        const oldLabel = btn.innerHTML;
+        btn.disabled = true;
+        btn.style.opacity = ".6";
+        btn.innerHTML =
+          '<i class="fas fa-spinner fa-spin mr-1"></i> Đang xoá...';
+
+        try {
+          const rs = await fetch(API_BASE + "API_delete_Tintuyendung.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ MaTin: id }),
+          });
+          const js = await rs.json();
+
+          if (js?.status === "success") {
+            showToast("Đã xoá tin #" + id, "success");
+            rawJobs = rawJobs.filter((j) => String(j.MaTin) !== String(id));
+            applyFilters();
+          } else {
+            showToast(js?.message || "Xoá thất bại!", "error");
+          }
+        } catch (err) {
+          showToast("Lỗi kết nối khi xoá!", "error");
+        } finally {
+          btn.disabled = false;
+          btn.style.opacity = "1";
+          btn.innerHTML = oldLabel;
+        }
+      });
+
+      // ===== Filters & pagination
+      searchInput.addEventListener("input", applyFilters);
+      btnReload.addEventListener("click", loadJobs);
+      prevPage.addEventListener("click", () => {
+        if (page > 1) {
+          page--;
+          renderJobs();
+        }
+      });
+      nextPage.addEventListener("click", () => {
+        const totalPages = Math.max(1, Math.ceil(viewJobs.length / pageSize));
+        if (page < totalPages) {
+          page++;
+          renderJobs();
+        }
+      });
+
+      // ===== Init =====
+      (async function init() {
+        try {
+          await loadProfile();
+          if (!MaNTD) {
+            showToast("Không tìm thấy hồ sơ NTD cho tài khoản này!", "warning");
+            return;
+          }
+          await loadJobs();
+        } catch (e) {
+          console.error(e);
+          showToast("Lỗi khởi tạo trang!", "error");
+        }
+      })();
+    </script>
+  </body>
 </html>

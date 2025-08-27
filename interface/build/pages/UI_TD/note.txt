@@ -1,0 +1,27 @@
+<body class="bg-gray-50">
+  <!-- Khung sẽ chứa Sidenav -->
+  <div id="sidenav-root"></div>
+
+  <main class="ml-64 xl:ml-72 p-4">
+    <!-- Nội dung trang -->
+  </main>
+
+  <!-- Nạp Sidenav qua fetch -->
+  <script>
+    (async function () {
+      // Đường dẫn tuyệt đối để chạy qua XAMPP
+      const SIDENAV_URL = "/Duantuyendung/interface/build/pages/UI_TD/Sidenav_Nhatuyendung.html";
+      const res = await fetch(SIDENAV_URL, { cache: "no-store" });
+      const html = await res.text();
+      document.getElementById("sidenav-root").innerHTML = html;
+
+      // Sau khi DOM có sidenav, nạp file JS và khởi tạo
+      const s = document.createElement("script");
+      s.src = "/Duantuyendung/interface/build/pages/UI_TD/sidenav-ntd.js";
+      s.onload = () => {
+        if (window.initSidenavNTD) window.initSidenavNTD();
+      };
+      document.body.appendChild(s);
+    })();
+  </script>
+</body>

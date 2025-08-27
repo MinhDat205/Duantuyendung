@@ -1,31 +1,30 @@
 <?php
 require_once __DIR__ . '/config.php';
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(["status"=>"error","message"=>"Chỉ hỗ trợ POST"]); exit; }
 
-$MaTin = $_POST['MaTin'] ?? null;
-if(!$MaTin){ echo json_encode(["status"=>"error","message"=>"Thiếu MaTin"]); exit; }
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit(); }
 
-try{
+try {
+  $raw  = file_get_contents("php://input");
+  $json = json_decode($raw, true) ?: [];
+  $MaTin = $json['MaTin'] ?? $_POST['MaTin'] ?? $_GET['MaTin'] ?? null;
+
+  if (!$MaTin) throw new Exception("Thiếu MaTin");
+
   $stmt = $conn->prepare("DELETE FROM TinTuyenDung WHERE MaTin=?");
-  if(!$stmt) throw new Exception("Lỗi prepare: ".$conn->error);
-  $id=(int)$MaTin;
+  $id = (int)$MaTin;
   $stmt->bind_param("i", $id);
-  if($stmt->execute()){
-    if($stmt->affected_rows>0){
-      echo json_encode(["status"=>"success","message"=>"Xóa thành công"], JSON_UNESCAPED_UNICODE);
-    }else{
-      echo json_encode(["status"=>"error","message"=>"Không tìm thấy bản ghi"], JSON_UNESCAPED_UNICODE);
-    }
-  } else {
-    echo json_encode(["status"=>"error","message"=>"Xóa thất bại"], JSON_UNESCAPED_UNICODE);
-  }
+  if (!$stmt->execute()) throw new Exception("Xóa thất bại");
   $stmt->close();
-}catch(Exception $e){
-  echo json_encode(["status"=>"error","message"=>$e->getMessage()], JSON_UNESCAPED_UNICODE);
+
+  echo json_encode(['status'=>'success'], JSON_UNESCAPED_UNICODE);
+
+} catch (Throwable $e) {
+  http_response_code(400);
+  echo json_encode(['status'=>'error','message'=>$e->getMessage()], JSON_UNESCAPED_UNICODE);
+} finally {
+  if (isset($conn) && $conn instanceof mysqli) $conn->close();
 }
-$conn->close();

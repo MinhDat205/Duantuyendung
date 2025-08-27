@@ -1,8 +1,9 @@
 <?php
-// File: API_update_Taikhoan.php
+// File: interface/API/API_update_Taikhoan.php
 require_once __DIR__ . '/config.php';
 
 header('Content-Type: application/json; charset=utf-8');
+// Nếu bạn đang gọi từ domain khác (Live Server...), giữ CORS đơn giản:
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
@@ -16,102 +17,115 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$MaTK = $_POST['MaTK'] ?? null;
-$TenDangNhap = isset($_POST['TenDangNhap']) ? trim($_POST['TenDangNhap']) : null;
-$MatKhau = isset($_POST['MatKhau']) ? trim($_POST['MatKhau']) : null;
-$LoaiTK = isset($_POST['LoaiTK']) ? trim($_POST['LoaiTK']) : null;
+// ===== Input =====
+$MaTK        = isset($_POST['MaTK']) ? (int)$_POST['MaTK'] : 0;
+$TenDangNhap = isset($_POST['TenDangNhap']) ? trim((string)$_POST['TenDangNhap']) : null; // map -> Email
+$MatKhauRaw  = isset($_POST['MatKhau']) ? trim((string)$_POST['MatKhau']) : null;
+$LoaiTK      = isset($_POST['LoaiTK']) ? trim((string)$_POST['LoaiTK']) : null;           // map -> LoaiTaiKhoan
 
-if (!$MaTK) {
-    echo json_encode(["status" => "error", "message" => "Thiếu MaTK"], JSON_UNESCAPED_UNICODE);
+if ($MaTK <= 0) {
+    echo json_encode(["status" => "error", "message" => "Thiếu hoặc sai MaTK"], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-// Kiểm tra MaTK tồn tại
-$sql_check = "SELECT COUNT(*) AS count FROM TaiKhoan WHERE MaTK = ?";
-$stmt_check = $conn->prepare($sql_check);
-$stmt_check->bind_param("i", $MaTK);
-$stmt_check->execute();
-$result_check = $stmt_check->get_result();
-$row_check = $result_check->fetch_assoc();
-$stmt_check->close();
+try {
+    // Kiểm tra MaTK tồn tại
+    $sql_check = "SELECT Email FROM TaiKhoan WHERE MaTK = ?";
+    $stmt_check = $conn->prepare($sql_check);
+    if (!$stmt_check) throw new Exception("Lỗi prepare: " . $conn->error);
+    $stmt_check->bind_param("i", $MaTK);
+    $stmt_check->execute();
+    $res_check = $stmt_check->get_result();
+    $row_user  = $res_check->fetch_assoc();
+    $stmt_check->close();
 
-if ($row_check['count'] == 0) {
-    echo json_encode(["status" => "error", "message" => "Không tìm thấy tài khoản với MaTK: $MaTK"], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-// Kiểm tra LoaiTK hợp lệ
-$validLoaiTK = ['UngVien', 'NhaTuyenDung'];
-if ($LoaiTK !== null && $LoaiTK !== "" && !in_array($LoaiTK, $validLoaiTK)) {
-    echo json_encode(["status" => "error", "message" => "LoaiTK không hợp lệ. Chỉ chấp nhận: UngVien, NhaTuyenDung"], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-$setParts = [];
-$types = "";
-$params = [];
-
-// Map TenDangNhap -> Email
-if ($TenDangNhap !== null && $TenDangNhap !== "") {
-    // Kiểm tra Email không trùng (ngoại trừ bản ghi hiện tại)
-    $sql_email_check = "SELECT COUNT(*) AS count FROM TaiKhoan WHERE Email = ? AND MaTK != ?";
-    $stmt_email_check = $conn->prepare($sql_email_check);
-    $stmt_email_check->bind_param("si", $TenDangNhap, $MaTK);
-    $stmt_email_check->execute();
-    $result_email_check = $stmt_email_check->get_result();
-    $row_email_check = $result_email_check->fetch_assoc();
-    $stmt_email_check->close();
-
-    if ($row_email_check['count'] > 0) {
-        echo json_encode(["status" => "error", "message" => "Email đã tồn tại"], JSON_UNESCAPED_UNICODE);
+    if (!$row_user) {
+        echo json_encode(["status" => "error", "message" => "Không tìm thấy tài khoản với MaTK: $MaTK"], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
-    $setParts[] = "Email = ?";
-    $types .= "s";
-    $params[] = $TenDangNhap;
-}
+    // Validate LoaiTK (nếu có)
+    if ($LoaiTK !== null && $LoaiTK !== "") {
+        $validLoaiTK = ['UngVien', 'NhaTuyenDung'];
+        if (!in_array($LoaiTK, $validLoaiTK, true)) {
+            echo json_encode(["status" => "error", "message" => "LoaiTK không hợp lệ. Chỉ chấp nhận: UngVien, NhaTuyenDung"], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+    }
 
-// MatKhau (giữ nguyên dạng plain theo hệ thống hiện tại)
-if ($MatKhau !== null && $MatKhau !== "") {
-    $setParts[] = "MatKhau = ?";
-    $types .= "s";
-    $params[] = $MatKhau;
-}
+    $setParts = [];
+    $types = "";
+    $params = [];
 
-// Map LoaiTK -> LoaiTaiKhoan
-if ($LoaiTK !== null && $LoaiTK !== "") {
-    $setParts[] = "LoaiTaiKhoan = ?";
-    $types .= "s";
-    $params[] = $LoaiTK;
-}
+    // Map TenDangNhap -> Email (nếu muốn đổi email)
+    if ($TenDangNhap !== null && $TenDangNhap !== "") {
+        // Kiểm tra email không trùng (ngoại trừ chính mình)
+        $sql_email_check = "SELECT COUNT(*) AS cnt FROM TaiKhoan WHERE Email = ? AND MaTK != ?";
+        $stmt_email = $conn->prepare($sql_email_check);
+        if (!$stmt_email) throw new Exception("Lỗi prepare: " . $conn->error);
+        $stmt_email->bind_param("si", $TenDangNhap, $MaTK);
+        $stmt_email->execute();
+        $res_email = $stmt_email->get_result();
+        $row_email = $res_email->fetch_assoc();
+        $stmt_email->close();
 
-if (empty($setParts)) {
-    echo json_encode(["status" => "error", "message" => "Không có trường nào để cập nhật"], JSON_UNESCAPED_UNICODE);
-    exit;
-}
+        if (!empty($row_email['cnt'])) {
+            echo json_encode(["status" => "error", "message" => "Email đã tồn tại"], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
 
-$sql = "UPDATE TaiKhoan SET " . implode(", ", $setParts) . " WHERE MaTK = ?";
-$types .= "i";
-$params[] = (int)$MaTK;
+        $setParts[] = "Email = ?";
+        $types     .= "s";
+        $params[]   = $TenDangNhap;
+    }
 
-try {
-    $stmt = $conn->prepare($sql);
+    // Hash mật khẩu nếu có cập nhật
+    if ($MatKhauRaw !== null && $MatKhauRaw !== "") {
+        // Bạn có thể thêm policy tối thiểu 8 ký tự ở đây nếu muốn
+        $hashed = password_hash($MatKhauRaw, PASSWORD_BCRYPT);
+        if ($hashed === false) {
+            echo json_encode(["status" => "error", "message" => "Không hash được mật khẩu"], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        $setParts[] = "MatKhau = ?";
+        $types     .= "s";
+        $params[]   = $hashed;
+    }
+
+    // Map LoaiTK -> LoaiTaiKhoan (nếu có)
+    if ($LoaiTK !== null && $LoaiTK !== "") {
+        $setParts[] = "LoaiTaiKhoan = ?";
+        $types     .= "s";
+        $params[]   = $LoaiTK;
+    }
+
+    if (empty($setParts)) {
+        echo json_encode(["status" => "error", "message" => "Không có trường nào để cập nhật"], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $sql_update = "UPDATE TaiKhoan SET " . implode(", ", $setParts) . " WHERE MaTK = ?";
+    $types     .= "i";
+    $params[]   = $MaTK;
+
+    $stmt = $conn->prepare($sql_update);
     if (!$stmt) throw new Exception("Lỗi prepare: " . $conn->error);
-
     $stmt->bind_param($types, ...$params);
+
     if ($stmt->execute()) {
         if ($stmt->affected_rows > 0) {
             echo json_encode(["status" => "success", "message" => "Cập nhật thành công"], JSON_UNESCAPED_UNICODE);
         } else {
+            // Không có thay đổi dữ liệu (giá trị gửi lên giống giá trị hiện tại)
             echo json_encode(["status" => "error", "message" => "Không có thay đổi nào được thực hiện"], JSON_UNESCAPED_UNICODE);
         }
     } else {
         echo json_encode(["status" => "error", "message" => "Cập nhật thất bại"], JSON_UNESCAPED_UNICODE);
     }
     $stmt->close();
-} catch (Exception $e) {
-    echo json_encode(["status" => "error", "message" => $e->getMessage()], JSON_UNESCAPED_UNICODE);
-}
 
-$conn->close();
+} catch (Throwable $e) {
+    echo json_encode(["status" => "error", "message" => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+} finally {
+    if (isset($conn) && $conn instanceof mysqli) $conn->close();
+}

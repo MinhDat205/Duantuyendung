@@ -1,4 +1,3 @@
-cho tôi mã sql tạo dữ liệu kiểm thử
 -- 1. DB & Charset
 CREATE DATABASE IF NOT EXISTS HeThongTuyenDung
   CHARACTER SET utf8mb4

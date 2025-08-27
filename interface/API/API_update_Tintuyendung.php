@@ -1,49 +1,57 @@
 <?php
 require_once __DIR__ . '/config.php';
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(["status"=>"error","message"=>"Chỉ hỗ trợ POST"]); exit; }
 
-$MaTin = $_POST['MaTin'] ?? null;
-$ChucDanh = $_POST['ChucDanh'] ?? null;
-$MoTaCongViec = $_POST['MoTaCongViec'] ?? null;
-$YeuCau = $_POST['YeuCau'] ?? null;
-$MucLuong = $_POST['MucLuong'] ?? null;
-$DiaDiemLamViec = $_POST['DiaDiemLamViec'] ?? null;
-$TrangThai = $_POST['TrangThai'] ?? null;
-$MaDanhMuc = $_POST['MaDanhMuc'] ?? null;
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit(); }
 
-if (!$MaTin) { echo json_encode(["status"=>"error","message"=>"Thiếu MaTin"]); exit; }
+try {
+  // Nhận dữ liệu
+  $raw  = file_get_contents("php://input");
+  $json = json_decode($raw, true) ?: [];
+  $post = $_POST;
+  $get  = $_GET;
 
-$fields=[]; $types=""; $params=[];
+  $MaTin           = $json['MaTin']           ?? $post['MaTin']           ?? $get['MaTin']           ?? null;
+  $ChucDanh        = $json['ChucDanh']        ?? $post['ChucDanh']        ?? null;
+  $MoTaCongViec    = $json['MoTaCongViec']    ?? $post['MoTaCongViec']    ?? null;
+  $YeuCau          = $json['YeuCau']          ?? $post['YeuCau']          ?? null;
+  $MucLuong        = $json['MucLuong']        ?? $post['MucLuong']        ?? null;
+  $DiaDiemLamViec  = $json['DiaDiemLamViec']  ?? $post['DiaDiemLamViec']  ?? null;
+  $TrangThai       = $json['TrangThai']       ?? $post['TrangThai']       ?? null;
 
-if($ChucDanh!==null){ $fields[]="ChucDanh=?"; $types.="s"; $params[]=$ChucDanh; }
-if($MoTaCongViec!==null){ $fields[]="MoTaCongViec=?"; $types.="s"; $params[]=$MoTaCongViec; }
-if($YeuCau!==null){ $fields[]="YeuCau=?"; $types.="s"; $params[]=$YeuCau; }
-if($MucLuong!==null){ $fields[]="MucLuong=?"; $types.="s"; $params[]=$MucLuong; }
-if($DiaDiemLamViec!==null){ $fields[]="DiaDiemLamViec=?"; $types.="s"; $params[]=$DiaDiemLamViec; }
-if($TrangThai!==null){ $fields[]="TrangThai=?"; $types.="s"; $params[]=$TrangThai; }
-if($MaDanhMuc!==null && $MaDanhMuc!==""){ $fields[]="MaDanhMuc=?"; $types.="i"; $params[]=(int)$MaDanhMuc; }
+  if (!$MaTin) throw new Exception("Thiếu MaTin");
 
-if(!$fields){ echo json_encode(["status"=>"error","message"=>"Không có trường để cập nhật"]); exit; }
+  // Xây dựng dynamic update
+  $fields = [];
+  $params = [];
+  $types  = "";
 
-$sql = "UPDATE TinTuyenDung SET ".implode(", ", $fields)." WHERE MaTin=?";
-$types.="i"; $params[]=(int)$MaTin;
+  if ($ChucDanh !== null)       { $fields[] = "ChucDanh=?";        $params[] = $ChucDanh;       $types.="s"; }
+  if ($MoTaCongViec !== null)   { $fields[] = "MoTaCongViec=?";    $params[] = $MoTaCongViec;   $types.="s"; }
+  if ($YeuCau !== null)         { $fields[] = "YeuCau=?";          $params[] = $YeuCau;         $types.="s"; }
+  if ($MucLuong !== null)       { $fields[] = "MucLuong=?";        $params[] = $MucLuong;       $types.="s"; }
+  if ($DiaDiemLamViec !== null) { $fields[] = "DiaDiemLamViec=?";  $params[] = $DiaDiemLamViec; $types.="s"; }
+  if ($TrangThai !== null)      { $fields[] = "TrangThai=?";       $params[] = $TrangThai;      $types.="s"; }
 
-try{
+  if (!$fields) throw new Exception("Không có trường nào để cập nhật");
+
+  $sql = "UPDATE TinTuyenDung SET ".implode(", ", $fields)." WHERE MaTin=?";
+  $types .= "i";
+  $params[] = (int)$MaTin;
+
   $stmt = $conn->prepare($sql);
-  if(!$stmt) throw new Exception("Lỗi prepare: ".$conn->error);
   $stmt->bind_param($types, ...$params);
-  if($stmt->execute()){
-    echo json_encode(["status"=>"success","message"=>"Cập nhật thành công"], JSON_UNESCAPED_UNICODE);
-  } else {
-    echo json_encode(["status"=>"error","message"=>"Cập nhật thất bại"], JSON_UNESCAPED_UNICODE);
-  }
+  if (!$stmt->execute()) throw new Exception("Lỗi cập nhật");
   $stmt->close();
-}catch(Exception $e){
-  echo json_encode(["status"=>"error","message"=>$e->getMessage()], JSON_UNESCAPED_UNICODE);
+
+  echo json_encode(['status' => 'success'], JSON_UNESCAPED_UNICODE);
+
+} catch (Throwable $e) {
+  http_response_code(400);
+  echo json_encode(['status'=>'error','message'=>$e->getMessage()], JSON_UNESCAPED_UNICODE);
+} finally {
+  if (isset($conn) && $conn instanceof mysqli) $conn->close();
 }
-$conn->close();
