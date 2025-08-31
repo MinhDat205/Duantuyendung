@@ -1,4 +1,3 @@
-<!-- Sidenav_Nhatuyendung.html -->
 <aside
   class="fixed inset-y-0 block w-full p-0 my-4 overflow-y-auto bg-white shadow-xl xl:ml-6 max-w-64 rounded-2xl xl:left-0 xl:translate-x-0 z-50"
 >
@@ -70,6 +69,18 @@
         </a>
       </li>
 
+      <!-- Chat -->
+      <li class="mt-0.5 w-full">
+        <a
+          id="navChat"
+          class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
+          href="UI_TD_Chat.html"
+        >
+          <i class="ni ni-chat-round mr-2 text-cyan-600"></i>
+          <span>Chat</span>
+        </a>
+      </li>
+
       <!-- Đăng xuất -->
       <li class="mt-0.5 w-full">
         <button
@@ -95,30 +106,23 @@
 
     btn.addEventListener("click", async (e) => {
       e.preventDefault();
-
-      // trạng thái đang xử lý
       btn.disabled = true;
       btn.style.opacity = "0.6";
-
       try {
-        // Xoá state phía client
         try {
+          localStorage.removeItem("auth");
           localStorage.removeItem("td_logged_in");
           localStorage.removeItem("uv_logged_in");
           localStorage.removeItem("user_email");
           localStorage.removeItem("auth_token");
-          localStorage.removeItem("auth");
           sessionStorage.clear();
         } catch (_) {}
-
-        // Gọi API để huỷ session phía server
         await fetch(API_LOGOUT, {
           method: "GET",
           credentials: "include",
           cache: "no-store",
         });
       } catch (_) {
-        // Dù lỗi vẫn điều hướng về trang đăng nhập
       } finally {
         window.location.href = LOGIN_PAGE;
       }

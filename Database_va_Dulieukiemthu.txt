@@ -1,10 +1,34 @@
--- 1. DB & Charset
+/* =========================
+   1) DB & Charset
+========================= */
 CREATE DATABASE IF NOT EXISTS HeThongTuyenDung
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 USE HeThongTuyenDung;
 
--- 2. Bảng Tài Khoản
+/* =========================
+   2) Dọn bảng (nếu có)
+========================= */
+DROP TABLE IF EXISTS ThongBao;
+DROP TABLE IF EXISTS TinNhan;
+DROP TABLE IF EXISTS LichPhongVan;
+DROP TABLE IF EXISTS ChatMessage;
+DROP TABLE IF EXISTS ChatThread;
+DROP TABLE IF EXISTS UngTuyen;
+DROP TABLE IF EXISTS TinTuyenDung;
+DROP TABLE IF EXISTS NhaTuyenDung_DanhMuc;
+DROP TABLE IF EXISTS UngVien_DanhMuc;
+DROP TABLE IF EXISTS NhaTuyenDung;
+DROP TABLE IF EXISTS UngVien;
+DROP TABLE IF EXISTS DanhMucNghe;
+DROP TABLE IF EXISTS QuanTriVien;
+DROP TABLE IF EXISTS TaiKhoan;
+DROP VIEW IF EXISTS v_UngVien_Nghe;
+DROP VIEW IF EXISTS v_NTD_Nghe;
+
+/* =========================
+   3) Tài khoản / QTV / Danh mục
+========================= */
 CREATE TABLE TaiKhoan (
   MaTK INT AUTO_INCREMENT PRIMARY KEY,
   Email VARCHAR(100) NOT NULL UNIQUE,
@@ -12,9 +36,8 @@ CREATE TABLE TaiKhoan (
   LoaiTaiKhoan ENUM('UngVien', 'NhaTuyenDung') NOT NULL,
   TrangThai ENUM('HoatDong', 'BiKhoa') NOT NULL DEFAULT 'HoatDong',
   NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB COMMENT='Thông tin tài khoản ứng viên và nhà tuyển dụng';
+) ENGINE=InnoDB;
 
--- 3. Bảng Quản Trị Viên
 CREATE TABLE QuanTriVien (
   MaQTV INT AUTO_INCREMENT PRIMARY KEY,
   Email VARCHAR(100) NOT NULL UNIQUE,
@@ -22,35 +45,35 @@ CREATE TABLE QuanTriVien (
   HoTen VARCHAR(100) NOT NULL,
   TrangThai ENUM('HoatDong', 'BiKhoa') NOT NULL DEFAULT 'HoatDong',
   NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB COMMENT='Thông tin quản trị viên';
+) ENGINE=InnoDB;
 
--- 4. Danh Mục Nghề
 CREATE TABLE DanhMucNghe (
   MaDanhMuc INT AUTO_INCREMENT PRIMARY KEY,
   TenDanhMuc VARCHAR(100) NOT NULL,
   UNIQUE KEY uq_DanhMucNghe_TenDanhMuc (TenDanhMuc),
   INDEX idx_DanhMucNghe_TenDanhMuc (TenDanhMuc)
-) ENGINE=InnoDB COMMENT='Danh mục ngành nghề';
+) ENGINE=InnoDB;
 
--- 5. Ứng Viên (giữ MaDanhMuc là ngành chính để tương thích; thêm AnhCV)
+/* =========================
+   4) Ứng viên / NTD + pivot
+========================= */
 CREATE TABLE UngVien (
   MaUngVien   INT AUTO_INCREMENT PRIMARY KEY,
   MaTK        INT NOT NULL UNIQUE,
   HoTen       VARCHAR(100) NOT NULL,
   SoDienThoai VARCHAR(15),
-  AnhCV       VARCHAR(255),  -- đường dẫn ảnh/file CV
+  AnhCV       VARCHAR(255),
   KyNang      TEXT,
   KinhNghiem  TEXT,
-  MaDanhMuc   INT NULL,      -- ngành chính (tùy chọn)
+  MaDanhMuc   INT NULL,
   CreatedAt   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UpdatedAt   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_UV_TK FOREIGN KEY (MaTK) REFERENCES TaiKhoan(MaTK) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_UV_DM FOREIGN KEY (MaDanhMuc) REFERENCES DanhMucNghe(MaDanhMuc) ON DELETE SET NULL ON UPDATE CASCADE,
   INDEX idx_UngVien_MaTK (MaTK),
   INDEX idx_UngVien_MaDanhMuc (MaDanhMuc)
-) ENGINE=InnoDB COMMENT='Thông tin ứng viên';
+) ENGINE=InnoDB;
 
--- 6. Nhà Tuyển Dụng (giữ MaDanhMuc là ngành chính; hỗ trợ multi bằng pivot)
 CREATE TABLE NhaTuyenDung (
   MaNTD         INT AUTO_INCREMENT PRIMARY KEY,
   MaTK          INT NOT NULL UNIQUE,
@@ -58,16 +81,15 @@ CREATE TABLE NhaTuyenDung (
   SoDienThoai   VARCHAR(15),
   DiaChi        VARCHAR(255),
   ThongTinCongTy TEXT,
-  MaDanhMuc     INT NULL,    -- ngành chính (tùy chọn)
+  MaDanhMuc     INT NULL,
   CreatedAt     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UpdatedAt     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_NTD_TK FOREIGN KEY (MaTK) REFERENCES TaiKhoan(MaTK) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_NTD_DM FOREIGN KEY (MaDanhMuc) REFERENCES DanhMucNghe(MaDanhMuc) ON DELETE SET NULL ON UPDATE CASCADE,
   INDEX idx_NTD_MaTK (MaTK),
   INDEX idx_NTD_MaDanhMuc (MaDanhMuc)
-) ENGINE=InnoDB COMMENT='Thông tin nhà tuyển dụng';
+) ENGINE=InnoDB;
 
--- 6b. Pivot: Ứng viên - Danh mục (nhiều-nhiều)
 CREATE TABLE UngVien_DanhMuc (
   MaUngVien INT NOT NULL,
   MaDanhMuc INT NOT NULL,
@@ -75,9 +97,8 @@ CREATE TABLE UngVien_DanhMuc (
   CONSTRAINT fk_UV_DM_pivot_UV FOREIGN KEY (MaUngVien) REFERENCES UngVien(MaUngVien) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_UV_DM_pivot_DM FOREIGN KEY (MaDanhMuc) REFERENCES DanhMucNghe(MaDanhMuc) ON DELETE CASCADE ON UPDATE CASCADE,
   INDEX idx_UV_DM_MaDanhMuc (MaDanhMuc)
-) ENGINE=InnoDB COMMENT='Ứng viên có thể thuộc nhiều ngành';
+) ENGINE=InnoDB;
 
--- 6c. Pivot: NTD - Danh mục (nhiều-nhiều)
 CREATE TABLE NhaTuyenDung_DanhMuc (
   MaNTD INT NOT NULL,
   MaDanhMuc INT NOT NULL,
@@ -85,9 +106,11 @@ CREATE TABLE NhaTuyenDung_DanhMuc (
   CONSTRAINT fk_NTD_DM_pivot_NTD FOREIGN KEY (MaNTD) REFERENCES NhaTuyenDung(MaNTD) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_NTD_DM_pivot_DM FOREIGN KEY (MaDanhMuc) REFERENCES DanhMucNghe(MaDanhMuc) ON DELETE CASCADE ON UPDATE CASCADE,
   INDEX idx_NTD_DM_MaDanhMuc (MaDanhMuc)
-) ENGINE=InnoDB COMMENT='NTD có thể thuộc nhiều ngành';
+) ENGINE=InnoDB;
 
--- 7. Tin Tuyển Dụng (giữ 1 ngành chính để đơn giản lọc)
+/* =========================
+   5) Tin tuyển dụng / Ứng tuyển
+========================= */
 CREATE TABLE TinTuyenDung (
   MaTin INT AUTO_INCREMENT PRIMARY KEY,
   MaNTD INT NOT NULL,
@@ -104,22 +127,29 @@ CREATE TABLE TinTuyenDung (
   INDEX idx_TTD_MaNTD (MaNTD),
   INDEX idx_TTD_MaDanhMuc (MaDanhMuc),
   INDEX idx_TTD_TrangThai_NgayDang (TrangThai, NgayDang)
-) ENGINE=InnoDB COMMENT='Thông tin tin tuyển dụng';
+) ENGINE=InnoDB;
 
--- 8. Ứng Tuyển
 CREATE TABLE UngTuyen (
   MaUngTuyen INT AUTO_INCREMENT PRIMARY KEY,
   MaTin INT NOT NULL,
   MaUngVien INT NOT NULL,
   NgayUngTuyen DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  TrangThai ENUM('DangXet', 'MoiPhongVan', 'TuChoi') NOT NULL DEFAULT 'DangXet',
+  TrangThai ENUM(
+      'DangXet',       -- mặc định khi UV nộp
+      'MoiPhongVan',   -- mời phỏng vấn -> ĐƯỢC PHÉP CHAT
+      'TuChoi'
+  ) NOT NULL DEFAULT 'DangXet',
   UNIQUE KEY uq_UngTuyen (MaTin, MaUngVien),
   CONSTRAINT fk_UT_TTD FOREIGN KEY (MaTin) REFERENCES TinTuyenDung(MaTin) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_UT_UV FOREIGN KEY (MaUngVien) REFERENCES UngVien(MaUngVien) ON DELETE CASCADE ON UPDATE CASCADE,
-  INDEX idx_UT_TrangThai (TrangThai)
-) ENGINE=InnoDB COMMENT='Thông tin ứng tuyển';
+  INDEX idx_UT_TrangThai (TrangThai),
+  INDEX idx_UT_MaTin (MaTin),
+  INDEX idx_UT_MaUngVien (MaUngVien)
+) ENGINE=InnoDB;
 
--- 9. Lịch Phỏng Vấn
+/* =========================
+   6) Lịch phỏng vấn (tham chiếu UngTuyen)
+========================= */
 CREATE TABLE LichPhongVan (
   MaLichPV INT AUTO_INCREMENT PRIMARY KEY,
   MaUngTuyen INT NOT NULL,
@@ -129,9 +159,46 @@ CREATE TABLE LichPhongVan (
   GhiChu TEXT,
   CONSTRAINT fk_LPV_UT FOREIGN KEY (MaUngTuyen) REFERENCES UngTuyen(MaUngTuyen) ON DELETE CASCADE ON UPDATE CASCADE,
   INDEX idx_LPV_TrangThai (TrangThai, NgayGioPhongVan)
-) ENGINE=InnoDB COMMENT='Thông tin lịch phỏng vấn';
+) ENGINE=InnoDB;
 
--- 10. Tin Nhắn
+/* =========================
+   7) Chat theo bài ứng tuyển (điều kiện: MoiPhongVan)
+========================= */
+CREATE TABLE ChatThread (
+  MaThread INT AUTO_INCREMENT PRIMARY KEY,
+  MaTin INT NOT NULL,
+  MaUngVien INT NOT NULL,
+  MaNTD INT NOT NULL,
+  IsOpen TINYINT(1) NOT NULL DEFAULT 1,
+  CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_thread (MaTin, MaUngVien, MaNTD),
+  INDEX idx_thread_lookup (MaUngVien, MaNTD, MaTin),
+  CONSTRAINT fk_thread_tin FOREIGN KEY (MaTin) REFERENCES TinTuyenDung(MaTin)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_thread_uv FOREIGN KEY (MaUngVien) REFERENCES UngVien(MaUngVien)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_thread_ntd FOREIGN KEY (MaNTD) REFERENCES NhaTuyenDung(MaNTD)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE ChatMessage (
+  MaMsg INT AUTO_INCREMENT PRIMARY KEY,
+  MaThread INT NOT NULL,
+  SenderType ENUM('UngVien','NhaTuyenDung') NOT NULL,
+  MaTK INT NULL,
+  NoiDung TEXT NOT NULL,
+  CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  IsRead TINYINT(1) NOT NULL DEFAULT 0,
+  INDEX idx_msg_thread (MaThread, CreatedAt),
+  CONSTRAINT fk_msg_thread FOREIGN KEY (MaThread) REFERENCES ChatThread(MaThread)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_msg_tk FOREIGN KEY (MaTK) REFERENCES TaiKhoan(MaTK)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+/* =========================
+   8) Hộp thư chung (tùy chọn)
+========================= */
 CREATE TABLE TinNhan (
   MaTinNhan INT AUTO_INCREMENT PRIMARY KEY,
   MaNguoiGui INT NOT NULL,
@@ -142,9 +209,11 @@ CREATE TABLE TinNhan (
   CONSTRAINT fk_TN_Nhan FOREIGN KEY (MaNguoiNhan) REFERENCES TaiKhoan(MaTK) ON DELETE CASCADE ON UPDATE CASCADE,
   INDEX idx_TN_HopThu (MaNguoiNhan, NgayGui),
   INDEX idx_TN_HoiThoai (MaNguoiGui, MaNguoiNhan, NgayGui)
-) ENGINE=InnoDB COMMENT='Tin nhắn giữa các tài khoản';
+) ENGINE=InnoDB;
 
--- 11. Thông Báo
+/* =========================
+   9) Thông báo (tùy chọn)
+========================= */
 CREATE TABLE ThongBao (
   MaTB INT AUTO_INCREMENT PRIMARY KEY,
   MaNguoiNhan INT NOT NULL,
@@ -154,19 +223,12 @@ CREATE TABLE ThongBao (
   NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_TB_Nhan FOREIGN KEY (MaNguoiNhan) REFERENCES TaiKhoan(MaTK) ON DELETE CASCADE ON UPDATE CASCADE,
   INDEX idx_TB_HopThongBao (MaNguoiNhan, DaXem, NgayTao)
-) ENGINE=InnoDB COMMENT='Thông tin thông báo';
+) ENGINE=InnoDB;
 
--- 12. OTP Reset mật khẩu
-CREATE TABLE PasswordReset (
-  Email VARCHAR(100) NOT NULL,
-  OTP VARCHAR(6) NOT NULL,
-  ExpireAt DATETIME NOT NULL,
-  PRIMARY KEY (Email),
-  INDEX idx_PR_ExpireAt (ExpireAt)
-) ENGINE=InnoDB COMMENT='OTP reset mật khẩu';
-
--- (Tuỳ chọn) VIEW hỗ trợ lấy danh sách ngành theo người dùng
-CREATE OR REPLACE VIEW v_UngVien_Nghe AS
+/* =========================
+   10) VIEW hỗ trợ
+========================= */
+CREATE VIEW v_UngVien_Nghe AS
 SELECT uv.MaUngVien,
        GROUP_CONCAT(dm.TenDanhMuc ORDER BY dm.TenDanhMuc SEPARATOR ', ') AS DanhSachNghe
 FROM UngVien uv
@@ -174,7 +236,7 @@ LEFT JOIN UngVien_DanhMuc uvdm ON uv.MaUngVien = uvdm.MaUngVien
 LEFT JOIN DanhMucNghe dm ON uvdm.MaDanhMuc = dm.MaDanhMuc
 GROUP BY uv.MaUngVien;
 
-CREATE OR REPLACE VIEW v_NTD_Nghe AS
+CREATE VIEW v_NTD_Nghe AS
 SELECT ntd.MaNTD,
        GROUP_CONCAT(dm.TenDanhMuc ORDER BY dm.TenDanhMuc SEPARATOR ', ') AS DanhSachNghe
 FROM NhaTuyenDung ntd
@@ -184,80 +246,137 @@ GROUP BY ntd.MaNTD;
 
 
 
+==============================================================================================================================================================================
+==============================================================================================================================================================================
+==============================================================================================================================================================================
+==============================================================================================================================================================================
+==============================================================================================================================================================================
+==============================================================================================================================================================================
 
--- 1. Chèn dữ liệu vào bảng DanhMucNghe
+USE HeThongTuyenDung;
+
+-- ========== 1. Admin
+INSERT INTO QuanTriVien (Email, MatKhau, HoTen)
+VALUES ('123ad@test.com',
+        '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+        'Admin Chính');
+
+-- ========== 2. Tài khoản chính
+INSERT INTO TaiKhoan (Email, MatKhau, LoaiTaiKhoan) VALUES
+('123uv@test.com','$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi','UngVien'),
+('123td@test.com','$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi','NhaTuyenDung');
+
+-- Một số tài khoản phụ
+INSERT INTO TaiKhoan (Email, MatKhau, LoaiTaiKhoan) VALUES
+('uv_extra1@test.com','$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi','UngVien'),
+('uv_extra2@test.com','$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi','UngVien'),
+('ntd_extra1@test.com','$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi','NhaTuyenDung');
+
+-- Lấy ID
+SET @tk_uv := (SELECT MaTK FROM TaiKhoan WHERE Email='123uv@test.com');
+SET @tk_ntd := (SELECT MaTK FROM TaiKhoan WHERE Email='123td@test.com');
+SET @tk_uv_ex1 := (SELECT MaTK FROM TaiKhoan WHERE Email='uv_extra1@test.com');
+SET @tk_uv_ex2 := (SELECT MaTK FROM TaiKhoan WHERE Email='uv_extra2@test.com');
+SET @tk_ntd_ex1 := (SELECT MaTK FROM TaiKhoan WHERE Email='ntd_extra1@test.com');
+
+-- ========== 3. Danh mục nghề
 INSERT INTO DanhMucNghe (TenDanhMuc) VALUES
-('Công nghệ thông tin'),
-('Kinh doanh & Bán hàng'),
-('Kế toán & Tài chính'),
+('CNTT - Lập trình'),
+('Kinh doanh - Bán hàng'),
+('Thiết kế đồ họa'),
 ('Nhân sự'),
+('Kế toán'),
 ('Marketing');
 
--- 2. Chèn dữ liệu vào bảng TaiKhoan
-INSERT INTO TaiKhoan (Email, MatKhau, LoaiTaiKhoan, TrangThai, NgayTao) VALUES
-('ungvien1@gmail.com', '$2a$10$hashedpassword1', 'UngVien', 'HoatDong', '2025-08-01 10:00:00'),
-('ungvien2@gmail.com', '$2a$10$hashedpassword2', 'UngVien', 'HoatDong', '2025-08-02 12:00:00'),
-('ntd1@company.com', '$2a$10$hashedpassword3', 'NhaTuyenDung', 'HoatDong', '2025-08-01 09:00:00'),
-('ntd2@company.com', '$2a$10$hashedpassword4', 'NhaTuyenDung', 'HoatDong', '2025-08-03 15:00:00');
+-- ========== 4. Ứng viên
+INSERT INTO UngVien (MaTK, HoTen, SoDienThoai, KyNang, KinhNghiem, MaDanhMuc) VALUES
+(@tk_uv,'Ứng viên Chính','0901111111','Java, PHP, SQL','3 năm kinh nghiệm',1),
+(@tk_uv_ex1,'Nguyễn Văn B','0902222222','React, NodeJS','1 năm kinh nghiệm',1),
+(@tk_uv_ex2,'Trần Thị C','0903333333','Sale, Marketing','Fresher',2);
 
--- 3. Chèn dữ liệu vào bảng QuanTriVien
-INSERT INTO QuanTriVien (Email, MatKhau, HoTen, TrangThai, NgayTao) VALUES
-('admin1@xai.com', '$2a$10$hashedpassword5', 'Nguyen Van Admin', 'HoatDong', '2025-08-01 08:00:00'),
-('admin2@xai.com', '$2a$10$hashedpassword6', 'Tran Thi Admin', 'HoatDong', '2025-08-02 09:00:00');
+-- ========== 5. Nhà tuyển dụng
+INSERT INTO NhaTuyenDung (MaTK, TenCongTy, SoDienThoai, DiaChi, ThongTinCongTy, MaDanhMuc) VALUES
+(@tk_ntd,'Công ty Test NTD','0911111111','Hà Nội','Công ty phần mềm lớn',1),
+(@tk_ntd_ex1,'Công ty Extra NTD','0914444444','TP.HCM','Công ty thương mại điện tử',2);
 
--- 4. Chèn dữ liệu vào bảng UngVien
-INSERT INTO UngVien (MaTK, HoTen, SoDienThoai, AnhCV, KyNang, KinhNghiem, MaDanhMuc, CreatedAt, UpdatedAt) VALUES
-(1, 'Nguyen Van A', '0901234567', '/cv/ungvien1.pdf', 'Java, Python, SQL', '2 năm làm việc tại Công ty ABC', 1, '2025-08-01 10:00:00', '2025-08-01 10:00:00'),
-(2, 'Tran Thi B', '0912345678', '/cv/ungvien2.pdf', 'Marketing, SEO, Content', '3 năm kinh nghiệm tại Agency XYZ', 5, '2025-08-02 12:00:00', '2025-08-02 12:00:00');
+-- ========== 6. Tin tuyển dụng (của 123td@test.com)
+INSERT INTO TinTuyenDung (MaNTD, MaDanhMuc, ChucDanh, MoTaCongViec, YeuCau, MucLuong, DiaDiemLamViec, TrangThai)
+VALUES
+((SELECT MaNTD FROM NhaTuyenDung WHERE MaTK=@tk_ntd),1,'Lập trình viên PHP','Xây dựng website','Biết PHP, MySQL','15-20 triệu','Hà Nội','DaDuyet'),
+((SELECT MaNTD FROM NhaTuyenDung WHERE MaTK=@tk_ntd),1,'Tester phần mềm','Kiểm thử hệ thống','Kinh nghiệm test','12-15 triệu','Hà Nội','DaDuyet'),
+((SELECT MaNTD FROM NhaTuyenDung WHERE MaTK=@tk_ntd),2,'Nhân viên kinh doanh','Tìm kiếm khách hàng','Kỹ năng sale','10-12 triệu','Hà Nội','ChoDuyet');
 
--- 5. Chèn dữ liệu vào bảng NhaTuyenDung
-INSERT INTO NhaTuyenDung (MaTK, TenCongTy, SoDienThoai, DiaChi, ThongTinCongTy, MaDanhMuc, CreatedAt, UpdatedAt) VALUES
-(3, 'Công ty TNHH TechStar', '0987654321', '123 Đường Láng, Hà Nội', 'Công ty công nghệ hàng đầu', 1, '2025-08-01 09:00:00', '2025-08-01 09:00:00'),
-(4, 'Công ty CP SalePlus', '0976543210', '456 Nguyễn Huệ, TP.HCM', 'Doanh nghiệp bán hàng đa ngành', 2, '2025-08-03 15:00:00', '2025-08-03 15:00:00');
+-- Tin tuyển dụng của NTD phụ
+INSERT INTO TinTuyenDung (MaNTD, MaDanhMuc, ChucDanh, MoTaCongViec, YeuCau, MucLuong, DiaDiemLamViec, TrangThai)
+VALUES
+((SELECT MaNTD FROM NhaTuyenDung WHERE MaTK=@tk_ntd_ex1),2,'Sale Online','Bán hàng online','Có kinh nghiệm','8-10 triệu','TP.HCM','DaDuyet');
 
--- 6. Chèn dữ liệu vào bảng UngVien_DanhMuc (nhiều ngành cho ứng viên)
-INSERT INTO UngVien_DanhMuc (MaUngVien, MaDanhMuc) VALUES
-(1, 1), -- Nguyen Van A: Công nghệ thông tin
-(1, 3), -- Nguyen Van A: Kế toán & Tài chính
-(2, 5), -- Tran Thi B: Marketing
-(2, 2); -- Tran Thi B: Kinh doanh & Bán hàng
+-- ========== 7. Ứng tuyển
+-- UV chính apply nhiều tin, với đủ 3 trạng thái
+INSERT INTO UngTuyen (MaTin, MaUngVien, TrangThai) VALUES
+(1,(SELECT MaUngVien FROM UngVien WHERE MaTK=@tk_uv),'DangXet'),
+(2,(SELECT MaUngVien FROM UngVien WHERE MaTK=@tk_uv),'MoiPhongVan'),
+(3,(SELECT MaUngVien FROM UngVien WHERE MaTK=@tk_uv),'TuChoi');
 
--- 7. Chèn dữ liệu vào bảng NhaTuyenDung_DanhMuc (nhiều ngành cho NTD)
-INSERT INTO NhaTuyenDung_DanhMuc (MaNTD, MaDanhMuc) VALUES
-(1, 1), -- TechStar: Công nghệ thông tin
-(1, 4), -- TechStar: Nhân sự
-(2, 2), -- SalePlus: Kinh doanh & Bán hàng
-(2, 5); -- SalePlus: Marketing
+-- UV phụ apply vào tin
+INSERT INTO UngTuyen (MaTin, MaUngVien, TrangThai) VALUES
+(1,(SELECT MaUngVien FROM UngVien WHERE MaTK=@tk_uv_ex1),'MoiPhongVan'),
+(4,(SELECT MaUngVien FROM UngVien WHERE MaTK=@tk_uv_ex2),'DangXet');
 
--- 8. Chèn dữ liệu vào bảng TinTuyenDung
-INSERT INTO TinTuyenDung (MaNTD, MaDanhMuc, ChucDanh, MoTaCongViec, YeuCau, MucLuong, DiaDiemLamViec, NgayDang, TrangThai) VALUES
-(1, 1, 'Lập trình viên Java', 'Phát triển ứng dụng web', '2 năm kinh nghiệm Java, Spring', '20-30 triệu', 'Hà Nội', '2025-08-10 08:00:00', 'DaDuyet'),
-(2, 2, 'Nhân viên kinh doanh', 'Tìm kiếm và chăm sóc khách hàng', 'Kỹ năng giao tiếp, 1 năm kinh nghiệm', '15-25 triệu', 'TP.HCM', '2025-08-11 09:00:00', 'DaDuyet'),
-(1, 4, 'Chuyên viên nhân sự', 'Tuyển dụng và quản lý nhân sự', '2 năm kinh nghiệm HR', '18-25 triệu', 'Hà Nội', '2025-08-12 10:00:00', 'ChoDuyet');
+-- ========== 8. Lịch phỏng vấn
+INSERT INTO LichPhongVan (MaUngTuyen, NgayGioPhongVan, HinhThuc, TrangThai, GhiChu)
+VALUES
+(2,'2025-09-05 09:00:00','Online','DaLenLich','PV qua Zoom'),
+(5,'2025-09-06 14:00:00','Offline','DaLenLich','PV trực tiếp tại văn phòng');
 
--- 9. Chèn dữ liệu vào bảng UngTuyen
-INSERT INTO UngTuyen (MaTin, MaUngVien, NgayUngTuyen, TrangThai) VALUES
-(1, 1, '2025-08-11 10:00:00', 'DangXet'), -- Nguyen Van A ứng tuyển Lập trình viên Java
-(2, 2, '2025-08-12 11:00:00', 'MoiPhongVan'), -- Tran Thi B ứng tuyển Nhân viên kinh doanh
-(1, 2, '2025-08-12 12:00:00', 'TuChoi'); -- Tran Thi B ứng tuyển Lập trình viên Java (bị từ chối)
+-- ========== 9. ChatThread & ChatMessage
+-- Tạo thread cho UV chính (MoiPhongVan)
+INSERT INTO ChatThread (MaTin, MaUngVien, MaNTD)
+SELECT ut.MaTin, ut.MaUngVien, ttd.MaNTD
+FROM UngTuyen ut
+JOIN TinTuyenDung ttd ON ut.MaTin=ttd.MaTin
+WHERE ut.MaUngVien=(SELECT MaUngVien FROM UngVien WHERE MaTK=@tk_uv) AND ut.TrangThai='MoiPhongVan'
+LIMIT 1;
 
--- 10. Chèn dữ liệu vào bảng LichPhongVan
-INSERT INTO LichPhongVan (MaUngTuyen, NgayGioPhongVan, HinhThuc, TrangThai, GhiChu) VALUES
-(2, '2025-08-15 14:00:00', 'Online', 'DaLenLich', 'Phỏng vấn qua Zoom');
+-- Thread cho UV phụ (MoiPhongVan)
+INSERT INTO ChatThread (MaTin, MaUngVien, MaNTD)
+SELECT ut.MaTin, ut.MaUngVien, ttd.MaNTD
+FROM UngTuyen ut
+JOIN TinTuyenDung ttd ON ut.MaTin=ttd.MaTin
+WHERE ut.MaUngVien=(SELECT MaUngVien FROM UngVien WHERE MaTK=@tk_uv_ex1) AND ut.TrangThai='MoiPhongVan'
+LIMIT 1;
 
--- 11. Chèn dữ liệu vào bảng TinNhan
-INSERT INTO TinNhan (MaNguoiGui, MaNguoiNhan, NoiDung, NgayGui) VALUES
-(1, 3, 'Chào anh/chị, tôi quan tâm đến vị trí Lập trình viên Java', '2025-08-11 10:30:00'),
-(3, 1, 'Cảm ơn bạn đã quan tâm. Vui lòng gửi CV chi tiết.', '2025-08-11 11:00:00'),
-(2, 4, 'Chào anh/chị, tôi muốn ứng tuyển vị trí Nhân viên kinh doanh', '2025-08-12 11:30:00');
+-- Tin nhắn chat cho UV chính
+SET @thr_main := (SELECT MaThread FROM ChatThread ct
+JOIN UngTuyen ut ON ct.MaTin=ut.MaTin AND ct.MaUngVien=ut.MaUngVien
+WHERE ut.MaUngVien=(SELECT MaUngVien FROM UngVien WHERE MaTK=@tk_uv) LIMIT 1);
 
--- 12. Chèn dữ liệu vào bảng ThongBao
-INSERT INTO ThongBao (MaNguoiNhan, LoaiThongBao, NoiDung, DaXem, NgayTao) VALUES
-(1, 'UngTuyen', 'Ứng tuyển của bạn cho vị trí Lập trình viên Java đã được gửi', FALSE, '2025-08-11 10:00:00'),
-(2, 'PhongVan', 'Bạn được mời phỏng vấn cho vị trí Nhân viên kinh doanh', FALSE, '2025-08-12 11:30:00'),
-(3, 'TinNhan', 'Bạn nhận được tin nhắn mới từ Nguyen Van A', TRUE, '2025-08-11 10:30:00');
+INSERT INTO ChatMessage (MaThread, SenderType, NoiDung) VALUES
+(@thr_main,'UngVien','Chào anh, em đã nhận được lời mời PV'),
+(@thr_main,'NhaTuyenDung','Chào em, buổi PV diễn ra 05/09, chuẩn bị nhé'),
+(@thr_main,'UngVien','Dạ vâng, em sẽ chuẩn bị CV và các dự án');
 
--- 13. Chèn dữ liệu vào bảng PasswordReset
-INSERT INTO PasswordReset (Email, OTP, ExpireAt) VALUES
-('ungvien1@gmail.com', '123456', '2025-08-25 15:00:00'),
-('ntd1@company.com', '654321', '2025-08-25 16:00:00');
+-- Tin nhắn chat cho UV phụ
+SET @thr_ex1 := (SELECT MaThread FROM ChatThread ct
+JOIN UngTuyen ut ON ct.MaTin=ut.MaTin AND ct.MaUngVien=ut.MaUngVien
+WHERE ut.MaUngVien=(SELECT MaUngVien FROM UngVien WHERE MaTK=@tk_uv_ex1) LIMIT 1);
+
+INSERT INTO ChatMessage (MaThread, SenderType, NoiDung) VALUES
+(@thr_ex1,'UngVien','Em quan tâm vị trí PHP Developer'),
+(@thr_ex1,'NhaTuyenDung','Ok em, hẹn em buổi phỏng vấn vào tuần sau');
+
+-- ========== 10. TinNhan (hộp thư chung)
+INSERT INTO TinNhan (MaNguoiGui, MaNguoiNhan, NoiDung)
+VALUES
+(@tk_uv,@tk_ntd,'Em đã nộp hồ sơ ứng tuyển'),
+(@tk_ntd,@tk_uv,'Chúng tôi đã nhận được hồ sơ của bạn'),
+(@tk_uv_ex2,@tk_ntd_ex1,'Em muốn ứng tuyển vị trí sale online');
+
+-- ========== 11. Thông báo
+INSERT INTO ThongBao (MaNguoiNhan, LoaiThongBao, NoiDung)
+VALUES
+(@tk_uv,'UngTuyen','Bạn đã được mời phỏng vấn cho vị trí Tester'),
+(@tk_uv,'UngTuyen','Hồ sơ của bạn cho vị trí Kinh doanh đã bị từ chối'),
+(@tk_ntd,'TinTuyenDung','Tin tuyển dụng Lập trình viên PHP đã được duyệt'),
+(@tk_ntd,'UngTuyen','Có ứng viên mới nộp hồ sơ'),
+(@tk_ntd_ex1,'UngTuyen','Ứng viên Trần Thị C vừa ứng tuyển');

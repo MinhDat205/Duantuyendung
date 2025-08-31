@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Lịch phỏng vấn | Nhà tuyển dụng</title>
+
+    <!-- Guard: chỉ cho NTD -->
+    <script>
+      (function () {
+        try {
+          const auth = JSON.parse(localStorage.getItem("auth") || "null");
+          if (!auth || !auth.ok || auth.role !== "NhaTuyenDung") {
+            window.location.href = "../UI_SignUp_TD-UV.html";
+          }
+        } catch {
+          window.location.href = "../UI_SignUp_TD-UV.html";
+        }
+      })();
+    </script>
+
+    <!-- Fonts & Icons -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
+    <!-- Argon / Tailwind assets -->
+    <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
+    <link
+      href="../../assets/css/argon-dashboard-tailwind.css?v=1.0.1"
+      rel="stylesheet"
+    />
+
+    <style>
+      html,
+      body,
+      button,
+      input,
+      textarea,
+      select {
+        font-family: "Open Sans", ui-sans-serif, system-ui, -apple-system,
+          "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji",
+          "Segoe UI Emoji", "Segoe UI Symbol", sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      .form-input {
+        width: 100%;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.95rem;
+      }
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(45deg, #111827, #334155);
+        color: #fff;
+        padding: 0.6rem 1rem;
+        border-radius: 0.75rem;
+        font-weight: 700;
+      }
+      .btn-ghost {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 0.5rem 0.85rem;
+      }
+      .tag {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        background: #eef2ff;
+        color: #3730a3;
+      }
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        border: 2px solid rgba(255, 255, 255, 0.95);
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38),
+          0 10px 18px rgba(0, 0, 0, 0.25);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 12px;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 999px;
+      }
+      .pill-scheduled {
+        background: #ecfeff;
+        color: #155e75;
+      }
+      .pill-done {
+        background: #ecfdf5;
+        color: #065f46;
+      }
+      .pill-canceled {
+        background: #fff1f2;
+        color: #9f1239;
+      }
+    </style>
+  </head>
+  <body class="m-0 font-sans text-base antialiased bg-gray-50 text-slate-600">
+    <!-- Header bg -->
+    <div
+      class="absolute w-full top-0 min-h-75 bg-[url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/profile-layout-header.jpg')] bg-cover bg-center"
+    >
+      <span
+        class="absolute top-0 left-0 w-full h-full bg-blue-500 opacity-60"
+      ></span>
+    </div>
+
+    <!-- Sidenav -->
+    <div id="sidenav-container" aria-label="Thanh điều hướng NTD"></div>
+    <script>
+      (async function loadSidenav() {
+        try {
+          const res = await fetch("Sidenav_Nhatuyendung.html", {
+            cache: "no-store",
+          });
+          const html = await res.text();
+          const host = document.getElementById("sidenav-container");
+          host.innerHTML = html;
+          const pvLink = host.querySelector("#navLichPhongVan");
+          if (pvLink) pvLink.classList.add("bg-gray-100");
+          const logoutBtn = host.querySelector("#btnLogout");
+          if (logoutBtn)
+            logoutBtn.addEventListener("click", function (e) {
+              e.preventDefault();
+              try {
+                localStorage.removeItem("auth");
+                sessionStorage.clear();
+              } catch {}
+              window.location.href = "../../../API/API_logout_User.php";
+            });
+        } catch (e) {
+          console.error("Không thể tải Sidenav_Nhatuyendung.html", e);
+        }
+      })();
+      function toast(msg, type = "success") {
+        const old = document.querySelector(".toast");
+        if (old) old.remove();
+        const el = document.createElement("div");
+        el.className = "toast";
+        let bg = "#16a34a";
+        if (type === "error") bg = "#dc2626";
+        else if (type === "warning") bg = "#f59e0b";
+        else if (type === "info") bg = "#2563eb";
+        el.style.backgroundColor = bg;
+        el.innerHTML =
+          '<i class="fa fa-info-circle"></i> <span>' + msg + "</span>";
+        document.body.appendChild(el);
+        setTimeout(() => el.classList.add("show"), 10);
+        setTimeout(() => {
+          el.classList.remove("show");
+          setTimeout(() => el.remove(), 250);
+        }, 2600);
+      }
+    </script>
+
+    <!-- Main wrapper -->
+    <div
+      class="relative h-full max-h-screen transition-all duration-200 ease-in-out xl:ml-68"
+    >
+      <!-- Navbar overlay -->
+      <nav
+        class="absolute z-20 flex items-center justify-between w-full px-6 py-2 -mt-56 text-white"
+      >
+        <div class="flex items-center justify-between w-full px-6 py-1 mx-auto">
+          <div>
+            <ol class="flex flex-wrap pt-1 pl-2 pr-4 bg-transparent rounded-lg">
+              <li class="leading-normal text-sm opacity-75">
+                <a class="opacity-75" href="UI_Nhatuyendung_Trangchu.html"
+                  >Trang chủ</a
+                >
+              </li>
+              <li
+                class="text-sm pl-2 capitalize leading-normal before:float-left before:pr-2 before:content-['/']"
+                aria-current="page"
+              >
+                Lịch phỏng vấn
+              </li>
+            </ol>
+            <h6 class="mb-2 ml-2 font-bold text-white">
+              Tạo & quản lý lịch phỏng vấn
+            </h6>
+          </div>
+          <div class="hidden sm:block text-sm">
+            <i class="fa fa-user mr-1"></i
+            ><span id="ntdEmail" class="font-semibold">—</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Header card -->
+      <div class="relative w-full mx-auto mt-60">
+        <div
+          class="relative flex flex-col flex-auto min-w-0 p-4 mx-6 overflow-hidden break-words bg-white border-0 shadow-3xl rounded-2xl bg-clip-border"
+        >
+          <div class="flex flex-wrap -mx-3 items-center">
+            <div class="w-auto px-3 my-auto">
+              <div class="h-full">
+                <h5 class="mb-1 text-slate-800" id="oTenCongTy">
+                  Nhà tuyển dụng
+                </h5>
+                <p
+                  class="mb-0 font-semibold leading-normal text-sm text-slate-500"
+                >
+                  <i class="ni ni-email-83 mr-1"></i><span id="oEmail">—</span>
+                </p>
+              </div>
+            </div>
+            <div class="w-full px-3 mt-4 md:w-auto md:ml-auto md:mt-0">
+              <div class="flex items-center gap-2">
+                <span class="tag" id="tagThread">—</span>
+                <button
+                  id="btnBackChat"
+                  class="btn-ghost hover:bg-gray-50"
+                  title="Quay lại chat"
+                >
+                  <i class="fa fa-comments mr-1"></i>Chat
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="w-full p-6 mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Create form -->
+          <div class="col-span-1">
+            <div class="bg-white rounded-2xl shadow-xl p-4">
+              <h3 class="font-bold mb-2">Tạo lịch mới</h3>
+              <div id="info" class="mb-3 text-slate-600">—</div>
+              <form id="formCreate" class="grid gap-3">
+                <div>
+                  <label class="block text-sm font-semibold mb-1"
+                    >Ngày & giờ</label
+                  >
+                  <input
+                    id="fNgayGio"
+                    type="datetime-local"
+                    class="form-input"
+                    required
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold mb-1"
+                    >Hình thức</label
+                  >
+                  <select id="fHinhThuc" class="form-input">
+                    <option>Online</option>
+                    <option>Offline</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold mb-1"
+                    >Ghi chú</label
+                  >
+                  <textarea
+                    id="fGhiChu"
+                    rows="2"
+                    class="form-input"
+                    placeholder="Link meet / Địa điểm / Người phỏng vấn..."
+                  ></textarea>
+                </div>
+                <div>
+                  <button class="btn-primary" type="submit">
+                    <i class="fa fa-calendar-plus mr-1"></i>Tạo lịch
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- List -->
+          <div class="col-span-1 lg:col-span-2">
+            <div class="bg-white rounded-2xl shadow-xl p-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold">Danh sách lịch</h3>
+                <div class="flex items-center gap-2">
+                  <label class="text-sm">Chỉ tương lai</label>
+                  <input type="checkbox" id="chkUpcoming" />
+                  <button
+                    id="btnReload"
+                    class="btn-ghost hover:bg-gray-50"
+                    title="Tải lại"
+                  >
+                    <i class="fa fa-sync"></i>
+                  </button>
+                </div>
+              </div>
+              <ul id="list"></ul>
+              <div id="empty" class="text-slate-500">—</div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="pt-4">
+          <div class="w-full px-6 mx-auto">
+            <div class="text-center text-sm text-slate-500">
+              ©
+              <script>
+                document.write(new Date().getFullYear());
+              </script>
+              Duantuyendung
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <!-- App -->
+    <script type="module">
+      import { API_BASE } from "../../assets/js/config.js";
+
+      // ===== Auth & header =====
+      const auth = (() => {
+        try {
+          return JSON.parse(localStorage.getItem("auth") || "null");
+        } catch {
+          return null;
+        }
+      })();
+      const emailStr = auth?.email || auth?.Email || "—";
+      document.getElementById("ntdEmail").textContent = emailStr;
+      document.getElementById("oEmail").textContent = emailStr;
+      const MaNTD = auth?.MaNTD || auth?.MaNhatuyendung || null;
+
+      // ===== Query params =====
+      const qs = new URLSearchParams(location.search);
+      const MaTin = Number(qs.get("MaTin") || 0);
+      const MaUngVien = Number(qs.get("MaUngVien") || 0);
+      const tagThread = document.getElementById("tagThread");
+      tagThread.textContent = `MaTin #${MaTin || "—"} • MaUV #${
+        MaUngVien || "—"
+      }`;
+
+      // ===== Elements =====
+      const $info = document.getElementById("info");
+      const $list = document.getElementById("list");
+      const $empty = document.getElementById("empty");
+      const $form = document.getElementById("formCreate");
+      const $dt = document.getElementById("fNgayGio");
+      const $ht = document.getElementById("fHinhThuc");
+      const $gc = document.getElementById("fGhiChu");
+      const $chkUpcoming = document.getElementById("chkUpcoming");
+      const $btnReload = document.getElementById("btnReload");
+      const $btnBackChat = document.getElementById("btnBackChat");
+
+      $btnBackChat.addEventListener("click", () => {
+        // Quay lại trang chat (chat sẽ tự khôi phục thread gần nhất)
+        window.location.href = `UI_TD_Chat.html`;
+      });
+
+      // ===== helpers =====
+      async function parseMaybeJSON(res) {
+        const ct = (res.headers.get("content-type") || "").toLowerCase();
+        const txt = await res.text();
+        try {
+          if (!ct.includes("application/json")) throw new Error("not-json");
+          return JSON.parse(txt);
+        } catch (e) {
+          console.error("API returned non-JSON:\\n", txt);
+          throw new Error("API không trả JSON hợp lệ (xem console).");
+        }
+      }
+      async function jget(u) {
+        const r = await fetch(u, { cache: "no-store" });
+        if (!r.ok) throw new Error("HTTP " + r.status + " @ " + u);
+        return parseMaybeJSON(r);
+      }
+      async function jpost(u, data) {
+        const r = await fetch(u, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (!r.ok) throw new Error("HTTP " + r.status + " @ " + u);
+        return parseMaybeJSON(r);
+      }
+
+      let resolved = null; // chứa MaUngTuyen + info
+
+      async function loadProfileNTD() {
+        try {
+          const prof = await jget(
+            API_BASE +
+              "API_show_Nhatuyendung.php?MaTK=" +
+              encodeURIComponent(auth?.MaTK || auth?.userId || "")
+          );
+          const me =
+            prof?.status === "success" && Array.isArray(prof.data)
+              ? prof.data[0]
+              : null;
+          if (me)
+            document.getElementById("oTenCongTy").textContent =
+              me.TenCongTy || "Nhà tuyển dụng";
+        } catch {}
+      }
+
+      async function loadResolve() {
+        const url = `${API_BASE}API_lpv_resolve_ungtuyen.php?MaNTD=${MaNTD}&MaTin=${MaTin}&MaUngVien=${MaUngVien}`;
+        const js = await jget(url);
+        if (!js.ok) throw new Error(js.error || "Không tìm thấy đơn ứng tuyển");
+        resolved = js;
+        // Hiển thị info
+        $info.textContent = `Ứng viên: ${js.UngVien?.HoTen || ""} • Email: ${
+          js.UngVien?.Email || ""
+        } • Tin: ${js.Tin?.ChucDanh || ""} (${
+          js.Tin?.DiaDiemLamViec || ""
+        }) • MaUngTuyen #${js.MaUngTuyen}`;
+      }
+
+      function pill(trangThai) {
+        if (trangThai === "HoanThanh")
+          return '<span class="status-pill pill-done"><i class="fa fa-check"></i> Hoàn thành</span>';
+        if (trangThai === "Huy")
+          return '<span class="status-pill pill-canceled"><i class="fa fa-xmark"></i> Hủy</span>';
+        return '<span class="status-pill pill-scheduled"><i class="fa fa-calendar"></i> Đã lên lịch</span>';
+      }
+
+      async function loadList() {
+        const upcoming = $chkUpcoming.checked ? "&upcoming=1" : "";
+        const url = `${API_BASE}API_lpv_list_by_thread.php?MaNTD=${MaNTD}&MaTin=${MaTin}&MaUngVien=${MaUngVien}${upcoming}`;
+        const js = await jget(url);
+        const rows = js.items || [];
+        $empty.style.display = rows.length ? "none" : "block";
+        $empty.textContent = rows.length ? "" : "Chưa có lịch phỏng vấn nào.";
+        $list.innerHTML = rows
+          .map(
+            (x) => `
+          <li class="p-3 border rounded-xl mb-2 bg-white">
+            <div class="flex items-center justify-between">
+              <div class="font-semibold">
+                #${x.MaLichPV} • ${x.HinhThuc}
+                <span class="ml-2">${pill(x.TrangThai)}</span>
+              </div>
+              <div class="text-sm text-slate-500">${x.NgayGioPhongVan}</div>
+            </div>
+            ${
+              x.GhiChu
+                ? `<div class="text-sm text-slate-600 mt-1">Ghi chú: ${x.GhiChu}</div>`
+                : ""
+            }
+            <div class="mt-2 flex flex-wrap gap-2">
+              <button class="btn-ghost" data-edit="${
+                x.MaLichPV
+              }"><i class="fa fa-pen mr-1"></i>Sửa</button>
+              <button class="btn-ghost" data-done="${
+                x.MaLichPV
+              }"><i class="fa fa-check mr-1"></i>Hoàn thành</button>
+              <button class="btn-ghost" data-cancel="${
+                x.MaLichPV
+              }"><i class="fa fa-times mr-1"></i>Hủy</button>
+            </div>
+          </li>
+        `
+          )
+          .join("");
+
+        // attach actions
+        $list.querySelectorAll("[data-edit]").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            editDialog(btn.getAttribute("data-edit"))
+          );
+        });
+        $list.querySelectorAll("[data-done]").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            setStatus(btn.getAttribute("data-done"), "HoanThanh")
+          );
+        });
+        $list.querySelectorAll("[data-cancel]").forEach((btn) => {
+          btn.addEventListener("click", () =>
+            setStatus(btn.getAttribute("data-cancel"), "Huy")
+          );
+        });
+      }
+
+      async function setStatus(MaLichPV, TrangThai) {
+        if (
+          !confirm(
+            "Xác nhận đổi trạng thái lịch #" +
+              MaLichPV +
+              " → " +
+              TrangThai +
+              "?"
+          )
+        )
+          return;
+        try {
+          const js = await jpost(`${API_BASE}API_lpv_set_status.php`, {
+            MaNTD,
+            MaLichPV: Number(MaLichPV),
+            TrangThai,
+          });
+          if (!js.ok) {
+            alert(js.error || "Đổi trạng thái thất bại");
+            return;
+          }
+          toast("Đã cập nhật trạng thái");
+          await loadList();
+        } catch (e) {
+          alert(e.message || "Lỗi kết nối");
+        }
+      }
+
+      function editDialog(MaLichPV) {
+        const newTime = prompt("Nhập ngày giờ mới (YYYY-MM-DD HH:MM)", "");
+        if (!newTime) return;
+        jpost(`${API_BASE}API_lpv_update.php`, {
+          MaNTD,
+          MaLichPV: Number(MaLichPV),
+          NgayGioPhongVan: newTime + ":00",
+        })
+          .then((js) => {
+            if (!js.ok) {
+              alert(js.error || "Cập nhật thất bại");
+              return;
+            }
+            toast("Đã cập nhật thời gian");
+            loadList();
+          })
+          .catch((e) => alert(e.message || "Lỗi"));
+      }
+
+      $form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!MaNTD || !MaTin || !MaUngVien) {
+          alert("Thiếu tham số");
+          return;
+        }
+        const dt = $dt.value; // "YYYY-MM-DDTHH:MM"
+        if (!dt) {
+          alert("Vui lòng chọn ngày giờ");
+          return;
+        }
+        const dtSQL = dt.replace("T", " ") + ":00";
+        try {
+          const js = await jpost(`${API_BASE}API_lpv_create.php`, {
+            MaNTD: MaNTD,
+            MaTin: MaTin,
+            MaUngVien: MaUngVien,
+            NgayGioPhongVan: dtSQL,
+            HinhThuc: $ht.value,
+            GhiChu: $gc.value.trim(),
+          });
+          if (!js.ok) {
+            alert(js.error || "Tạo lịch thất bại");
+            return;
+          }
+          toast("Đã tạo lịch #" + js.MaLichPV, "info");
+          $form.reset();
+          await loadList();
+        } catch (e) {
+          alert(e.message || "Lỗi kết nối");
+        }
+      });
+
+      $chkUpcoming.addEventListener("change", loadList);
+      $btnReload.addEventListener("click", loadList);
+
+      (async function init() {
+        try {
+          await loadProfileNTD();
+          if (!MaNTD || !MaTin || !MaUngVien) {
+            alert("Thiếu tham số trên URL");
+            return;
+          }
+          await loadResolve();
+          await loadList();
+        } catch (e) {
+          console.error(e);
+          alert("Không thể tải dữ liệu: " + e.message);
+        }
+      })();
+    </script>
+  </body>
+</html>
