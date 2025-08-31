@@ -20,7 +20,7 @@
       })();
     </script>
 
-    <!-- Fonts & Icons (đồng bộ với giao diện Trang chủ) -->
+    <!-- Fonts & Icons -->
     <link
       href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700"
       rel="stylesheet"
@@ -40,7 +40,6 @@
     />
 
     <style>
-      /* Áp dụng Open Sans giống giao diện tham chiếu */
       html,
       body,
       button,
@@ -53,7 +52,6 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
-
       .form-input {
         width: 100%;
         border: 1px solid #e5e7eb;
@@ -110,14 +108,12 @@
       .toast.show {
         opacity: 1;
       }
-
       .chat-list-item {
         cursor: pointer;
       }
       .chat-list-item.active {
         background: #f1f5f9;
       }
-
       .bubble {
         max-width: 75%;
         border-radius: 16px;
@@ -127,20 +123,70 @@
       }
       .bubble.mine {
         background: #2563eb;
-        color: #ffffff;
+        color: #fff;
       }
       .bubble.other {
         background: #f1f5f9;
-        color: #000000;
+        color: #000;
         border: 1px solid #d1d5db;
       }
-
       .badge {
         display: inline-block;
         padding: 2px 8px;
         border-radius: 999px;
         font-size: 11px;
         font-weight: 800;
+      }
+
+      /* Modal tạo lịch */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.5);
+        backdrop-filter: blur(2px);
+        display: none;
+        z-index: 1000;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        place-items: center;
+        z-index: 1001;
+      }
+      .modal.show,
+      .modal-backdrop.show {
+        display: grid;
+      }
+      .modal-card {
+        width: 100%;
+        max-width: 520px;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+      }
+      .modal-head {
+        padding: 14px 16px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .modal-body {
+        padding: 16px;
+      }
+      .modal-foot {
+        padding: 14px 16px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+      .text-danger {
+        color: #dc2626;
+        font-size: 12px;
+        margin-top: 6px;
+        display: none;
       }
     </style>
   </head>
@@ -166,12 +212,8 @@
           const html = await res.text();
           const host = document.getElementById("sidenav-container");
           host.innerHTML = html;
-
-          // set active cho mục Chat (nếu có navChat)
           const chatLink = host.querySelector("#navChat");
           if (chatLink) chatLink.classList.add("bg-gray-100");
-
-          // logout
           const logoutBtn = host.querySelector("#btnLogout");
           if (logoutBtn) {
             logoutBtn.addEventListener("click", function (e) {
@@ -300,14 +342,7 @@
               class="relative flex flex-col min-w-0 break-words bg-white border-0 shadow-xl rounded-2xl bg-clip-border"
             >
               <div class="rounded-t-2xl p-4 border-b">
-                <p class="mb-0 font-semibold">
-                  Cuộc trò chuyện (đang ở trạng thái
-                  <span
-                    class="badge"
-                    style="background: #dbeafe; color: #1e40af"
-                    >MoiPhongVan</span
-                  >)
-                </p>
+                <p class="mb-0 font-semibold">Cuộc trò chuyện được kết nối</p>
               </div>
               <div id="threadList" class="flex-auto p-0"></div>
               <div id="emptyThreads" class="p-4 hidden">
@@ -332,15 +367,14 @@
                   <div id="jobInfo" class="text-sm text-slate-500"></div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <!-- NÚT TẠO LỊCH PHỎNG VẤN -->
+                  <!-- NÚT TẠO LỊCH PHỎNG VẤN (mở modal) -->
                   <button
                     id="btnCreateInterview"
                     type="button"
                     class="btn-primary hidden"
                     title="Tạo lịch phỏng vấn với ứng viên này"
                   >
-                    <i class="fa fa-calendar-plus"></i>
-                    Tạo lịch PV
+                    <i class="fa fa-calendar-plus"></i> Tạo lịch PV
                   </button>
                   <div id="threadMeta" class="text-xs text-slate-400"></div>
                 </div>
@@ -394,6 +428,73 @@
       </div>
     </div>
 
+    <!-- MODAL TẠO LỊCH PHỎNG VẤN -->
+    <div id="lpvBackdrop" class="modal-backdrop"></div>
+    <div
+      id="lpvModal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="lpvTitle"
+    >
+      <div class="modal-card">
+        <div class="modal-head">
+          <h4 id="lpvTitle" class="font-bold">Tạo lịch phỏng vấn</h4>
+          <button id="lpvClose" class="btn-ghost" title="Đóng">
+            <i class="fa fa-times"></i>
+          </button>
+        </div>
+        <form id="lpvForm">
+          <div class="modal-body grid gap-3">
+            <div class="text-sm text-slate-600" id="lpvInfo">—</div>
+            <div>
+              <label class="block text-sm font-semibold mb-1">Ngày & giờ</label>
+              <input
+                id="lpvDateTime"
+                type="datetime-local"
+                class="form-input"
+                required
+              />
+              <div id="lpvErrTime" class="text-danger">
+                Thời điểm phải ở tương lai.
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-1">Hình thức</label>
+              <select id="lpvHinhThuc" class="form-input">
+                <option>Online</option>
+                <option>Offline</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-1">Ghi chú</label>
+              <textarea
+                id="lpvGhiChu"
+                rows="2"
+                class="form-input"
+                placeholder="Link meet / Địa điểm / Người phỏng vấn..."
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <a
+              id="lpvOpenPage"
+              class="btn-ghost"
+              href="#"
+              target="_blank"
+              rel="noopener"
+            >
+              <i class="fa fa-list mr-1"></i> Xem tất cả lịch
+            </a>
+            <button type="button" id="lpvCancel" class="btn-ghost">Hủy</button>
+            <button type="submit" id="lpvSubmit" class="btn-primary">
+              <i class="fa fa-calendar-plus mr-1"></i> Tạo lịch
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- App -->
     <script type="module">
       import { API_BASE } from "../../assets/js/config.js";
@@ -427,7 +528,21 @@
       const rangeInfo = document.getElementById("rangeInfo");
       const btnCreateInterview = document.getElementById("btnCreateInterview");
 
-      // ===== Fetch helpers: chống non-JSON =====
+      // Modal elements
+      const lpvBackdrop = document.getElementById("lpvBackdrop");
+      const lpvModal = document.getElementById("lpvModal");
+      const lpvForm = document.getElementById("lpvForm");
+      const lpvInfo = document.getElementById("lpvInfo");
+      const lpvDateTime = document.getElementById("lpvDateTime");
+      const lpvHinhThuc = document.getElementById("lpvHinhThuc");
+      const lpvGhiChu = document.getElementById("lpvGhiChu");
+      const lpvErrTime = document.getElementById("lpvErrTime");
+      const lpvSubmit = document.getElementById("lpvSubmit");
+      const lpvCancel = document.getElementById("lpvCancel");
+      const lpvClose = document.getElementById("lpvClose");
+      const lpvOpenPage = document.getElementById("lpvOpenPage");
+
+      // ===== Fetch helpers =====
       async function parseMaybeJSON(res) {
         const ct = (res.headers.get("content-type") || "").toLowerCase();
         const txt = await res.text();
@@ -435,10 +550,8 @@
           if (!ct.includes("application/json")) throw new Error("not-json");
           return JSON.parse(txt);
         } catch (e) {
-          console.error("API returned non-JSON:\n", txt);
-          throw new Error(
-            "API không trả JSON hợp lệ (xem console để biết chi tiết)."
-          );
+          console.error("API returned non-JSON:\\n", txt);
+          throw new Error("API không trả JSON hợp lệ (xem console).");
         }
       }
       async function jget(u) {
@@ -462,13 +575,13 @@
       let filteredThreads = [];
       let currentThread = null;
 
-      const PAGE = 6; // hiển thị 6 tin 1 lần
+      const PAGE = 6;
       let viewPage = 0; // 0 = newest page
-      let cachedLimit = PAGE; // tổng bản ghi đang lấy (server luôn trả newest 'limit' bản)
-      let cachedMessages = []; // mảng oldest->newest
+      let cachedLimit = PAGE;
+      let cachedMessages = []; // oldest->newest
       let pollTimer = null;
       let sending = false;
-      let olderEnded = false; // đã hết dữ liệu cũ hơn
+      let olderEnded = false;
 
       // dedupe helpers
       let seen = new Set();
@@ -537,13 +650,11 @@
             c = (t.DiaDiemLamViec || "").toLowerCase();
           return !q || a.includes(q) || b.includes(q) || c.includes(q);
         });
-
         if (!filteredThreads.length) {
           emptyThreads.classList.remove("hidden");
           return;
         }
         emptyThreads.classList.add("hidden");
-
         filteredThreads.forEach((th) => {
           const row = document.createElement("button");
           row.type = "button";
@@ -621,17 +732,12 @@
         const start = Math.max(0, end - PAGE);
         const slice = arrOldestToNewest.slice(start, end);
         slice.forEach((m) => renderOneMessage(m, "append"));
-        rangeInfo.textContent = total
-          ? `Hiển thị ${start + 1}–${end} / ${total}`
-          : "—";
-        // luôn cho phép click "cũ hơn"; disable khi olderEnded=true sau khi gọi API
-        if (page === 0) messagesEl.scrollTop = messagesEl.scrollHeight;
       }
       async function fetchNewestChunk(limit) {
         const r = await jget(
           `${API_BASE}API_chat_fetch.php?MaThread=${currentThread.MaThread}&limit=${limit}`
         );
-        return Array.isArray(r?.messages) ? r.messages : []; // oldest->newest
+        return Array.isArray(r?.messages) ? r.messages : [];
       }
 
       async function openThread(th, rowEl) {
@@ -644,17 +750,26 @@
         }`;
         threadMeta.textContent = `MaTin #${th.MaTin} • MaUV #${th.MaUngVien}`;
 
-        // Hiển thị nút Tạo lịch PV nếu trạng thái cho phép
-        if (th.TrangThai === "MoiPhongVan") {
+        // bật nút tạo lịch khi trạng thái cho phép
+        if (th.TrangThai === "MoiPhongVan")
           btnCreateInterview.classList.remove("hidden");
-        } else {
-          btnCreateInterview.classList.add("hidden");
-        }
+        else btnCreateInterview.classList.add("hidden");
+
+        // Cập nhật link "Xem tất cả lịch" trong modal
+        const q = new URLSearchParams({
+          MaTin: String(th.MaTin || ""),
+          MaUngVien: String(th.MaUngVien || ""),
+        });
+        lpvOpenPage.href = `UI_TD_Lichphongvan.html?${q.toString()}`;
+
+        // Prefill info modal
+        lpvInfo.textContent = `Ứng viên: ${th.HoTen || ""} • Tin: ${
+          th.ChucDanh || ""
+        } (${th.DiaDiemLamViec || ""})`;
 
         viewPage = 0;
         cachedLimit = PAGE;
         olderEnded = false;
-
         const arr = await fetchNewestChunk(cachedLimit);
         seedSeenFrom(arr);
         cachedMessages = arr.slice();
@@ -685,9 +800,7 @@
           const before = cachedMessages.length;
           const end = before - viewPage * PAGE;
           const start = Math.max(0, end - PAGE);
-
           if (start === 0) {
-            // cần nạp thêm dữ liệu cũ hơn: tăng limit và lấy lại newestLimit
             cachedLimit += PAGE;
             const arr = await fetchNewestChunk(cachedLimit);
             seedSeenFrom(arr);
@@ -701,7 +814,6 @@
               showToast("Đã hết tin nhắn cũ hơn.", "info");
             }
           } else {
-            // đã có sẵn trong cache -> chuyển trang
             viewPage += 1;
             renderSlice(cachedMessages, viewPage);
           }
@@ -714,7 +826,7 @@
         }
       });
 
-      // ===== Poll: chỉ chạy khi đang ở "mới nhất" (viewPage=0) =====
+      // ===== Poll newest =====
       function startPolling() {
         stopPolling();
         pollTimer = setInterval(doPoll, 1500);
@@ -736,19 +848,18 @@
           const arr = Array.isArray(r?.messages) ? r.messages : [];
           if (arr.length) {
             const merged = mergeUnique(cachedMessages, arr);
-            cachedMessages = merged.slice(-cachedLimit); // giữ newest 'cachedLimit'
+            cachedMessages = merged.slice(-cachedLimit);
             renderSlice(cachedMessages, 0);
           }
         } catch {}
       }
 
-      // ===== Send message: KHÔNG render tạm (tránh đúp) =====
+      // ===== Send message =====
       composer.addEventListener("submit", async (e) => {
         e.preventDefault();
         if (!currentThread || sending) return;
         const text = msgInput.value.trim();
         if (!text) return;
-
         sending = true;
         btnSend.disabled = true;
         try {
@@ -779,15 +890,87 @@
         }
       });
 
-      // ===== Nút Tạo lịch PV =====
+      // ======= Modal: Tạo lịch PV (inline) =======
+      function openModal() {
+        // set min cho datetime-local = now (local) => ngăn chọn quá khứ
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); // normalize to local for input
+        const minStr = now.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
+        lpvDateTime.min = minStr;
+        // đề xuất mặc định +24h
+        const suggest = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        lpvDateTime.value = suggest.toISOString().slice(0, 16);
+        lpvErrTime.style.display = "none";
+        lpvBackdrop.classList.add("show");
+        lpvModal.classList.add("show");
+      }
+      function closeModal() {
+        lpvBackdrop.classList.remove("show");
+        lpvModal.classList.remove("show");
+      }
+
       btnCreateInterview.addEventListener("click", () => {
         if (!currentThread) return;
-        // Ưu tiên truyền theo MaTin & MaUngVien (trang lịch sẽ suy ra MaUngTuyen)
-        const qs = new URLSearchParams({
-          MaTin: String(currentThread.MaTin || ""),
-          MaUngVien: String(currentThread.MaUngVien || ""),
-        });
-        window.location.href = `UI_TD_Lichphongvan.html?${qs.toString()}`;
+        openModal();
+      });
+      lpvCancel.addEventListener("click", closeModal);
+      lpvClose.addEventListener("click", closeModal);
+      lpvBackdrop.addEventListener("click", closeModal);
+
+      function isFutureLocal(dtStr) {
+        // dtStr: "YYYY-MM-DDTHH:MM"
+        if (!dtStr) return false;
+        const local = new Date(dtStr);
+        // nowLocal computed via new Date()
+        const now = new Date();
+        return local.getTime() > now.getTime();
+      }
+
+      lpvForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!currentThread || !MaNTD) {
+          showToast("Thiếu thông tin tạo lịch.", "error");
+          return;
+        }
+        const dt = lpvDateTime.value; // YYYY-MM-DDTHH:MM
+        if (!dt) {
+          lpvErrTime.textContent = "Vui lòng chọn thời điểm.";
+          lpvErrTime.style.display = "block";
+          return;
+        }
+        if (!isFutureLocal(dt)) {
+          lpvErrTime.textContent = "Thời điểm phải ở tương lai.";
+          lpvErrTime.style.display = "block";
+          return;
+        }
+        lpvErrTime.style.display = "none";
+        const dtSQL = dt.replace("T", " ") + ":00";
+
+        lpvSubmit.disabled = true;
+        lpvSubmit.innerHTML =
+          '<i class="fa fa-spinner fa-spin mr-1"></i> Đang tạo...';
+        try {
+          const js = await jpost(`${API_BASE}API_lpv_create.php`, {
+            MaNTD: Number(MaNTD),
+            MaTin: Number(currentThread.MaTin),
+            MaUngVien: Number(currentThread.MaUngVien),
+            NgayGioPhongVan: dtSQL,
+            HinhThuc: lpvHinhThuc.value,
+            GhiChu: lpvGhiChu.value.trim(),
+          });
+          if (!js.ok) {
+            showToast(js.error || "Tạo lịch thất bại", "error");
+          } else {
+            showToast("Đã tạo lịch #" + js.MaLichPV, "info");
+            closeModal();
+          }
+        } catch (err) {
+          showToast(err.message || "Lỗi kết nối", "error");
+        } finally {
+          lpvSubmit.disabled = false;
+          lpvSubmit.innerHTML =
+            '<i class="fa fa-calendar-plus mr-1"></i> Tạo lịch';
+        }
       });
 
       // ===== Events =====
@@ -796,10 +979,6 @@
 
       // ===== Init =====
       (async function init() {
-        const emailStr = auth?.email || auth?.Email || "—";
-        document.getElementById("ntdEmail").textContent = emailStr;
-        document.getElementById("oEmail").textContent = emailStr;
-
         await loadProfile();
         await loadThreads();
       })();

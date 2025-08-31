@@ -1,44 +1,44 @@
 <?php
 // interface/API/API_lpv_list_by_thread.php
-require_once __DIR__ . '/config.php';
+require 'config.php';
+require_method('GET');
 
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
-header('Content-Type: application/json; charset=utf-8');
+$MaNTD     = (int) inparam(['MaNTD'], 0);
+$MaTin     = (int) inparam(['MaTin'], 0);
+$MaUngVien = (int) inparam(['MaUngVien','maUV'], 0);
+$onlyUpcoming = (int) inparam(['upcoming'], 0);
 
-try {
-  $MaNTD     = isset($_GET['MaNTD']) ? (int)$_GET['MaNTD'] : 0;
-  $MaTin     = isset($_GET['MaTin']) ? (int)$_GET['MaTin'] : 0;
-  $MaUngVien = isset($_GET['MaUngVien']) ? (int)$_GET['MaUngVien'] : 0;
-
-  if (!$MaNTD || !$MaTin || !$MaUngVien) {
-    http_response_code(400);
-    echo json_encode(['ok'=>false,'error'=>'Thiếu MaNTD/MaTin/MaUngVien']); exit;
-  }
-
-  // Quyền
-  $stmTin = $pdo->prepare("SELECT MaNTD FROM TinTuyenDung WHERE MaTin=?");
-  $stmTin->execute([$MaTin]);
-  $owner = $stmTin->fetchColumn();
-  if (!$owner || (int)$owner !== $MaNTD) {
-    http_response_code(403);
-    echo json_encode(['ok'=>false,'error'=>'Tin không thuộc NTD']); exit;
-  }
-
-  $sql = "SELECT lpv.*, ut.MaTin, ut.MaUngVien
-          FROM LichPhongVan lpv
-          JOIN UngTuyen ut ON ut.MaUngTuyen = lpv.MaUngTuyen
-          WHERE ut.MaTin=? AND ut.MaUngVien=?
-          ORDER BY lpv.NgayGioPhongVan DESC, lpv.MaLichPV DESC
-          LIMIT 50";
-  $stm = $pdo->prepare($sql);
-  $stm->execute([$MaTin, $MaUngVien]);
-  $rows = $stm->fetchAll(PDO::FETCH_ASSOC);
-
-  echo json_encode(['ok'=>true,'items'=>$rows], JSON_UNESCAPED_UNICODE);
-} catch (Throwable $e) {
-  http_response_code(500);
-  echo json_encode(['ok'=>false,'error'=>'Server error', 'detail'=>$e->getMessage()]);
+if (!$MaNTD || !$MaTin || !$MaUngVien) {
+  json_out(['ok'=>false,'error'=>'Thiếu tham số'], 400);
 }
+
+// Xác thực mối quan hệ Tin-NTD-UV
+$ck = db()->prepare("
+  SELECT ut.MaUngTuyen
+  FROM UngTuyen ut
+  JOIN TinTuyenDung t ON ut.MaTin=t.MaTin
+  WHERE ut.MaTin=? AND ut.MaUngVien=? AND t.MaNTD=? 
+  LIMIT 1
+");
+$ck->bind_param("iii", $MaTin, $MaUngVien, $MaNTD);
+$ck->execute();
+$r = $ck->get_result()->fetch_assoc();
+if (!$r) json_out(['ok'=>false,'error'=>'Không hợp lệ (Tin-NTD-UV)'], 400);
+
+$where = " MaUngTuyen=? ";
+if ($onlyUpcoming) $where .= " AND NgayGioPhongVan >= NOW() ";
+
+$sql = db()->prepare("
+  SELECT MaLichPV, MaUngTuyen, NgayGioPhongVan, HinhThuc, TrangThai, GhiChu
+  FROM LichPhongVan
+  WHERE $where
+  ORDER BY NgayGioPhongVan DESC, MaLichPV DESC
+");
+$sql->bind_param("i", $r['MaUngTuyen']);
+$sql->execute();
+$res = $sql->get_result();
+
+$items = [];
+while ($row = $res->fetch_assoc()) $items[] = $row;
+
+json_out(['ok'=>true,'items'=>$items]);

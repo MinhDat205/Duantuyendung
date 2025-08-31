@@ -1,64 +1,38 @@
 <?php
 // interface/API/API_lpv_list_by_ntd.php
-require_once __DIR__ . '/config.php';
+require 'config.php';
+require_method('GET');
 
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
-header('Content-Type: application/json; charset=utf-8');
+$MaNTD     = (int) inparam(['MaNTD'], 0);
+$MaTin     = (int) inparam(['MaTin'], 0);
+$MaUngVien = (int) inparam(['MaUngVien','maUV'], 0);
+$onlyUpcoming = (int) inparam(['upcoming'], 0);
 
-try {
-  $MaNTD    = isset($_GET['MaNTD']) ? (int)$_GET['MaNTD'] : 0;
-  $status   = isset($_GET['TrangThai']) ? $_GET['TrangThai'] : null; // DaLenLich | HoanThanh | Huy
-  $upcoming = isset($_GET['upcoming']) ? (int)$_GET['upcoming'] : 0; // 1: chỉ tương lai
-  $from     = isset($_GET['from']) ? $_GET['from'] : null; // YYYY-MM-DD
-  $to       = isset($_GET['to']) ? $_GET['to'] : null;     // YYYY-MM-DD
+if (!$MaNTD) json_out(['ok'=>false,'error'=>'Thiếu MaNTD'], 400);
 
-  if (!$MaNTD) {
-    http_response_code(400);
-    echo json_encode(['ok'=>false,'error'=>'Thiếu MaNTD']); exit;
-  }
+$cond = " t.MaNTD=? ";
+$types = "i";
+$args  = [$MaNTD];
 
-  $params = [$MaNTD];
-  $cond = [];
-  $cond[] = "ttd.MaNTD = ?";
+if ($MaTin)     { $cond .= " AND ut.MaTin=? ";      $types.="i"; $args[]=$MaTin; }
+if ($MaUngVien) { $cond .= " AND ut.MaUngVien=? ";  $types.="i"; $args[]=$MaUngVien; }
+if ($onlyUpcoming) { $cond .= " AND lpv.NgayGioPhongVan >= NOW() "; }
 
-  if ($status && in_array($status, ['DaLenLich','HoanThanh','Huy'])) {
-    $cond[] = "lpv.TrangThai = ?";
-    $params[] = $status;
-  }
-  if ($upcoming === 1) {
-    $cond[] = "lpv.NgayGioPhongVan >= NOW()";
-  }
-  if ($from) {
-    $cond[] = "lpv.NgayGioPhongVan >= ?";
-    $params[] = $from . " 00:00:00";
-  }
-  if ($to) {
-    $cond[] = "lpv.NgayGioPhongVan <= ?";
-    $params[] = $to . " 23:59:59";
-  }
+$sql = db()->prepare("
+  SELECT lpv.MaLichPV, lpv.MaUngTuyen, lpv.NgayGioPhongVan, lpv.HinhThuc, lpv.TrangThai, lpv.GhiChu,
+         ut.MaTin, ut.MaUngVien, uv.HoTen, t.ChucDanh, t.DiaDiemLamViec
+  FROM LichPhongVan lpv
+  JOIN UngTuyen ut ON lpv.MaUngTuyen=ut.MaUngTuyen
+  JOIN TinTuyenDung t ON ut.MaTin=t.MaTin
+  JOIN UngVien uv ON ut.MaUngVien=uv.MaUngVien
+  WHERE $cond
+  ORDER BY lpv.NgayGioPhongVan DESC, lpv.MaLichPV DESC
+");
+$sql->bind_param($types, ...$args);
+$sql->execute();
+$res = $sql->get_result();
 
-  $where = $cond ? ("WHERE " . implode(" AND ", $cond)) : "";
-  $sql = "
-    SELECT lpv.MaLichPV, lpv.MaUngTuyen, lpv.NgayGioPhongVan, lpv.HinhThuc, lpv.TrangThai, lpv.GhiChu,
-           ut.MaTin, ut.MaUngVien, uv.HoTen AS TenUngVien,
-           ttd.ChucDanh, ttd.DiaDiemLamViec
-    FROM LichPhongVan lpv
-    JOIN UngTuyen ut ON ut.MaUngTuyen = lpv.MaUngTuyen
-    JOIN TinTuyenDung ttd ON ttd.MaTin = ut.MaTin
-    JOIN UngVien uv ON uv.MaUngVien = ut.MaUngVien
-    $where
-    ORDER BY lpv.NgayGioPhongVan ASC, lpv.MaLichPV DESC
-    LIMIT 500
-  ";
-  $stm = $pdo->prepare($sql);
-  $stm->execute($params);
-  $rows = $stm->fetchAll(PDO::FETCH_ASSOC);
+$items = [];
+while ($r = $res->fetch_assoc()) $items[] = $r;
 
-  echo json_encode(['ok'=>true, 'items'=>$rows], JSON_UNESCAPED_UNICODE);
-} catch (Throwable $e) {
-  http_response_code(500);
-  echo json_encode(['ok'=>false, 'error'=>'Server error', 'detail'=>$e->getMessage()]);
-}
+json_out(['ok'=>true,'items'=>$items]);
