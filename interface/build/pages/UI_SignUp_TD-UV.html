@@ -125,8 +125,6 @@
         padding: 8px;
         background: #fafafa;
       }
-
-      /* ===== Modal (đã sửa) ===== */
       .modal-backdrop {
         position: fixed;
         inset: 0;
@@ -223,9 +221,8 @@
       >
         <span
           class="py-1.75 ml-4 mr-4 font-bold text-white text-sm whitespace-nowrap lg:ml-0"
+          >Duantuyendung</span
         >
-          Duantuyendung
-        </span>
       </div>
     </nav>
 
@@ -323,8 +320,6 @@
                           placeholder="Số điện thoại (tuỳ chọn)"
                         />
                       </div>
-
-                      <!-- Ảnh CV -->
                       <div class="mb-3">
                         <label class="text-sm font-semibold block mb-1"
                           >Ảnh CV (tuỳ chọn)</label
@@ -448,15 +443,17 @@
                     </button>
                     <div id="signinMsg" class="msg"></div>
                   </form>
-                  
-                  <!-- Link đến trang đăng nhập Nhà Tuyển Dụng -->
+
                   <div class="mt-4 text-center">
-                    <a href="UI_SignUp_TD-UV.html" class="text-sm text-blue-600 hover:underline">
-                      Đăng nhập với tư cách Nhà Tuyển Dụng
-                    </a>
+                    <a
+                      href="UI_SignUp_TD-UV.html"
+                      class="text-sm text-blue-600 hover:underline"
+                      >Đăng nhập với tư cách Nhà Tuyển Dụng</a
+                    >
                   </div>
                 </div>
               </div>
+
               <p class="text-xs text-center text-slate-400 mt-3">
                 ©
                 <script>
@@ -521,14 +518,17 @@
       async
     ></script>
 
+    <!-- ỨNG DỤNG -->
     <script type="module">
-      import { BASE_URL, API_BASE } from '../assets/js/config.js';
-      
+      import { BASE_URL, API_BASE } from "../assets/js/config.js";
+
       // ====== SETUP BASE PATHS ======
       window.BASE_INTERFACE = BASE_URL + "interface";
       window.API_BASE = API_BASE;
-      window.URL_UV_HOME = BASE_URL + "interface/build/pages/UI_UV/uv-home.html";
-      window.URL_TD_HOME = BASE_URL + "interface/build/pages/UI_TD/UI_Nhatuyendung_Trangchu.html";
+      window.URL_UV_HOME =
+        BASE_URL + "interface/build/pages/UI_UV/uv-home.html";
+      window.URL_TD_HOME =
+        BASE_URL + "interface/build/pages/UI_TD/UI_Nhatuyendung_Trangchu.html";
 
       // ====== TAB ======
       const btnTabSignup = document.getElementById("btnTabSignup");
@@ -578,9 +578,9 @@
       const selectedChips = document.getElementById("selectedChips");
 
       let allCats = []; // [{MaDanhMuc, TenDanhMuc}]
-      let selectedCats = new Set(); // ids đã chọn (app state)
-      let tempSelected = new Set(); // ids chọn tạm trong modal
-      let filtered = []; // danh sách sau khi lọc
+      let selectedCats = new Set();
+      let tempSelected = new Set();
+      let filtered = [];
 
       async function loadCategories() {
         try {
@@ -605,7 +605,6 @@
         if (lock) document.body.style.overflow = "hidden";
         else document.body.style.overflow = "";
       }
-
       function openCatsModal() {
         tempSelected = new Set(selectedCats);
         catSearch.value = "";
@@ -615,7 +614,6 @@
         catsModal.classList.add("open");
         catsBackdrop.classList.add("open");
         lockBodyScroll(true);
-        // focus vào ô tìm kiếm sau 50ms
         setTimeout(() => catSearch.focus(), 50);
       }
       function closeCatsModal() {
@@ -626,12 +624,10 @@
       btnOpenCats.addEventListener("click", openCatsModal);
       btnCloseCats.addEventListener("click", closeCatsModal);
       catsBackdrop.addEventListener("click", closeCatsModal);
-      // ESC để đóng
       document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && catsModal.classList.contains("open"))
           closeCatsModal();
       });
-
       btnSaveCats.addEventListener("click", () => {
         selectedCats = new Set(tempSelected);
         renderSelectedChips();
@@ -682,14 +678,12 @@
         catList.innerHTML = "";
         catList.appendChild(frag);
       }
-
       function updateCount() {
         const total = allCats.length,
           filt = filtered.length,
           sel = tempSelected.size;
         catCount.textContent = `Đang hiển thị ${filt}/${total} ngành · Đã chọn ${sel}`;
       }
-
       btnSelectAll.addEventListener("click", () => {
         filtered.forEach((c) => tempSelected.add(Number(c.MaDanhMuc)));
         renderCatList();
@@ -730,7 +724,7 @@
       const cvPreviewWrap = document.getElementById("cvPreviewWrap");
       const cvPreview = document.getElementById("cvPreview");
       const cvMsg = document.getElementById("cvMsg");
-      let uploadedCvRelPath = null; // 'uploads/cv/xxx.png'
+      let uploadedCvRelPath = null;
 
       uvAnhCV.addEventListener("change", async (e) => {
         const file = e.target.files && e.target.files[0];
@@ -752,7 +746,8 @@
           const js = await rs.json();
           if (js.ok) {
             uploadedCvRelPath = js.data.relPath;
-            cvPreview.src = BASE_INTERFACE + "/" + uploadedCvRelPath;
+            cvPreview.src =
+              (window.BASE_INTERFACE || "") + "/" + uploadedCvRelPath;
             cvPreviewWrap.classList.remove("hidden");
             cvMsg.className = "msg text-green-600";
             cvMsg.textContent = "Tải ảnh thành công";
@@ -771,7 +766,6 @@
       // ====== SIGNUP ======
       const formSignup = document.getElementById("formSignup");
       const signupMsg = document.getElementById("signupMsg");
-
       formSignup.addEventListener("submit", async (e) => {
         e.preventDefault();
         signupMsg.className = "msg text-slate-600";
@@ -846,24 +840,33 @@
             signinMsg.className = "msg text-green-600";
             signinMsg.textContent =
               "Đăng nhập thành công! Đang chuyển trang...";
-            
+
             // Lưu thông tin auth vào localStorage
             const role = js.data.LoaiTaiKhoan;
-            localStorage.setItem("auth", JSON.stringify({
-              ok: true,
-              role: role,
-              email: js.data.Email || document.getElementById("loginEmail").value.trim(),
-              MaTK: js.data.MaTK || null,
-              MaTaiKhoan: js.data.MaTK || null,
-              MaUngVien: js.data.MaUngVien || js.data.MaUngvien || null,
-              MaNTD: js.data.MaNTD || js.data.MaNhatuyendung || null,
-              HoTen: js.data.HoTen || null,
-              TenCongTy: js.data.TenCongTy || null,
-              LoaiTaiKhoan: js.data.LoaiTaiKhoan || null,
-              userId: js.data.MaTK || null,
-              token: js.token || null
-            }));
-            
+            localStorage.setItem(
+              "auth",
+              JSON.stringify({
+                ok: true,
+                role: role,
+                email:
+                  js.data.Email ||
+                  document.getElementById("loginEmail").value.trim(),
+                MaTK: js.data.MaTK || null,
+                MaTaiKhoan: js.data.MaTK || null,
+                MaUngVien: js.data.MaUngVien || js.data.MaUngvien || null,
+                MaNTD: js.data.MaNTD || js.data.MaNhatuyendung || null,
+                HoTen: js.data.HoTen || null,
+                TenCongTy: js.data.TenCongTy || null,
+                LoaiTaiKhoan: js.data.LoaiTaiKhoan || null,
+                userId: js.data.MaTK || null,
+                token: js.token || null,
+              })
+            );
+
+            // ⭐ Đánh dấu điều hướng trong app (tránh auto-logout do pagehide)
+            sessionStorage.setItem("navInApp", "1");
+
+            // Điều hướng
             window.location.href =
               role === "UngVien" ? window.URL_UV_HOME : window.URL_TD_HOME;
           } else {
@@ -875,6 +878,32 @@
           signinMsg.textContent = "Lỗi kết nối máy chủ";
         }
       });
+    </script>
+
+    <!-- ⭐ NHÚNG AUTO-LOGOUT: đường dẫn từ trang login -->
+    <script src="../assets/js/auto-logout.js"></script>
+
+    <!-- XỬ LÝ ?logged_out=1 NGAY TẠI TRANG LOGIN + nhận tín hiệu forceLogout -->
+    <script>
+      (function () {
+        const p = new URLSearchParams(location.search);
+        if (p.get("logged_out") === "1") {
+          try {
+            localStorage.removeItem("auth");
+            sessionStorage.removeItem("navInApp");
+            sessionStorage.removeItem("skipCloseLogoutOnce");
+          } catch {}
+          if (history.replaceState)
+            history.replaceState({}, "", location.pathname);
+        }
+        window.addEventListener("storage", (e) => {
+          if (e.key === "forceLogout" && e.newValue) {
+            try {
+              localStorage.removeItem("auth");
+            } catch {}
+          }
+        });
+      })();
     </script>
   </body>
 </html>

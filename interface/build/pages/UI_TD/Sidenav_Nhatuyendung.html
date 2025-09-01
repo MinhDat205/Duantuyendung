@@ -6,6 +6,7 @@
     <a
       class="block px-8 py-6 m-0 text-sm whitespace-nowrap text-slate-700"
       href="UI_Nhatuyendung_Trangchu.html"
+      data-nav
     >
       <img
         src="../../assets/img/logo-ct.png"
@@ -30,6 +31,7 @@
         <a
           class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
           href="UI_Nhatuyendung_Trangchu.html"
+          data-nav
         >
           <i class="ni ni-tv-2 mr-2 text-blue-500"></i>
           <span>Trang chủ</span>
@@ -41,6 +43,7 @@
         <a
           class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
           href="UI_TD_HoSo.html"
+          data-nav
         >
           <i class="ni ni-single-02 mr-2 text-emerald-500"></i>
           <span>Hồ sơ</span>
@@ -52,6 +55,7 @@
         <a
           class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
           href="UI_TD_QuanLyTinTuyenDung.html"
+          data-nav
         >
           <i class="ni ni-briefcase-24 mr-2 text-orange-500"></i>
           <span>Quản lý tin tuyển dụng</span>
@@ -63,6 +67,7 @@
         <a
           class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
           href="UI_TD_QuanLyUngVienUngTuyen.html"
+          data-nav
         >
           <i class="ni ni-circle-08 mr-2 text-purple-500"></i>
           <span>Ứng viên ứng tuyển</span>
@@ -76,6 +81,7 @@
           class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
           href="UI_TD_Lichphongvan.html"
           title="Tạo & quản lý lịch phỏng vấn"
+          data-nav
         >
           <i class="ni ni-calendar-grid-58 mr-2 text-indigo-600"></i>
           <span>Lịch phỏng vấn</span>
@@ -88,6 +94,7 @@
           id="navChat"
           class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
           href="UI_TD_Chat.html"
+          data-nav
         >
           <i class="ni ni-chat-round mr-2 text-cyan-600"></i>
           <span>Chat</span>
@@ -110,35 +117,75 @@
 
 <script>
   (function () {
+    // ===== ĐỊNH NGHĨA =====
     const API_LOGOUT = "/Duantuyendung/interface/API/API_logout_User.php";
     const LOGIN_PAGE =
       "/Duantuyendung/interface/build/pages/UI_SignUp_TD-UV.html?logged_out=1";
 
-    const btn = document.getElementById("btnLogout");
-    if (!btn) return;
-
-    btn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      btn.disabled = true;
-      btn.style.opacity = "0.6";
-      try {
+    // Đánh dấu "điều hướng trong app" khi bấm menu để không auto-logout lúc chuyển trang
+    document.querySelectorAll("a[data-nav]").forEach((a) => {
+      a.addEventListener("click", () => {
         try {
-          localStorage.removeItem("auth");
-          localStorage.removeItem("td_logged_in");
-          localStorage.removeItem("uv_logged_in");
-          localStorage.removeItem("user_email");
-          localStorage.removeItem("auth_token");
-          sessionStorage.clear();
-        } catch (_) {}
-        await fetch(API_LOGOUT, {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-        });
-      } catch (_) {
-      } finally {
-        window.location.href = LOGIN_PAGE;
-      }
+          sessionStorage.setItem("navInApp", "1");
+        } catch {}
+      });
     });
+
+    // Tiện ích xoá auth phía client
+    function clearClientAuth() {
+      try {
+        localStorage.removeItem("auth");
+        localStorage.removeItem("td_logged_in");
+        localStorage.removeItem("uv_logged_in");
+        localStorage.removeItem("user_email");
+        localStorage.removeItem("auth_token");
+        sessionStorage.removeItem("navInApp");
+        sessionStorage.removeItem("skipCloseLogoutOnce");
+      } catch (_) {}
+    }
+
+    // Phát tín hiệu logout tới các tab khác
+    function broadcastForceLogout() {
+      try {
+        localStorage.setItem("forceLogout", String(Date.now()));
+      } catch {}
+    }
+
+    // Gọi server logout bằng beacon (không chặn đóng tab/điều hướng)
+    function serverLogout() {
+      try {
+        const fd = new FormData();
+        fd.append("reason", "manual_click");
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(API_LOGOUT, fd);
+        } else {
+          fetch(API_LOGOUT, {
+            method: "POST",
+            body: fd,
+            keepalive: true,
+          }).catch(() => {});
+        }
+      } catch (_) {}
+    }
+
+    // Đăng xuất hoàn chỉnh
+    function doLogout() {
+      clearClientAuth();
+      broadcastForceLogout();
+      serverLogout();
+      // Điều hướng về trang login
+      window.location.href = LOGIN_PAGE;
+    }
+
+    // Gán sự kiện nút Đăng xuất
+    const btn = document.getElementById("btnLogout");
+    if (btn) {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        btn.disabled = true;
+        btn.style.opacity = "0.6";
+        doLogout();
+      });
+    }
   })();
 </script>

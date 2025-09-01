@@ -13,6 +13,8 @@
           try {
             localStorage.removeItem("admin_logged_in");
             localStorage.removeItem("admin_email");
+            sessionStorage.removeItem("navInApp");
+            sessionStorage.removeItem("skipCloseLogoutOnce");
           } catch (e) {}
           params.delete("logged_out");
           const url =
@@ -100,6 +102,7 @@
                         type="email"
                         name="Email"
                         required
+                        autocomplete="username"
                         class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
                         placeholder="Email quản trị viên"
                       />
@@ -109,6 +112,7 @@
                         type="password"
                         name="MatKhau"
                         required
+                        autocomplete="current-password"
                         class="placeholder:text-gray-500 text-sm block w-full rounded-lg border border-gray-300 py-2 px-3 focus:border-blue-500 focus:outline-none"
                         placeholder="Mật khẩu"
                       />
@@ -119,6 +123,7 @@
                     ></p>
                     <div class="text-center">
                       <button
+                        id="btnSubmit"
                         type="submit"
                         class="inline-block w-full px-5 py-2.5 mt-6 font-bold text-white rounded-lg shadow-md bg-gradient-to-tl from-zinc-800 to-zinc-700 hover:opacity-90"
                       >
@@ -156,8 +161,12 @@
           const redirect = form.querySelector('input[name="redirect"]').value;
 
           const errEl = document.getElementById("loginError");
+          const btn = document.getElementById("btnSubmit");
           errEl.classList.add("hidden");
           errEl.textContent = "";
+
+          btn.disabled = true;
+          btn.style.opacity = "0.7";
 
           try {
             const res = await fetch(API_LOGIN, {
@@ -165,19 +174,34 @@
               headers: { "Content-Type": "application/x-www-form-urlencoded" },
               body: toFormData({ Email, MatKhau, redirect, return_json: "1" }),
             });
-            const data = await res.json();
+
+            let data = null;
+            try {
+              data = await res.json();
+            } catch {
+              throw new Error("Máy chủ trả về dữ liệu không hợp lệ");
+            }
 
             if (!res.ok || data.status !== "success") {
-              throw new Error(data?.message || "Đăng nhập thất bại");
+              throw new Error((data && data.message) || "Đăng nhập thất bại");
             }
 
             localStorage.setItem("admin_logged_in", "true");
             localStorage.setItem("admin_email", Email);
 
-            window.location.href = redirect || "UI_Admin_Trangchu.html";
+            // Đánh dấu điều hướng nội bộ để (nếu có auto-logout) không hiểu nhầm là đóng tab
+            try {
+              sessionStorage.setItem("navInApp", "1");
+            } catch {}
+
+            window.location.href =
+              data.redirect || redirect || "UI_Admin_Trangchu.html";
           } catch (err) {
             errEl.textContent = err.message || "Có lỗi xảy ra";
             errEl.classList.remove("hidden");
+          } finally {
+            btn.disabled = false;
+            btn.style.opacity = "1";
           }
         });
     </script>

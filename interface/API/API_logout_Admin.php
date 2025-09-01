@@ -1,24 +1,21 @@
 <?php
-// interface\API\API_logout_Admin.php
-// Hủy session admin và đưa về trang đăng nhập (kèm flag logged_out=1)
+// /Duantuyendung/interface/API/API_logout_Admin.php
 
 session_start();
-
-// Xóa toàn bộ biến session
 $_SESSION = [];
 
-// Hủy cookie phiên nếu có
 if (ini_get("session.use_cookies")) {
-  $params = session_get_cookie_params();
-  setcookie(session_name(), '', time() - 42000,
-    $params["path"], $params["domain"],
-    $params["secure"], $params["httponly"]
-  );
+  $p = session_get_cookie_params();
+  setcookie(session_name(), '', time()-42000, $p["path"], $p["domain"], $p["secure"], $p["httponly"]);
 }
-
-// Hủy session
 session_destroy();
 
-// Điều hướng về trang đăng nhập giao diện (kèm cờ để JS xóa localStorage)
+// POST (sendBeacon/keepalive) → 204 No Content
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  http_response_code(204);
+  exit;
+}
+
+// GET → redirect về login kèm flag
 header('Location: /Duantuyendung/interface/build/pages/UI_AD/UI_DangNhap_Admin.html?logged_out=1');
 exit;

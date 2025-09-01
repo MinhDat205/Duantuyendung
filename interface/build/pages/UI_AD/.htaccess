@@ -1,0 +1,8 @@
+RewriteEngine On
+
+# Nếu là file vật lý (ảnh, css, js) thì cho qua
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# Mọi file .html trong thư mục này đều đi qua guard.php
+RewriteRule ^(.+\.html)$ guard.php?file=$1 [QSA,L]

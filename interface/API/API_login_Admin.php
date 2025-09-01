@@ -1,23 +1,18 @@
 <?php
-// /Duantuyendung/API/API_login_Admin.php
-// Chuẩn bị: có file /Duantuyendung/API/config.php với biến $conn (mysqli)
-
+// /Duantuyendung/interface/API/API_login_Admin.php
 require_once __DIR__ . '/config.php';
 
-// --- Session (an toàn) ---
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_httponly', 1);
     ini_set('session.use_strict_mode', 1);
     session_start();
 }
 
-// --- CORS (nhẹ, đủ dùng dev nội bộ) ---
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 
-// --- Chỉ cho POST ---
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Content-Type: application/json; charset=utf-8');
     http_response_code(405);
@@ -25,7 +20,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// --- Input ---
 $Email      = isset($_POST['Email']) ? trim($_POST['Email']) : '';
 $MatKhau    = isset($_POST['MatKhau']) ? trim($_POST['MatKhau']) : '';
 $redirect   = isset($_POST['redirect']) && $_POST['redirect'] !== ''
@@ -34,6 +28,11 @@ $redirect   = isset($_POST['redirect']) && $_POST['redirect'] !== ''
 $returnJson = (!empty($_POST['return_json']) && $_POST['return_json'] == '1')
               || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
 
+// 🔒 Chặn open redirect: chỉ cho phép đường dẫn nội bộ
+if (strpos($redirect, '/Duantuyendung/') !== 0) {
+    $redirect = '/Duantuyendung/interface/build/pages/UI_AD/UI_Admin_Trangchu.html';
+}
+
 if ($Email === '' || $MatKhau === '') {
     header('Content-Type: application/json; charset=utf-8');
     http_response_code(400);
@@ -41,7 +40,6 @@ if ($Email === '' || $MatKhau === '') {
     exit;
 }
 
-// --- Helper: verify hash/plain ---
 function verify_password_flexible(string $input, string $stored): bool {
     $info = password_get_info($stored);
     if (!empty($info['algo'])) return password_verify($input, $stored);
@@ -49,7 +47,6 @@ function verify_password_flexible(string $input, string $stored): bool {
 }
 
 try {
-    // --- Lấy quản trị viên theo Email ---
     $sql  = "SELECT MaQTV, Email, MatKhau, HoTen, TrangThai FROM QuanTriVien WHERE Email = ? LIMIT 1";
     $stmt = $conn->prepare($sql);
     if (!$stmt) throw new Exception("Lỗi prepare: " . $conn->error);
@@ -80,7 +77,6 @@ try {
         $conn->close(); exit;
     }
 
-    // --- Đăng nhập OK ---
     session_regenerate_id(true);
     $_SESSION['admin'] = [
         'MaQTV'    => (int)$row['MaQTV'],
@@ -89,7 +85,6 @@ try {
         'Role'     => 'QuanTriVien',
         'LoggedAt' => date('Y-m-d H:i:s')
     ];
-    // Flag tương thích guard khác (nếu có):
     $_SESSION['admin_logged_in'] = true;
 
     $conn->close();

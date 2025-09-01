@@ -1,6 +1,6 @@
 <?php
-// interface\API\API_logout_User.php
-// Hủy phiên người dùng (Ứng viên / Nhà tuyển dụng) và đưa về UI_SignUp_TD-UV.html (kèm flag logged_out=1)
+// interface/API/API_logout_User.php
+// Hủy phiên người dùng (Ứng viên / Nhà tuyển dụng) và hỗ trợ sendBeacon.
 
 session_start();
 
@@ -19,6 +19,12 @@ if (ini_get("session.use_cookies")) {
 // Hủy session
 session_destroy();
 
-// Điều hướng về trang đăng ký/đăng nhập (kèm cờ để JS phía UI xóa localStorage/sessionStorage)
+// Nếu là POST (sendBeacon / keepalive fetch) → trả 204 No Content
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  http_response_code(204);
+  exit;
+}
+
+// Còn lại (GET) → điều hướng về trang đăng nhập
 header('Location: /Duantuyendung/interface/build/pages/UI_SignUp_TD-UV.html?logged_out=1');
 exit;
