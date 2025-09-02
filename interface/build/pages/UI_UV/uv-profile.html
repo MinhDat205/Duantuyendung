@@ -2,149 +2,323 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <title>UV • Thông tin</title>
+  <title>UV • Thông tin cá nhân</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  
+  <!-- Fonts & Icons -->
+  <link
+    href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700"
+    rel="stylesheet"
+  />
+  <script
+    src="https://kit.fontawesome.com/42d5adcbca.js"
+    crossorigin="anonymous"
+  ></script>
+
+  <!-- Argon -->
+  <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
+  <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
+  <link
+    href="../../assets/css/argon-dashboard-tailwind.css?v=1.0.1"
+    rel="stylesheet"
+  />
+
   <style>
-    :root{--blue:#3b82f6;--blue-600:#2563eb;--bg:#f6f8fc;--text:#0f172a;--sub:#64748b;--card:#ffffff;--line:#e5e7eb}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Roboto,Arial}
-    .layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
-    .sidebar{background:linear-gradient(180deg,var(--blue) 0%,var(--blue-600) 100%);color:#fff;padding:20px 16px}
-    .brand{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-    .brand .dot{width:12px;height:12px;border-radius:50%;background:#fff;opacity:.9}
-    .user{background:rgba(255,255,255,.12);border-radius:16px;padding:14px;text-align:center;margin-bottom:12px}
-    .user .avatar{width:56px;height:56px;border-radius:50%;background:#fff;color:var(--blue-600);display:inline-grid;place-content:center;font-weight:700;margin-bottom:6px}
-    .nav a,.nav button{display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;border-radius:10px;border:0;background:transparent;color:#fff;text-decoration:none;cursor:pointer}
-    .nav a:hover,.nav button:hover{background:rgba(255,255,255,.14)}
-    .main{padding:20px}
-    .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;max-width:840px}
-    label{display:block;margin:12px 0 6px;color:var(--sub)} input,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--blue);color:#fff;cursor:pointer;margin-top:14px}
-    #msg{margin-top:10px}
+    /* Ảnh nền cho toàn bộ main */
+    main {
+      background: url("../../assets/img/Trangchu.jpg") no-repeat center center;
+      background-size: cover;
+      position: relative;
+    }
+    /* Overlay làm mờ nền một chút */
+    main::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.7);
+      z-index: 0;
+      border-radius: 0.75rem;
+    }
+    main > * {
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Custom styles for profile form */
+    .profile-panel {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(229, 231, 235, 0.5);
+      border-radius: 1.5rem;
+      padding: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #64748b;
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+    .form-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      transition: all 0.3s ease;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .form-input:disabled {
+      background-color: #f8fafc;
+      color: #64748b;
+      cursor: not-allowed;
+    }
+    .form-textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .btn-save {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 1rem;
+    }
+    .btn-save:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    .message {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+    }
+    .message.success {
+      background: #ecfdf5;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+    .message.error {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
   </style>
 </head>
-<body>
-<div class="layout">
-  <aside class="sidebar">
-    <div class="brand"><span class="dot"></span><strong>Ứng viên</strong></div>
-    <div class="user">
-      <div class="avatar" id="uv-initial">UV</div>
-      <div id="uv-email" style="opacity:.9;font-size:13px">...</div>
-    </div>
-    <nav class="nav">
-      <a id="link-home" href="#">🏠 Trang chủ</a>
-      <a id="link-profile" href="#">🧾 Thông tin</a>
-      <a id="link-apps" href="#">📄 Tin đã ứng tuyển</a>
-      <button id="btn-logout">🚪 Đăng xuất</button>
-    </nav>
-  </aside>
+<body class="m-0 font-sans text-base antialiased bg-gray-50 text-slate-600">
+  <!-- Placeholder Sidenav -->
+  <div
+    id="sidenav-container"
+    role="complementary"
+    aria-label="Thanh điều hướng ứng viên"
+  ></div>
 
-  <main class="main">
-    <div class="panel">
-      <h3 style="margin:0 0 10px">Hồ sơ Ứng viên</h3>
-      <div class="row">
-        <div>
-          <label>Email (không chỉnh)</label>
-          <input id="Email" disabled />
-        </div>
-        <div>
-          <label>Họ tên</label>
-          <input id="HoTen" />
+  <script>
+    (async function loadSidenav() {
+      try {
+        const res = await fetch("Sidenav_ungvien.html", { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const html = await res.text();
+        const host = document.getElementById("sidenav-container");
+        host.innerHTML = html;
+
+        // Gắn listener Đăng xuất từ trang cha
+        const logoutBtn = host.querySelector("#btnLogout");
+        if (logoutBtn) {
+          logoutBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            try {
+              localStorage.removeItem("auth");
+            } catch {}
+            window.location.href = "../UI_SignUp_TD-UV.html";
+          });
+        }
+      } catch (e) {
+        console.error("Không thể tải Sidenav_ungvien.html", e);
+      }
+    })();
+  </script>
+
+  <main
+    class="relative h-full min-h-screen transition-all duration-200 ease-in-out xl:ml-68 rounded-xl overflow-hidden"
+  >
+    <!-- Navbar -->
+    <nav
+      class="mx-6 mt-4 px-6 py-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-md"
+    >
+      <div class="flex items-center justify-between">
+        <h6 class="font-bold">Thông tin cá nhân</h6>
+        <div class="text-sm text-slate-700">
+          Xin chào, <span id="uvEmail">ứng viên</span>
         </div>
       </div>
-      <div class="row">
-        <div>
-          <label>Số điện thoại</label>
-          <input id="SoDienThoai" />
+    </nav>
+
+    <!-- Nội dung -->
+    <div class="w-full px-6 py-6 mx-auto">
+      <div class="profile-panel">
+        <div class="text-center mb-8">
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">Hồ sơ Ứng viên</h3>
+          <p class="text-gray-600">Cập nhật thông tin cá nhân của bạn</p>
         </div>
-        <div>
-          <label>Địa chỉ</label>
-          <input id="DiaChi" />
-        </div>
+
+        <form id="profileForm">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="form-group">
+              <label class="form-label">Email (không thể chỉnh sửa)</label>
+              <input id="Email" class="form-input" disabled />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Họ tên</label>
+              <input id="HoTen" class="form-input" placeholder="Nhập họ tên đầy đủ" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="form-group">
+              <label class="form-label">Số điện thoại</label>
+              <input id="SoDienThoai" class="form-input" placeholder="Nhập số điện thoại" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kỹ năng</label>
+              <textarea 
+                id="KyNang" 
+                class="form-input form-textarea" 
+                rows="3"
+                placeholder="Mô tả các kỹ năng của bạn (ví dụ: JavaScript, React, Node.js, SQL...)"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Kinh nghiệm</label>
+            <textarea 
+              id="KinhNghiem" 
+              class="form-input form-textarea" 
+              rows="4"
+              placeholder="Mô tả kinh nghiệm làm việc của bạn..."
+            ></textarea>
+          </div>
+
+          <div class="text-center">
+            <button type="submit" class="btn-save" id="btnSave">
+              <i class="ni ni-save mr-2"></i>
+              Lưu cập nhật
+            </button>
+          </div>
+
+          <div id="msg" class="message" style="display: none;"></div>
+        </form>
       </div>
-      <label>Kỹ năng</label>
-      <textarea id="KyNang" rows="3"></textarea>
-      <label>Kinh nghiệm</label>
-      <textarea id="KinhNghiem" rows="4"></textarea>
-      <button class="btn" id="btnSave">Lưu cập nhật</button>
-      <div id="msg"></div>
     </div>
   </main>
-</div>
 
-<script type="module">
-  import { BASE_URL, API_BASE } from "../../assets/js/config.js";
+  <script type="module">
+    import { BASE_URL, API_BASE } from "../../assets/js/config.js";
 
-  // -------- Guard + helpers ----------
-  const authRaw = localStorage.getItem("auth");
-  const auth = authRaw ? JSON.parse(authRaw) : null;
-  const LOGIN_PAGE = BASE_URL + "interface/build/pages/UI_SignUp_TD-UV.html";
-  if (!auth || !auth.ok || (auth.LoaiTaiKhoan && auth.LoaiTaiKhoan !== "UngVien")) {
-    window.location.href = LOGIN_PAGE;
-  }
-  function getUVId(){
-    return Number(auth?.MaUngVien ?? auth?.MaUV ?? auth?.MaTK ?? auth?.userId ?? auth?.id ?? 0);
-  }
-  const UV_EMAIL = auth?.email || auth?.Email || auth?.Email || "";
-
-  // nav + header
-  const nav = {
-    home: BASE_URL + "interface/build/pages/UI_UV/uv-home.html",
-    profile: BASE_URL + "interface/build/pages/UI_UV/uv-profile.html",
-    apps: BASE_URL + "interface/build/pages/UI_UV/uv-my-applications.html",
-  };
-  document.getElementById("link-home").href = nav.home;
-  document.getElementById("link-profile").href = nav.profile;
-  document.getElementById("link-apps").href = nav.apps;
-  document.getElementById("btn-logout").onclick = ()=>{
-    localStorage.removeItem("auth");
-    window.location.href = LOGIN_PAGE;
-  };
-  document.getElementById("uv-email").textContent = UV_EMAIL;
-  document.getElementById("uv-initial").textContent = (UV_EMAIL||"UV").slice(0,2).toUpperCase();
-
-  async function post(path, body={}){
-    const res = await fetch(API_BASE + path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
-    const data = await res.json().catch(()=>({ok:false,error:"Invalid JSON"}));
-    if(!data.ok) throw new Error(data.error||"API error");
-    return data;
-  }
-
-  async function loadProfile(){
-    try{
-      const r = await post("API_show_UngVien.php", { MaTK:getUVId(), MaUngVien:getUVId() });
-      const d = r.data||{};
-      Email.value = d.Email || UV_EMAIL || "";
-      HoTen.value = d.HoTen || "";
-      SoDienThoai.value = d.SoDienThoai || d.SDT || "";
-      DiaChi.value = d.DiaChi || "";
-      KyNang.value = d.KyNang || "";
-      KinhNghiem.value = d.KinhNghiem || "";
-    }catch(e){
-      document.getElementById("msg").style.color="#ef4444";
-      document.getElementById("msg").textContent = e.message;
+    // -------- Guard + helpers ----------
+    const authRaw = localStorage.getItem("auth");
+    const auth = authRaw ? JSON.parse(authRaw) : null;
+    const LOGIN_PAGE = BASE_URL + "interface/build/pages/UI_SignUp_TD-UV.html";
+    if (!auth || !auth.ok || (auth.LoaiTaiKhoan && auth.LoaiTaiKhoan !== "UngVien")) {
+      window.location.href = LOGIN_PAGE;
     }
-  }
+    function getUVId(){
+      return Number(auth?.MaUngVien ?? auth?.MaUV ?? auth?.MaTK ?? auth?.userId ?? auth?.id ?? 0);
+    }
+    const UV_EMAIL = auth?.email || auth?.Email || auth?.Email || "";
 
-  document.getElementById("btnSave").onclick = async()=>{
-    const msg = document.getElementById("msg"); msg.textContent = ""; msg.style.color="#06b6d4";
-    try{
-      const body = {
-        MaTK:getUVId(),
-        MaUngVien:getUVId(),
-        HoTen: HoTen.value.trim(),
-        SoDienThoai: SoDienThoai.value.trim(),
-        DiaChi: DiaChi.value.trim(),
-        KyNang: KyNang.value.trim(),
-        KinhNghiem: KinhNghiem.value.trim()
-      };
-      // Tùy server: nếu file là API_update_Ungvien.php → đổi tên dưới đây
-      const r = await post("API_update_UngVien.php", body);
-      msg.textContent = r.ok ? "Đã lưu hồ sơ" : "Lỗi lưu hồ sơ";
-    }catch(e){ msg.style.color="#ef4444"; msg.textContent = e.message; }
-  };
+    // Show header info
+    document.getElementById("uvEmail").textContent = UV_EMAIL || "ứng viên";
 
-  loadProfile();
-</script>
+    async function post(path, body={}){
+      const res = await fetch(API_BASE + path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+      const data = await res.json().catch(()=>({ok:false,error:"Invalid JSON"}));
+      if(!data.ok) throw new Error(data.error||"API error");
+      return data;
+    }
+
+    function showMessage(message, isError = false) {
+      const msgEl = document.getElementById("msg");
+      msgEl.textContent = message;
+      msgEl.className = `message ${isError ? 'error' : 'success'}`;
+      msgEl.style.display = 'block';
+      
+      // Auto hide after 3 seconds
+      setTimeout(() => {
+        msgEl.style.display = 'none';
+      }, 3000);
+    }
+
+    async function loadProfile(){
+      try{
+        const uvId = getUVId();
+        console.log("Loading profile for UV ID:", uvId);
+        
+        // Gọi API với cả MaTK và MaUngVien để tăng khả năng tìm thấy
+        const r = await post("API_show_UngVien.php", { 
+          MaTK: uvId, 
+          MaUngVien: uvId 
+        });
+        
+        const d = r.data || {};
+        console.log("Profile data:", d);
+        
+        Email.value = d.Email || UV_EMAIL || "";
+        HoTen.value = d.HoTen || "";
+        SoDienThoai.value = d.SoDienThoai || d.SDT || "";
+        KyNang.value = d.KyNang || "";
+        KinhNghiem.value = d.KinhNghiem || "";
+      }catch(e){
+        console.error("Error loading profile:", e);
+        showMessage(e.message, true);
+      }
+    }
+
+    document.getElementById("profileForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const btnSave = document.getElementById("btnSave");
+      const originalText = btnSave.innerHTML;
+      btnSave.innerHTML = '<i class="ni ni-settings-gear-65 mr-2"></i>Đang lưu...';
+      btnSave.disabled = true;
+
+      try{
+        const body = {
+          MaTK:getUVId(),
+          MaUngVien:getUVId(),
+          HoTen: HoTen.value.trim(),
+          SoDienThoai: SoDienThoai.value.trim(),
+          KyNang: KyNang.value.trim(),
+          KinhNghiem: KinhNghiem.value.trim()
+        };
+        
+        const r = await post("API_update_UngVien.php", body);
+        showMessage("Đã lưu hồ sơ thành công!");
+      }catch(e){ 
+        showMessage(e.message, true);
+      } finally {
+        btnSave.innerHTML = originalText;
+        btnSave.disabled = false;
+      }
+    });
+
+    // Load profile on page load
+    loadProfile();
+  </script>
 </body>
 </html>

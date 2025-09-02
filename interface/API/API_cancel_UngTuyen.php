@@ -1,113 +1,67 @@
 <?php
 require_once __DIR__ . '/config.php';
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { 
-    http_response_code(200); 
-    exit; 
-}
 
-// Tắt hiển thị lỗi HTML
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
+header('Content-Type: application/json; charset=UTF-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 
 try {
-    // Đọc input
-    $raw = file_get_contents('php://input');
-    $js = json_decode($raw, true);
-    $P = array_merge($_GET, $_POST, is_array($js) ? $js : []);
+  if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['ok'=>false,'error'=>'Chỉ hỗ trợ POST'], JSON_UNESCAPED_UNICODE); exit;
+  }
 
-    $maTin = isset($P['MaTin']) ? (int)$P['MaTin'] : null;
-    $maTK = isset($P['MaTK']) ? (int)$P['MaTK'] : null;
-    $maUV = isset($P['MaUngVien']) ? (int)$P['MaUngVien'] : null;
+  $raw  = file_get_contents('php://input');
+  $json = json_decode($raw, true) ?: [];
+  $MaTin = $json['MaTin'] ?? $_POST['MaTin'] ?? null;
+  $MaTK = $json['MaTK'] ?? $_POST['MaTK'] ?? null;
+  $MaUngVien = $json['MaUngVien'] ?? $_POST['MaUngVien'] ?? null;
 
-    // Validate input
-    if (!$maTin) {
-        echo json_encode(['ok' => false, 'error' => 'Thiếu MaTin']);
-        exit;
-    }
-    if (!$maUV && !$maTK) {
-        echo json_encode(['ok' => false, 'error' => 'Thiếu MaUngVien hoặc MaTK']);
-        exit;
-    }
+  if (!$MaTin || (!$MaUngVien && !$MaTK)) {
+    http_response_code(422);
+    echo json_encode(['ok'=>false,'error'=>'Thiếu tham số: MaTin và (MaUngVien hoặc MaTK)'], JSON_UNESCAPED_UNICODE); exit;
+  }
 
-    // Lấy MaUngVien từ MaTK nếu cần
-    if (!$maUV && $maTK) {
-        $stmt = $conn->prepare('SELECT MaUngVien FROM UngVien WHERE MaTK = ?');
-        $stmt->bind_param('i', $maTK);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        if ($row = $res->fetch_assoc()) {
-            $maUV = (int)$row['MaUngVien'];
-        }
-        $stmt->close();
-        
-        if (!$maUV) {
-            echo json_encode(['ok' => false, 'error' => 'Không tìm thấy MaUngVien từ MaTK']);
-            exit;
-        }
-    }
-
-    // Kiểm tra xem có đơn ứng tuyển không
-    $stmt = $conn->prepare('SELECT MaUngTuyen, TrangThai FROM UngTuyen WHERE MaUngVien = ? AND MaTin = ?');
-    $stmt->bind_param('ii', $maUV, $maTin);
+  // Suy ra MaUngVien nếu chỉ có MaTK
+  if (!$MaUngVien && $MaTK) {
+    $stmt = $conn->prepare('SELECT MaUngVien FROM UngVien WHERE MaTK=? LIMIT 1');
+    $stmt->bind_param('i', $MaTK);
     $stmt->execute();
     $res = $stmt->get_result();
-    $current = $res->fetch_assoc();
+    $row = $res->fetch_assoc();
     $stmt->close();
-
-    if (!$current) {
-        echo json_encode(['ok' => false, 'error' => 'Không tìm thấy đơn ứng tuyển']);
-        exit;
+    if (!$row || empty($row['MaUngVien'])) {
+      http_response_code(404);
+      echo json_encode(['ok'=>false,'error'=>'Không tìm thấy ứng viên theo MaTK'], JSON_UNESCAPED_UNICODE); exit;
     }
+    $MaUngVien = (int)$row['MaUngVien'];
+  }
 
-    // Xử lý trạng thái
-    $currentStatus = $current['TrangThai'] ?? '';
-    if (empty($currentStatus) || $currentStatus === '') {
-        // Nếu trạng thái rỗng, cập nhật thành DangXet trước
-        $stmt = $conn->prepare('UPDATE UngTuyen SET TrangThai = "DangXet" WHERE MaUngVien = ? AND MaTin = ?');
-        $stmt->bind_param('ii', $maUV, $maTin);
-        $stmt->execute();
-        $stmt->close();
-        $currentStatus = 'DangXet';
-    }
+  $MaTin = (int)$MaTin;
+  $MaUngVien = (int)$MaUngVien;
 
-    // Kiểm tra nếu đã hủy rồi
-    if ($currentStatus === 'Huy') {
-        echo json_encode(['ok' => true, 'status' => 'already_cancelled']);
-        exit;
-    }
+  // Cập nhật trạng thái đơn ứng tuyển về Huy
+  $stmt = $conn->prepare('UPDATE UngTuyen SET TrangThai = "Huy" WHERE MaTin = ? AND MaUngVien = ?');
+  if (!$stmt) { throw new Exception('Prepare failed: ' . $conn->error); }
+  $stmt->bind_param('ii', $MaTin, $MaUngVien);
+  $ok = $stmt->execute();
+  $affected = $stmt->affected_rows;
+  $stmt->close();
 
-    // Thực hiện hủy
-    $stmt = $conn->prepare('UPDATE UngTuyen SET TrangThai = "Huy" WHERE MaUngVien = ? AND MaTin = ?');
-    $stmt->bind_param('ii', $maUV, $maTin);
-    $stmt->execute();
-    $affected = $stmt->affected_rows;
-    $stmt->close();
+  if (!$ok) {
+    throw new Exception('Hủy ứng tuyển thất bại');
+  }
 
-    if ($affected > 0) {
-        echo json_encode([
-            'ok' => true, 
-            'status' => 'cancelled',
-            'previous_status' => $currentStatus,
-            'debug' => [
-                'MaUngVien' => $maUV,
-                'MaTin' => $maTin,
-                'affected_rows' => $affected
-            ]
-        ]);
-    } else {
-        echo json_encode(['ok' => false, 'error' => 'Không thể cập nhật trạng thái']);
-    }
+  echo json_encode(['ok'=>true,'data'=>['affected'=>$affected]], JSON_UNESCAPED_UNICODE);
 
 } catch (Throwable $e) {
-    http_response_code(500);
-    echo json_encode(['ok' => false, 'error' => 'Lỗi server: ' . $e->getMessage()]);
+  http_response_code(500);
+  echo json_encode(['ok'=>false,'error'=>$e->getMessage()], JSON_UNESCAPED_UNICODE);
 } finally {
-    if (isset($conn) && $conn instanceof mysqli) {
-        $conn->close();
-    }
+  if (isset($conn) && $conn instanceof mysqli) { $conn->close(); }
 }
 ?>
+
+

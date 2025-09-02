@@ -48,14 +48,11 @@ $KinhNghiem = $P['KinhNghiem'] ?? null;
 $MaDanhMuc = $P['MaDanhMuc'] ?? null;
 
 try {
-    $response = [];
-
     if (!$maUV) {
-    $response = [
-        "status" => "error", 
-        "message" => "Thiếu tham số bắt buộc: MaUngVien"
-    ];
-} else {
+        echo json_encode(["ok" => false, "error" => "Thiếu tham số bắt buộc: MaUngVien"], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     $fields = [];
     $types = "";
     $values = [];
@@ -92,34 +89,27 @@ try {
     }
 
     if (empty($fields)) {
-        $response = [
-            "status" => "error", 
-            "message" => "Không có trường nào để cập nhật"
-        ];
-    } else {
-        $sql = "UPDATE UngVien SET " . implode(", ", $fields) . " WHERE MaUngVien = ?";
-        $types .= "i";
-        $values[] = $maUV;
-        
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param($types, ...$values);
-        
-        if ($stmt->execute()) {
-            $response = [
-                "status" => "success", 
-                "message" => "Cập nhật ứng viên thành công"
-            ];
-        } else {
-            $response = [
-                "status" => "error", 
-                "message" => "Lỗi: " . $stmt->error
-            ];
-        }
-        $stmt->close();
+        echo json_encode(["ok" => false, "error" => "Không có trường nào để cập nhật"], JSON_UNESCAPED_UNICODE);
+        exit;
     }
-}
 
-echo json_encode(['ok' => $response['status'] === 'success', 'message' => $response['message']], JSON_UNESCAPED_UNICODE);
+    $sql = "UPDATE UngVien SET " . implode(", ", $fields) . " WHERE MaUngVien = ?";
+    $types .= "i";
+    $values[] = $maUV;
+    
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        throw new Exception("Lỗi prepare: " . $conn->error);
+    }
+    
+    $stmt->bind_param($types, ...$values);
+    
+    if ($stmt->execute()) {
+        echo json_encode(['ok' => true, 'message' => 'Cập nhật ứng viên thành công'], JSON_UNESCAPED_UNICODE);
+    } else {
+        echo json_encode(['ok' => false, 'error' => 'Lỗi cập nhật: ' . $stmt->error], JSON_UNESCAPED_UNICODE);
+    }
+    $stmt->close();
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['ok' => false, 'error' => 'Lỗi server: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);

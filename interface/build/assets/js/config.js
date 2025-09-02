@@ -1,8 +1,8 @@
 // interface/build/assets/js/config.js
 // Cấu hình chung cho toàn bộ frontend
 
-export const BASE_URL = "http://localhost:8888/Duantuyendung/";
-export const API_BASE = BASE_URL + "interface/API/";
+export const BASE_URL = "http://localhost:8080/Duantuyendung/";
+export const API_BASE = "http://localhost:8080/Duantuyendung/interface/API/";
 
 // Các endpoint API chuẩn
 export const API_ENDPOINTS = {
