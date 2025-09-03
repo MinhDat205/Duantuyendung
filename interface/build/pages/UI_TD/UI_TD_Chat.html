@@ -137,8 +137,6 @@
         font-size: 11px;
         font-weight: 800;
       }
-
-      /* Modal tạo lịch */
       .modal-backdrop {
         position: fixed;
         inset: 0;
@@ -367,7 +365,6 @@
                   <div id="jobInfo" class="text-sm text-slate-500"></div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <!-- NÚT TẠO LỊCH PHỎNG VẤN (mở modal) -->
                   <button
                     id="btnCreateInterview"
                     type="button"
@@ -750,7 +747,7 @@
         }`;
         threadMeta.textContent = `MaTin #${th.MaTin} • MaUV #${th.MaUngVien}`;
 
-        // bật nút tạo lịch khi trạng thái cho phép
+        // Bật nút tạo lịch khi trạng thái cho phép
         if (th.TrangThai === "MoiPhongVan")
           btnCreateInterview.classList.remove("hidden");
         else btnCreateInterview.classList.add("hidden");
@@ -892,12 +889,10 @@
 
       // ======= Modal: Tạo lịch PV (inline) =======
       function openModal() {
-        // set min cho datetime-local = now (local) => ngăn chọn quá khứ
         const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); // normalize to local for input
-        const minStr = now.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        const minStr = now.toISOString().slice(0, 16);
         lpvDateTime.min = minStr;
-        // đề xuất mặc định +24h
         const suggest = new Date(now.getTime() + 24 * 60 * 60 * 1000);
         lpvDateTime.value = suggest.toISOString().slice(0, 16);
         lpvErrTime.style.display = "none";
@@ -918,10 +913,8 @@
       lpvBackdrop.addEventListener("click", closeModal);
 
       function isFutureLocal(dtStr) {
-        // dtStr: "YYYY-MM-DDTHH:MM"
         if (!dtStr) return false;
         const local = new Date(dtStr);
-        // nowLocal computed via new Date()
         const now = new Date();
         return local.getTime() > now.getTime();
       }
@@ -932,7 +925,7 @@
           showToast("Thiếu thông tin tạo lịch.", "error");
           return;
         }
-        const dt = lpvDateTime.value; // YYYY-MM-DDTHH:MM
+        const dt = lpvDateTime.value;
         if (!dt) {
           lpvErrTime.textContent = "Vui lòng chọn thời điểm.";
           lpvErrTime.style.display = "block";
@@ -972,6 +965,30 @@
             '<i class="fa fa-calendar-plus mr-1"></i> Tạo lịch';
         }
       });
+
+      // ===== Update Application Status =====
+      async function updateApplicationStatus(MaUngTuyen, TrangThai) {
+        try {
+          const res = await jpost(`${API_BASE}API_update_Ungtuyen.php`, {
+            MaUngTuyen,
+            TrangThai,
+          });
+          if (res.status === "success") {
+            showToast(
+              res.message || "Cập nhật trạng thái thành công",
+              "success"
+            );
+            await loadThreads(); // Làm mới danh sách luồng chat
+          } else {
+            showToast(res.message || "Cập nhật trạng thái thất bại", "error");
+          }
+        } catch (err) {
+          showToast(
+            err.message || "Lỗi kết nối khi cập nhật trạng thái",
+            "error"
+          );
+        }
+      }
 
       // ===== Events =====
       searchInput.addEventListener("input", renderThreads);

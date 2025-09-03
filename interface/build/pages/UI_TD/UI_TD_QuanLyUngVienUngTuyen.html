@@ -1,24 +1,9 @@
 <!DOCTYPE html>
 <html lang="vi">
   <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>Quản lý ứng viên ứng tuyển | Nhà tuyển dụng</title>
-
-    <!-- Guard: chỉ cho NTD -->
-    <script>
-      (function () {
-        try {
-          const auth = JSON.parse(localStorage.getItem("auth") || "null");
-          if (!auth || !auth.ok || auth.role !== "NhaTuyenDung") {
-            window.location.href = "../UI_SignUp_TD-UV.html";
-          }
-        } catch {
-          window.location.href = "../UI_SignUp_TD-UV.html";
-        }
-      })();
-    </script>
+    <meta charset="utf-8" />
+    <title>NTD • Quản lý ứng viên</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
 
     <!-- Fonts & Icons -->
     <link
@@ -30,7 +15,7 @@
       crossorigin="anonymous"
     ></script>
 
-    <!-- Argon / Tailwind assets -->
+    <!-- Argon -->
     <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
     <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
     <link
@@ -39,125 +24,185 @@
     />
 
     <style>
-      .min-h-75 {
-        min-height: 18rem;
+      body {
+        font-family: "Open Sans", sans-serif;
       }
-      .form-input {
-        width: 100%;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 0.6rem 0.75rem;
-        font-size: 0.95rem;
+      /* Ảnh nền cho toàn bộ main */
+      main {
+        background: url("../../assets/img/Trangchu.jpg") no-repeat center center;
+        background-size: cover;
+        position: relative;
+        min-height: 100vh;
       }
-      .btn {
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        padding: 0.5rem 0.85rem;
-      }
-      .btn-primary {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        background: linear-gradient(45deg, #111827, #334155);
-        color: #fff;
-        border: none;
-        padding: 0.6rem 1rem;
-        border-radius: 0.75rem;
-        font-weight: 700;
-      }
-      .badge {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 800;
-      }
-      /* Toast */
-      .toast {
-        position: fixed;
-        right: 24px;
-        bottom: 24px;
-        z-index: 100000;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px 16px;
-        border-radius: 10px;
-        color: #fff;
-        font-size: 14px;
-        font-weight: 700;
-        border: 2px solid rgba(255, 255, 255, 0.95);
-        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38),
-          0 10px 18px rgba(0, 0, 0, 0.25);
-        opacity: 0;
-        transition: opacity 0.25s ease;
-      }
-      .toast.show {
-        opacity: 1;
-      }
-
-      /* Modal */
-      .modal-portal {
-        position: fixed;
-        inset: 0;
-        z-index: 99999;
-        display: none;
-      }
-      .modal-portal.show {
-        display: flex;
-      }
-      .modal-backdrop {
+      main::before {
+        content: "";
         position: absolute;
         inset: 0;
-        background: rgba(0, 0, 0, 0.5);
-      }
-      .modal-card {
-        position: relative;
-        margin: auto;
-        width: min(860px, 92vw);
-        max-height: 85vh;
-        background: #fff;
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.85),
+          rgba(255, 255, 255, 0.95)
+        );
+        z-index: 0;
         border-radius: 1rem;
-        overflow: hidden;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
       }
-      .modal-body-scroll {
-        padding: 1rem 1.25rem;
-        overflow-y: auto;
-        max-height: calc(85vh - 56px);
+      main > * {
+        position: relative;
+        z-index: 1;
       }
-      html.lock-scroll,
-      body.lock-scroll {
-        overflow: hidden;
+
+      /* Navbar styles */
+      nav {
+        background: linear-gradient(to right, #ffffff, #f8fafc);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
       }
-      .cv-img {
-        max-height: 300px;
-        object-fit: contain;
-        border: 1px dashed #e5e7eb;
-        border-radius: 12px;
-        padding: 6px;
+
+      /* Card styles */
+      .candidate-card {
+        background: #ffffff;
+        border: 1px solid rgba(229, 231, 235, 0.3);
+        border-radius: 1.25rem;
+        padding: 1.75rem;
+        transition: all 0.3s ease-in-out;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      }
+      .candidate-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+        border-color: #3b82f6;
+      }
+
+      /* Search panel styles */
+      .search-panel {
+        background: #ffffff;
+        border: 1px solid rgba(229, 231, 235, 0.3);
+        border-radius: 1.25rem;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+      }
+      .search-panel:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+      }
+
+      /* Input styles */
+      input,
+      select {
+        transition: all 0.3s ease;
+      }
+      input:focus,
+      select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      /* Badge styles */
+      .badge {
+        border-radius: 0.75rem;
+        padding: 0.375rem 0.875rem;
+        font-size: 0.825rem;
+        font-weight: 500;
+      }
+      .badge.dangxet {
+        background: #cffafe;
+        color: #0e7490;
+      }
+      .badge.moiphongvan {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .badge.tuchoi {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+
+      /* Button styles */
+      button {
+        transition: all 0.3s ease;
+      }
+      button:hover {
+        transform: scale(1.05);
+      }
+      [data-action] {
+        background: #2563eb;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 0.9rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      [data-action]:hover {
+        background: #1e40af;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+      [data-action="tuchoi"] {
+        background: #dc2626;
+      }
+      [data-action="tuchoi"]:hover {
+        background: #b91c1c;
+      }
+      [data-action="close"] {
+        background: #6b7280;
+      }
+      [data-action="close"]:hover {
+        background: #4b5563;
+      }
+
+      /* Modal styles */
+      .modal {
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal.open {
+        display: flex;
+      }
+      .modal-content {
+        background: #ffffff;
+        border-radius: 1.25rem;
+        padding: 2rem;
+        max-width: 600px;
+        width: 90%;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 640px) {
+        .search-panel {
+          padding: 1.25rem;
+        }
+        .candidate-card {
+          padding: 1.25rem;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        [data-action] {
+          padding: 0.5rem 1rem;
+          font-size: 0.85rem;
+        }
       }
     </style>
   </head>
-
-  <body
-    class="m-0 font-sans antialiased font-normal text-base leading-default bg-gray-50 text-slate-600"
-  >
-    <!-- Header bg -->
+  <body class="m-0 font-sans text-base antialiased bg-gray-50 text-slate-600">
+    <!-- Placeholder Sidenav -->
     <div
-      class="absolute w-full top-0 min-h-75 bg-[url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/profile-layout-header.jpg')] bg-cover bg-center"
-    >
-      <span
-        class="absolute top-0 left-0 w-full h-full bg-blue-500 opacity-60"
-      ></span>
-    </div>
+      id="sidenav-container"
+      role="complementary"
+      aria-label="Thanh điều hướng nhà tuyển dụng"
+    ></div>
 
-    <!-- Sidenav -->
-    <div id="sidenav-container" aria-label="Thanh điều hướng NTD"></div>
     <script>
       (async function loadSidenav() {
         try {
-          const res = await fetch("Sidenav_Nhatuyendung.html", {
+          const res = await fetch("Sidenav_nhatuyendung.html", {
             cache: "no-store",
           });
           if (!res.ok) throw new Error("HTTP " + res.status);
@@ -171,730 +216,323 @@
               e.preventDefault();
               try {
                 localStorage.removeItem("auth");
-                sessionStorage.clear();
               } catch {}
-              window.location.href = "../../../API/API_logout_User.php";
+              window.location.href = "../UI_SignUp_TD-UV.html";
             });
           }
         } catch (e) {
-          console.error("Không thể tải Sidenav_Nhatuyendung.html", e);
+          console.error("Không thể tải Sidenav_nhatuyendung.html", e);
         }
       })();
-
-      function showToast(msg, type = "success") {
-        const old = document.querySelector(".toast");
-        if (old) old.remove();
-        const el = document.createElement("div");
-        el.className = "toast";
-        let bg = "#16a34a",
-          icon = '<i class="fas fa-check-circle"></i>';
-        if (type === "error") {
-          bg = "#dc2626";
-          icon = '<i class="fas fa-times-circle"></i>';
-        } else if (type === "warning") {
-          bg = "#f59e0b";
-          icon = '<i class="fas fa-exclamation-triangle"></i>';
-        } else if (type === "info") {
-          bg = "#2563eb";
-          icon = '<i class="fas fa-info-circle"></i>';
-        }
-        el.style.backgroundColor = bg;
-        el.innerHTML = icon + " <span>" + msg + "</span>";
-        document.body.appendChild(el);
-        setTimeout(() => el.classList.add("show"), 10);
-        setTimeout(() => {
-          el.classList.remove("show");
-          setTimeout(() => el.remove(), 250);
-        }, 2600);
-      }
     </script>
 
-    <!-- Main wrapper -->
-    <div
-      class="relative h-full max-h-screen transition-all duration-200 ease-in-out xl:ml-68"
+    <main
+      class="relative h-full min-h-screen transition-all duration-200 ease-in-out xl:ml-68 rounded-xl overflow-hidden"
     >
-      <!-- Navbar overlay -->
+      <!-- Navbar -->
       <nav
-        class="absolute z-20 flex items-center justify-between w-full px-6 py-2 -mt-56 text-white"
+        class="mx-6 mt-4 px-6 py-4 bg-white/95 backdrop-blur-md rounded-2xl shadow-md"
       >
-        <div class="flex items-center justify-between w-full px-6 py-1 mx-auto">
-          <div>
-            <ol class="flex flex-wrap pt-1 pl-2 pr-4 bg-transparent rounded-lg">
-              <li class="leading-normal text-sm opacity-75">
-                <a class="opacity-75" href="UI_Nhatuyendung_Trangchu.html"
-                  >Trang chủ</a
-                >
-              </li>
-              <li
-                class="text-sm pl-2 capitalize leading-normal before:float-left before:pr-2 before:content-['/']"
-              >
-                Quản lý ứng viên ứng tuyển
-              </li>
-            </ol>
-            <h6 class="mb-2 ml-2 font-bold text-white">Ứng viên ứng tuyển</h6>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <img src="../../assets/img/logo.png" alt="Logo" class="h-8" />
+            <h6 class="font-bold text-lg text-gray-900">Quản lý ứng viên</h6>
           </div>
-          <div class="hidden sm:block text-sm">
-            <i class="fa fa-user mr-1"></i>
-            <span id="ntdEmail" class="font-semibold">—</span>
+          <div class="text-sm text-slate-700">
+            Xin chào, <span id="ntdEmail">nhà tuyển dụng</span>
           </div>
         </div>
       </nav>
 
-      <!-- Header small card -->
-      <div class="relative w-full mx-auto mt-60">
-        <div
-          class="relative flex flex-col flex-auto min-w-0 p-4 mx-6 overflow-hidden break-words bg-white border-0 shadow-3xl rounded-2xl bg-clip-border"
-        >
-          <div class="flex flex-wrap -mx-3 items-center">
-            <div class="w-auto px-3 my-auto">
-              <div class="h-full">
-                <h5 class="mb-1 text-slate-800" id="oTenCongTy">
-                  Nhà tuyển dụng
-                </h5>
-                <p
-                  class="mb-0 font-semibold leading-normal text-sm text-slate-500"
-                >
-                  <i class="ni ni-email-83 mr-1"></i><span id="oEmail">—</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Content -->
-      <div class="w-full p-6 mx-auto">
-        <div class="flex flex-wrap -mx-3">
-          <!-- Bộ lọc & chọn tin -->
-          <div class="w-full max-w-full px-3">
-            <div
-              class="relative flex flex-col min-w-0 break-words bg-white border-0 shadow-xl rounded-2xl bg-clip-border"
+      <!-- Nội dung -->
+      <div class="w-full px-6 py-8 mx-auto max-w-7xl">
+        <!-- Search Panel -->
+        <div class="search-panel">
+          <div class="flex items-center gap-4 flex-wrap">
+            <input
+              id="kw"
+              placeholder="Tìm theo tên ứng viên hoặc chức danh..."
+              class="flex-1 min-w-64 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <select
+              id="statusFilter"
+              class="min-w-48 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <div class="p-6 pb-0">
-                <div
-                  class="flex flex-col gap-3 md:flex-row md:items-end md:gap-4"
-                >
-                  <div class="md:w-1/2">
-                    <label class="block text-sm mb-1">Chọn tin</label>
-                    <select id="selectTin" class="form-input">
-                      <option value="">— Chọn tin tuyển dụng —</option>
-                    </select>
-                    <p class="text-xs text-slate-400 mt-1">
-                      Nguồn: API_show_Tintuyendung.php?scope=admin (lọc theo
-                      MaNTD).
-                    </p>
-                  </div>
-                  <div class="md:flex-1 flex gap-2">
-                    <div class="relative flex-1">
-                      <span
-                        class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                        ><i class="fas fa-search"></i
-                      ></span>
-                      <input
-                        id="searchInput"
-                        type="text"
-                        placeholder="Tìm theo tên/ email/ SĐT/ trạng thái..."
-                        class="pl-9 form-input"
-                      />
-                    </div>
-                    <select id="filterTrangThai" class="form-input md:w-48">
-                      <option value="">— Tất cả trạng thái —</option>
-                      <option value="DangXet">Đang xét</option>
-                      <option value="MoiPhongVan">Đã duyệt (mời PV)</option>
-                      <option value="TuChoi">Từ chối</option>
-                    </select>
-                    <button id="btnReload" class="btn hover:bg-gray-50">
-                      <i class="fas fa-sync mr-1"></i>Tải lại
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex-auto px-0 pt-0 pb-2">
-                <div class="p-0 overflow-x-auto">
-                  <table
-                    class="items-center w-full mb-0 align-top border-collapse text-slate-600"
-                  >
-                    <thead>
-                      <tr class="text-slate-400">
-                        <th
-                          class="px-6 py-3 text-left text-xxs font-bold uppercase"
-                        >
-                          Ứng viên
-                        </th>
-                        <th
-                          class="px-6 py-3 text-left text-xxs font-bold uppercase"
-                        >
-                          Liên hệ
-                        </th>
-                        <th
-                          class="px-6 py-3 text-left text-xxs font-bold uppercase"
-                        >
-                          Ngày ứng tuyển
-                        </th>
-                        <th
-                          class="px-6 py-3 text-center text-xxs font-bold uppercase"
-                        >
-                          Trạng thái
-                        </th>
-                        <th
-                          class="px-6 py-3 text-center text-xxs font-bold uppercase"
-                        >
-                          Thao tác
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody id="appsBody"></tbody>
-                  </table>
-
-                  <div class="flex items-center justify-between px-6 py-4">
-                    <div class="text-xs text-slate-400" id="countLabel">—</div>
-                    <div class="flex gap-2">
-                      <button
-                        id="prevPage"
-                        class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 disabled:opacity-50"
-                      >
-                        Trước
-                      </button>
-                      <button
-                        id="nextPage"
-                        class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 disabled:opacity-50"
-                      >
-                        Sau
-                      </button>
-                    </div>
-                  </div>
-
-                  <div id="emptyState" class="px-6 pb-6 hidden">
-                    <div
-                      class="p-6 rounded-xl border text-center text-slate-500"
-                    >
-                      Chưa có ứng viên nào cho tin này.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+              <option value="">Tất cả trạng thái</option>
+              <option value="DangXet">Đang xét</option>
+              <option value="MoiPhongVan">Mời phỏng vấn</option>
+              <option value="TuChoi">Từ chối</option>
+            </select>
+            <button
+              id="btnSearch"
+              class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              Tìm kiếm
+            </button>
+            <span class="text-sm text-gray-600">
+              <span id="result-count">Đang tải...</span>
+            </span>
           </div>
-          <!-- /table -->
         </div>
 
-        <footer class="pt-4">
-          <div class="w-full px-6 mx-auto">
-            <div class="text-center text-sm text-slate-500">
-              ©
-              <script>
-                document.write(new Date().getFullYear());
-              </script>
-              Duantuyendung
+        <!-- Candidate List -->
+        <div
+          id="list"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6"
+        ></div>
+
+        <!-- Modal for Candidate Details -->
+        <div id="candidateModal" class="modal">
+          <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">
+                Thông tin ứng viên
+              </h3>
+              <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+              </button>
             </div>
-          </div>
-        </footer>
-      </div>
-    </div>
-
-    <!-- ========= MODAL HỒ SƠ ỨNG VIÊN ========= -->
-    <div id="portal" class="modal-portal" aria-hidden="true">
-      <div class="modal-backdrop" data-close="modal"></div>
-
-      <div
-        class="modal-card"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modalTitle"
-      >
-        <div class="flex items-center px-6 py-4 border-b">
-          <h3 id="modalTitle" class="flex-1 text-lg font-semibold text-center">
-            Hồ sơ ứng viên
-          </h3>
-          <button
-            id="btnCloseModal"
-            class="text-slate-500 hover:text-slate-700 btn"
-            aria-label="Đóng"
-          >
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-
-        <div class="modal-body-scroll">
-          <div class="grid md:grid-cols-3 gap-4">
-            <div class="md:col-span-2">
-              <div class="mb-3">
-                <div class="text-sm text-slate-500">Họ tên</div>
-                <div class="font-semibold text-slate-800" id="pHoTen">—</div>
-              </div>
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <div class="text-sm text-slate-500">Email</div>
-                  <div
-                    class="font-semibold text-slate-800 break-all"
-                    id="pEmail"
-                  >
-                    —
-                  </div>
-                </div>
-                <div>
-                  <div class="text-sm text-slate-500">Số điện thoại</div>
-                  <div class="font-semibold text-slate-800" id="pSdt">—</div>
-                </div>
-              </div>
-              <div class="mt-4">
-                <div class="text-sm text-slate-500">Kỹ năng</div>
-                <div class="whitespace-pre-wrap" id="pKyNang">—</div>
-              </div>
-              <div class="mt-4">
-                <div class="text-sm text-slate-500">Kinh nghiệm</div>
-                <div class="whitespace-pre-wrap" id="pKinhNghiem">—</div>
-              </div>
-            </div>
-
-            <div>
-              <div class="text-sm text-slate-500 mb-1">
-                Ảnh/ File CV (nếu có)
-              </div>
-              <img id="pCvImg" class="cv-img w-full" alt="CV" />
-              <div id="pCvNote" class="text-xs text-slate-400 mt-1">—</div>
+            <div id="candidateDetails"></div>
+            <div class="flex gap-3 mt-4">
+              <button data-action="close" class="bg-gray-500 text-white">
+                Tắt
+              </button>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    <!-- ========= /MODAL ========= -->
+    </main>
 
-    <!-- plugin for scrollbar  -->
-    <script
-      src="../../assets/js/plugins/perfect-scrollbar.min.js"
-      async
-    ></script>
-    <!-- main script file  -->
-    <script
-      src="../../assets/js/argon-dashboard-tailwind.js?v=1.0.1"
-      async
-    ></script>
-
-    <!-- App logic -->
     <script type="module">
-      import { API_BASE } from "../../assets/js/config.js";
+      import { BASE_URL, API_BASE } from "../../assets/js/config.js";
 
-      const auth = (() => {
-        try {
-          return JSON.parse(localStorage.getItem("auth") || "null");
-        } catch {
-          return null;
-        }
-      })();
-      const MaTK = auth?.userId || auth?.MaTK || null;
-      const emailStr = auth?.email || auth?.Email || "—";
-      document.getElementById("ntdEmail").textContent = emailStr;
-      document.getElementById("oEmail").textContent = emailStr;
-
-      const oTenCongTy = document.getElementById("oTenCongTy");
-      const selectTin = document.getElementById("selectTin");
-      const appsBody = document.getElementById("appsBody");
-      const countLabel = document.getElementById("countLabel");
-      const emptyState = document.getElementById("emptyState");
-      const searchInput = document.getElementById("searchInput");
-      const filterTrangThai = document.getElementById("filterTrangThai");
-      const btnReload = document.getElementById("btnReload");
-      const prevPage = document.getElementById("prevPage");
-      const nextPage = document.getElementById("nextPage");
-
-      // Modal elements
-      const portal = document.getElementById("portal");
-      const btnCloseModal = document.getElementById("btnCloseModal");
-      const pHoTen = document.getElementById("pHoTen");
-      const pEmail = document.getElementById("pEmail");
-      const pSdt = document.getElementById("pSdt");
-      const pKyNang = document.getElementById("pKyNang");
-      const pKinhNghiem = document.getElementById("pKinhNghiem");
-      const pCvImg = document.getElementById("pCvImg");
-      const pCvNote = document.getElementById("pCvNote");
-
-      let MaNTD = null;
-      let jobs = []; // {MaTin, ChucDanh}
-      let rawApps = []; // ứng tuyển thô
-      let viewApps = []; // đã lọc
-      let page = 1;
-      const pageSize = 10;
-
-      // ===== Helpers =====
-      const statusBadge = (s) => {
-        const v = String(s || "").trim();
-        if (v === "MoiPhongVan")
-          return '<span class="badge" style="background:#34d399; color:#052e16;">Đã duyệt</span>';
-        if (v === "TuChoi")
-          return '<span class="badge" style="background:#fca5a5; color:#7f1d1d;">Từ chối</span>';
-        return '<span class="badge" style="background:#fde68a; color:#78350f;">Đang xét</span>';
-      };
-      const fmtDateTime = (iso) => {
-        if (!iso) return "—";
-        const d = new Date(String(iso).replace(" ", "T"));
-        if (isNaN(d)) return iso;
-        return d.toLocaleString("vi-VN");
-      };
-      function paginate(arr, p, size) {
-        const s = (p - 1) * size;
-        return arr.slice(s, s + size);
+      // Guard + common helpers
+      const authRaw = localStorage.getItem("auth");
+      const auth = authRaw ? JSON.parse(authRaw) : null;
+      const LOGIN_PAGE =
+        BASE_URL + "interface/build/pages/UI_SignUp_TD-UV.html";
+      if (
+        !auth ||
+        !auth.ok ||
+        (auth.LoaiTaiKhoan && auth.LoaiTaiKhoan !== "NhaTuyenDung")
+      ) {
+        window.location.href = LOGIN_PAGE;
       }
-      async function getJSON(url, opts = {}) {
-        const rs = await fetch(url, opts);
-        const ct = rs.headers.get("Content-Type") || "";
-        if (!rs.ok) throw new Error("HTTP " + rs.status);
-        return ct.includes("application/json") ? rs.json() : null;
-      }
-
-      // ===== Load NTD profile (MaNTD + tên công ty) =====
-      async function loadNTDProfile() {
-        const url =
-          API_BASE +
-          "API_show_Nhatuyendung.php?MaTK=" +
-          encodeURIComponent(MaTK);
-        const js = await getJSON(url);
-        const me =
-          js?.status === "success" && Array.isArray(js.data)
-            ? js.data[0]
-            : null;
-        if (!me) return;
-        MaNTD = Number(me.MaNTD);
-        oTenCongTy.textContent = me.TenCongTy || "Nhà tuyển dụng";
-      }
-
-      // ===== Load jobs (drop-down) =====
-      async function loadJobs() {
-        const url = API_BASE + "API_show_Tintuyendung.php?scope=admin";
-        const list = await getJSON(url);
-        const arr = Array.isArray(list) ? list : list?.data || [];
-        jobs = (arr || []).filter((r) => String(r.MaNTD) === String(MaNTD));
-        // render select
-        selectTin.innerHTML =
-          '<option value="">— Chọn tin tuyển dụng —</option>' +
-          jobs
-            .map(
-              (j) =>
-                `<option value="${j.MaTin}">#${j.MaTin} · ${
-                  j.ChucDanh || "(không tiêu đề)"
-                } · ${fmtDateTime(j.NgayDang)}</option>`
-            )
-            .join("");
-      }
-
-      // ===== Load applications for a job =====
-      async function loadApplications(maTin) {
-        if (!maTin) {
-          rawApps = [];
-          applyFilters();
-          return;
-        }
-
-        // Kỳ vọng: API_show_Ungtuyen.php hỗ trợ ?MaTin=...
-        const url =
-          API_BASE + "API_show_Ungtuyen.php?MaTin=" + encodeURIComponent(maTin);
-        let js = null;
-        try {
-          js = await getJSON(url);
-        } catch (e) {
-          console.error(e);
-          showToast("Không tải được danh sách ứng tuyển!", "error");
-          rawApps = [];
-          applyFilters();
-          return;
-        }
-
-        let arr = [];
-        if (Array.isArray(js)) arr = js;
-        else if (js && js.ok && Array.isArray(js.data)) arr = js.data;
-
-        // Chuẩn hóa trường tối thiểu
-        rawApps = (arr || []).map((x) => ({
-          MaUngTuyen: x.MaUngTuyen ?? x.id ?? null,
-          MaUngVien: x.MaUngVien ?? x.UngVienId ?? null,
-          NgayUngTuyen: x.NgayUngTuyen ?? x.CreatedAt ?? x.created_at ?? "",
-          TrangThai: x.TrangThai ?? "DangXet",
-          // Thông tin có thể đã join sẵn:
-          HoTen: x.HoTen ?? x.Ten ?? null,
-          Email: x.Email ?? null,
-          SoDienThoai: x.SoDienThoai ?? x.SDT ?? null,
-        }));
-
-        // Với bản ghi thiếu info người ứng tuyển → fetch bổ sung (song song)
-        const needFetch = rawApps.filter(
-          (r) => !(r.HoTen && (r.Email || r.SoDienThoai)) && r.MaUngVien
+      function getNTDId() {
+        return Number(
+          auth?.MaNTD ?? auth?.MaTK ?? auth?.userId ?? auth?.id ?? 0
         );
-        if (needFetch.length) {
-          try {
-            const jobs = needFetch.map(async (r) => {
-              const rs = await fetch(API_BASE + "API_show_Ungvien.php", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ MaUngVien: r.MaUngVien }),
-              });
-              const js = await rs.json();
-              if (js && js.ok && js.data) {
-                r.HoTen = r.HoTen || js.data.HoTen || null;
-                r.Email = r.Email || js.data.Email || null;
-                r.SoDienThoai = r.SoDienThoai || js.data.SoDienThoai || null;
-              }
-            });
-            await Promise.allSettled(jobs);
-          } catch {}
-        }
-
-        applyFilters();
       }
+      const NTD_EMAIL = auth?.email || auth?.Email || "";
+      document.getElementById("ntdEmail").textContent =
+        NTD_EMAIL || "nhà tuyển dụng";
 
-      function applyFilters() {
-        const q = (searchInput.value || "").trim().toLowerCase();
-        const st = filterTrangThai.value;
-
-        viewApps = rawApps.filter((r) => {
-          const hitQ =
-            !q ||
-            String(r.HoTen || "")
-              .toLowerCase()
-              .includes(q) ||
-            String(r.Email || "")
-              .toLowerCase()
-              .includes(q) ||
-            String(r.SoDienThoai || "")
-              .toLowerCase()
-              .includes(q) ||
-            String(r.TrangThai || "")
-              .toLowerCase()
-              .includes(q);
-          const hitSt = !st || r.TrangThai === st;
-          return hitQ && hitSt;
-        });
-
-        page = 1;
-        renderApps();
-      }
-
-      function renderApps() {
-        appsBody.innerHTML = "";
-        const rows = paginate(viewApps, page, pageSize);
-
-        if (!rows.length) emptyState.classList.remove("hidden");
-        else emptyState.classList.add("hidden");
-
-        rows.forEach((r) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td class="px-6 py-3 border-b">
-              <div class="flex flex-col">
-                <span class="text-sm font-semibold text-slate-700">${
-                  r.HoTen || "(Ẩn danh)"
-                }</span>
-                <span class="text-xs text-slate-400">#UV${
-                  r.MaUngVien || "?"
-                }</span>
-              </div>
-            </td>
-            <td class="px-6 py-3 border-b">
-              <div class="text-sm">${r.Email || "—"}</div>
-              <div class="text-xs text-slate-400">${r.SoDienThoai || "—"}</div>
-            </td>
-            <td class="px-6 py-3 border-b">
-              <span class="text-sm">${fmtDateTime(r.NgayUngTuyen)}</span>
-            </td>
-            <td class="px-6 py-3 text-center border-b">${statusBadge(
-              r.TrangThai
-            )}</td>
-            <td class="px-6 py-3 text-center border-b">
-              <div class="flex items-center gap-2 justify-center">
-                <button class="px-2 py-1 rounded-lg text-xs border hover:bg-gray-50" data-act="view" data-uv="${
-                  r.MaUngVien || ""
-                }">
-                  <i class="fas fa-id-card mr-1"></i> Hồ sơ
-                </button>
-                <button class="px-2 py-1 rounded-lg text-xs border hover:bg-emerald-50 text-emerald-700" data-act="approve" data-id="${
-                  r.MaUngTuyen
-                }">
-                  <i class="fas fa-check mr-1"></i> Duyệt
-                </button>
-                <button class="px-2 py-1 rounded-lg text-xs border hover:bg-rose-50 text-rose-600" data-act="reject" data-id="${
-                  r.MaUngTuyen
-                }">
-                  <i class="fas fa-times mr-1"></i> Từ chối
-                </button>
-              </div>
-            </td>
-          `;
-          appsBody.appendChild(tr);
-        });
-
-        const totalPages = Math.max(1, Math.ceil(viewApps.length / pageSize));
-        countLabel.textContent = `${viewApps.length} ứng viên`;
-        prevPage.disabled = page <= 1;
-        nextPage.disabled = page >= totalPages;
-      }
-
-      // ===== Actions =====
-      selectTin.addEventListener("change", (e) => {
-        const id = e.target.value;
-        loadApplications(id);
-      });
-      searchInput.addEventListener("input", applyFilters);
-      filterTrangThai.addEventListener("change", applyFilters);
-      btnReload.addEventListener("click", () => {
-        const id = selectTin.value;
-        loadApplications(id);
-      });
-      prevPage.addEventListener("click", () => {
-        if (page > 1) {
-          page--;
-          renderApps();
-        }
-      });
-      nextPage.addEventListener("click", () => {
-        const totalPages = Math.max(1, Math.ceil(viewApps.length / pageSize));
-        if (page < totalPages) {
-          page++;
-          renderApps();
-        }
-      });
-
-      document.addEventListener("click", async (e) => {
-        const btn = e.target.closest("[data-act]");
-        if (!btn) return;
-
-        const act = btn.dataset.act;
-
-        // Xem hồ sơ
-        if (act === "view") {
-          const maUV = btn.dataset.uv;
-          if (!maUV) return;
-          await openProfileModal(maUV);
-          return;
-        }
-
-        // Duyệt / Từ chối
-        if (act === "approve" || act === "reject") {
-          const id = btn.dataset.id;
-          if (!id) return;
-
-          const next = act === "approve" ? "MoiPhongVan" : "TuChoi";
-          const oldHTML = btn.innerHTML;
-          btn.disabled = true;
-          btn.style.opacity = ".6";
-          btn.innerHTML =
-            '<i class="fas fa-spinner fa-spin mr-1"></i> Đang lưu...';
-
-          try {
-            // API_update_Ungtuyen.php — POST JSON: {MaUngTuyen, TrangThai}
-            const rs = await fetch(API_BASE + "API_update_Ungtuyen.php", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ MaUngTuyen: id, TrangThai: next }),
-            });
-            const js = await rs.json();
-            if (js?.status === "success") {
-              showToast("Cập nhật trạng thái thành công!");
-              // cập nhật local
-              const i = rawApps.findIndex(
-                (x) => String(x.MaUngTuyen) === String(id)
-              );
-              if (i > -1) rawApps[i].TrangThai = next;
-              applyFilters();
-            } else {
-              showToast(js?.message || "Cập nhật thất bại!", "error");
-            }
-          } catch (err) {
-            console.error(err);
-            showToast("Lỗi kết nối khi cập nhật!", "error");
-          } finally {
-            btn.disabled = false;
-            btn.style.opacity = "1";
-            btn.innerHTML = oldHTML;
-          }
-          return;
-        }
-      });
-
-      // ===== Modal control & load profile =====
-      function setModal(open) {
-        if (open) {
-          portal.classList.add("show");
-          portal.setAttribute("aria-hidden", "false");
-          document.documentElement.classList.add("lock-scroll");
-          document.body.classList.add("lock-scroll");
-        } else {
-          portal.classList.remove("show");
-          portal.setAttribute("aria-hidden", "true");
-          document.documentElement.classList.remove("lock-scroll");
-          document.body.classList.remove("lock-scroll");
-        }
-      }
-      document
-        .getElementById("btnCloseModal")
-        .addEventListener("click", () => setModal(false));
-      portal.addEventListener("click", (e) => {
-        if (e.target.dataset.close === "modal") setModal(false);
-      });
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && portal.classList.contains("show"))
-          setModal(false);
-      });
-
-      async function openProfileModal(maUV) {
-        // Reset UI
-        pHoTen.textContent = "—";
-        pEmail.textContent = "—";
-        pSdt.textContent = "—";
-        pKyNang.textContent = "—";
-        pKinhNghiem.textContent = "—";
-        pCvImg.src = "";
-        pCvImg.style.display = "none";
-        pCvNote.textContent = "—";
-
-        setModal(true);
-
+      async function post(path, body = {}) {
         try {
-          const rs = await fetch(API_BASE + "API_show_Ungvien.php", {
+          const res = await fetch(API_BASE + path, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ MaUngVien: Number(maUV) }),
+            body: JSON.stringify(body),
           });
-          const js = await rs.json();
-          if (js?.ok && js.data) {
-            const d = js.data;
-            pHoTen.textContent = d.HoTen || "—";
-            pEmail.textContent = d.Email || "—";
-            pSdt.textContent = d.SoDienThoai || "—";
-            pKyNang.textContent = d.KyNang || "—";
-            pKinhNghiem.textContent = d.KinhNghiem || "—";
-
-            if (d.AnhCV) {
-              const base = window.BASE_INTERFACE || "/Duantuyendung/interface"; // fallback
-              pCvImg.src = base + "/" + d.AnhCV.replace(/^\/+/, "");
-              pCvImg.style.display = "block";
-              pCvNote.textContent =
-                "Nhấn chuột phải để mở ảnh CV trong tab mới nếu cần phóng to.";
-            } else {
-              pCvImg.style.display = "none";
-              pCvNote.textContent = "Ứng viên chưa tải ảnh/ file CV.";
-            }
-          } else {
-            showToast(js?.error || "Không tải được hồ sơ ứng viên!", "error");
+          const data = await res
+            .json()
+            .catch(() => ({ status: "error", message: "Invalid JSON" }));
+          if (!data.ok && data.status !== "success") {
+            throw new Error(data.message || "API error");
           }
-        } catch (e) {
-          console.error(e);
-          showToast("Lỗi kết nối khi tải hồ sơ ứng viên!", "error");
+          return data;
+        } catch (err) {
+          throw new Error(err.message || "Lỗi kết nối server");
         }
       }
 
-      // ===== Init =====
-      (async function init() {
+      // Search + render
+      async function search() {
+        document.getElementById("result-count").textContent = "Đang tải...";
         try {
-          await loadNTDProfile();
-          if (!MaNTD) {
-            showToast("Không tìm thấy hồ sơ NTD cho tài khoản này!", "warning");
-            return;
-          }
-          await loadJobs();
-        } catch (e) {
-          console.error(e);
-          showToast("Lỗi khởi tạo trang!", "error");
+          const body = {
+            MaNTD: getNTDId(),
+            keyword: document.getElementById("kw").value.trim(),
+            TrangThai: document.getElementById("statusFilter").value,
+          };
+          const r = await post("API_show_Ungtuyen.php", body);
+          render(r.data || []);
+        } catch (err) {
+          console.error("Search error:", err);
+          document.getElementById("result-count").textContent =
+            "Lỗi khi tải dữ liệu";
+          render([]);
         }
+      }
+
+      const listEl = document.getElementById("list");
+      function render(items) {
+        document.getElementById(
+          "result-count"
+        ).textContent = `${items.length} ứng viên`;
+        listEl.innerHTML = "";
+        items.forEach((item) => {
+          const card = document.createElement("div");
+          card.className = "candidate-card";
+          card.innerHTML = `
+            <div class="flex flex-col h-full">
+              <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">${
+                  item.HoTen || "Ứng viên"
+                }</h3>
+                <p class="text-gray-600 font-medium mb-2">${
+                  item.ChucDanh || "N/A"
+                }</p>
+                <p class="text-sm text-gray-500 mb-3">${
+                  item.DiaDiemLamViec || "N/A"
+                } • ${item.MucLuong || "Thoả thuận"}</p>
+                <p class="text-sm text-gray-600 mb-4">Ngày ứng tuyển: ${
+                  item.NgayUngTuyen
+                    ? new Date(item.NgayUngTuyen).toLocaleDateString("vi-VN")
+                    : "N/A"
+                }</p>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="badge ${item.TrangThai.toLowerCase()}" id="st-${
+            item.MaUngTuyen
+          }">
+                  ${
+                    item.TrangThai === "DangXet"
+                      ? "Đang xét"
+                      : item.TrangThai === "MoiPhongVan"
+                      ? "Mời phỏng vấn"
+                      : "Từ chối"
+                  }
+                </span>
+                <div class="flex gap-3">
+                  <button data-action="view" data-id="${
+                    item.MaUngVien
+                  }" data-apply-id="${item.MaUngTuyen}">
+                    Xem chi tiết
+                  </button>
+                  <button data-action="moiphongvan" data-apply-id="${
+                    item.MaUngTuyen
+                  }" data-tin-id="${item.MaTin}" class="${
+            item.TrangThai === "MoiPhongVan" || item.TrangThai === "TuChoi"
+              ? "hidden"
+              : ""
+          }">
+                    Mời phỏng vấn
+                  </button>
+                  <button data-action="tuchoi" data-apply-id="${
+                    item.MaUngTuyen
+                  }" class="${item.TrangThai === "TuChoi" ? "hidden" : ""}">
+                    Từ chối
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+          listEl.appendChild(card);
+        });
+      }
+
+      // Load candidate details
+      async function loadCandidateDetails(MaUngVien, MaUngTuyen) {
+        try {
+          const r = await post("API_show_Ungvien.php", { MaUngVien });
+          const data = r.data;
+          const modalContent = document.getElementById("candidateDetails");
+          modalContent.innerHTML = `
+            <p><strong>Họ tên:</strong> ${data.HoTen || "N/A"}</p>
+            <p><strong>Email:</strong> ${data.Email || "N/A"}</p>
+            <p><strong>Số điện thoại:</strong> ${data.SoDienThoai || "N/A"}</p>
+            <p><strong>Kỹ năng:</strong> ${data.KyNang || "N/A"}</p>
+            <p><strong>Kinh nghiệm:</strong> ${data.KinhNghiem || "N/A"}</p>
+            ${
+              data.AnhCV
+                ? `<p><strong>CV:</strong> <a href="/Duantuyendung/interface/${data.AnhCV}" target="_blank" class="text-blue-600 hover:underline">Xem CV</a></p>`
+                : ""
+            }
+          `;
+          document.getElementById("candidateModal").classList.add("open");
+        } catch (err) {
+          console.error("Load candidate details error:", err);
+          alert("Lỗi khi tải thông tin ứng viên: " + err.message);
+        }
+      }
+
+      // Update application status
+      async function updateStatus(MaUngTuyen, TrangThai, MaTin) {
+        try {
+          const r = await post("API_update_Ungtuyen.php", {
+            MaUngTuyen,
+            TrangThai,
+            MaNTD: getNTDId(),
+          });
+          if (r.status === "success") {
+            await search();
+            alert(
+              `Đã cập nhật trạng thái thành ${
+                TrangThai === "MoiPhongVan" ? "Mời phỏng vấn" : "Từ chối"
+              }`
+            );
+            if (TrangThai === "MoiPhongVan") {
+              window.location.href = `UI_TD_Chat.html?MaTin=${MaTin}&MaUngTuyen=${MaUngTuyen}`;
+            }
+          } else {
+            alert(
+              "Lỗi khi cập nhật trạng thái: " + (r.message || "Unknown error")
+            );
+          }
+        } catch (err) {
+          console.error("Update status error:", err);
+          alert("Lỗi khi cập nhật trạng thái: " + err.message);
+        }
+      }
+
+      // Event listeners
+      listEl.addEventListener("click", async (e) => {
+        const actionBtn = e.target.closest("[data-action]");
+        if (actionBtn) {
+          const action = actionBtn.dataset.action;
+          const MaUngTuyen = Number(actionBtn.dataset.applyId);
+          const MaUngVien = Number(actionBtn.dataset.id);
+          const MaTin = Number(actionBtn.dataset.tinId);
+
+          if (action === "view") {
+            await loadCandidateDetails(MaUngVien, MaUngTuyen);
+          } else if (action === "moiphongvan" || action === "tuchoi") {
+            await updateStatus(
+              MaUngTuyen,
+              action === "moiphongvan" ? "MoiPhongVan" : "TuChoi",
+              MaTin
+            );
+          }
+        }
+      });
+
+      document.getElementById("closeModal").addEventListener("click", () => {
+        document.getElementById("candidateModal").classList.remove("open");
+      });
+
+      document
+        .getElementById("candidateModal")
+        .addEventListener("click", (e) => {
+          const actionBtn = e.target.closest("[data-action]");
+          if (actionBtn && actionBtn.dataset.action === "close") {
+            document.getElementById("candidateModal").classList.remove("open");
+          }
+        });
+
+      // Init
+      (async () => {
+        await search();
+        document.getElementById("btnSearch").onclick = search;
+        document.getElementById("statusFilter").onchange = search;
+        document.getElementById("kw").oninput = () => {
+          if (
+            document.getElementById("kw").value.length >= 2 ||
+            document.getElementById("kw").value.length === 0
+          ) {
+            search();
+          }
+        };
       })();
     </script>
   </body>
