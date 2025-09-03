@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="vi">
   <head>
@@ -11,11 +12,11 @@
       (function () {
         try {
           const auth = JSON.parse(localStorage.getItem("auth") || "null");
-          if (!auth || !auth.ok || auth.role !== "UngVien") {
-            window.location.href = "../UI_SignUp_TD-UV.html";
+          if (!auth || !auth.ok || auth.LoaiTaiKhoan !== "UngVien") {
+            window.location.href = "../UI_SignUp_TD-UV.html?logged_out=1";
           }
         } catch {
-          window.location.href = "../UI_SignUp_TD-UV.html";
+          window.location.href = "../UI_SignUp_TD-UV.html?logged_out=1";
         }
       })();
     </script>
@@ -28,6 +29,10 @@
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css"
     />
 
     <!-- Argon / Tailwind -->
@@ -96,23 +101,6 @@
         color: #6b7280;
         text-align: center;
       }
-      .calendar {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 10px;
-        margin-top: 20px;
-      }
-      .calendar .day {
-        padding: 10px;
-        background: #f1f5f9;
-        text-align: center;
-        border-radius: 8px;
-        cursor: pointer;
-      }
-      .calendar .day:hover {
-        background: linear-gradient(45deg, #111827, #334155);
-        color: white;
-      }
     </style>
   </head>
 
@@ -127,20 +115,41 @@
     </div>
 
     <!-- Sidenav -->
-    <div id="sidenav-container"></div>
+    <div
+      id="sidenav-container"
+      role="complementary"
+      aria-label="Thanh điều hướng ứng viên"
+    ></div>
     <script>
       (async function loadSidenav() {
         try {
-          const res = await fetch("Sidenav_Ungvien.html", {
+          const res = await fetch("Sidenav_ungvien.html", {
             cache: "no-store",
           });
+          console.log("Sidenav fetch status:", res.status);
+          if (!res.ok) throw new Error("HTTP " + res.status);
           const html = await res.text();
           const host = document.getElementById("sidenav-container");
           host.innerHTML = html;
-          const link = host.querySelector("#navLichPhongVan");
-          if (link) link.classList.add("bg-gray-100");
+          const link = host.querySelector("a[href='UI_UV_Lichphongvan.html']");
+          if (link) {
+            link.classList.add("bg-gray-100", "text-blue-600");
+            link.querySelector("i")?.classList.add("text-blue-600");
+          }
+          const logoutBtn = host.querySelector("#btnLogout");
+          if (logoutBtn) {
+            logoutBtn.addEventListener("click", async (e) => {
+              e.preventDefault();
+              try {
+                localStorage.removeItem("auth");
+                sessionStorage.clear();
+              } catch {}
+              window.location.href = "../UI_SignUp_TD-UV.html?logged_out=1";
+            });
+          }
         } catch (e) {
-          console.error(e);
+          console.error("Không thể tải Sidenav_ungvien.html:", e);
+          showToast("Lỗi tải menu điều hướng", "error");
         }
       })();
     </script>
@@ -155,7 +164,7 @@
         <div class="flex items-center justify-between w-full px-6 py-1 mx-auto">
           <div>
             <ol class="flex flex-wrap pt-1 pl-2 pr-4">
-              <li><a href="uv-home.html">Trang chủ</a></li>
+              <li><a href="UI_Ungvien_Trangchu.html">Trang chủ</a></li>
               <li class="pl-2 before:content-['/']">Lịch phỏng vấn</li>
             </ol>
             <h6 class="mb-2 ml-2 font-bold text-white">
@@ -199,9 +208,9 @@
               <option value="HoanThanh">Hoàn thành</option>
               <option value="Huy">Hủy</option>
             </select>
-            <label class="inline-flex items-center gap-2 text-sm"
-              ><input type="checkbox" id="upcoming" />Chỉ lịch tương lai</label
-            >
+            <label class="inline-flex items-center gap-2 text-sm">
+              <input type="checkbox" id="upcoming" />Chỉ lịch tương lai
+            </label>
             <button id="btnReload" class="btn-ghost">
               <i class="fa fa-sync"></i>
             </button>
@@ -214,66 +223,100 @@
     </div>
 
     <!-- App -->
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <script type="module">
       import { API_BASE } from "../../assets/js/config.js";
 
+      const notyf = new Notyf();
+      function showToast(message, type = "success") {
+        notyf.open({ type, message, duration: 3000 });
+      }
+
       const auth = JSON.parse(localStorage.getItem("auth") || "null");
+      if (!auth || !auth.ok || auth.LoaiTaiKhoan !== "UngVien") {
+        console.error("Invalid auth:", auth);
+        showToast("Phiên đăng nhập không hợp lệ", "error");
+        window.location.href = "../UI_SignUp_TD-UV.html?logged_out=1";
+      }
       document.getElementById("oEmail").textContent =
         auth?.Email || auth?.email || "—";
       document.getElementById("uvEmail").textContent =
         auth?.Email || auth?.email || "—";
 
-      const $q = document.getElementById("q"),
-        $status = document.getElementById("status"),
-        $upcoming = document.getElementById("upcoming"),
-        $btnReload = document.getElementById("btnReload"),
-        $list = document.getElementById("list"),
-        $empty = document.getElementById("empty"),
-        $calendar = document.getElementById("calendar"),
-        $btnCreateInterview = document.getElementById("btnCreateInterview");
+      const $q = document.getElementById("q");
+      const $status = document.getElementById("status");
+      const $upcoming = document.getElementById("upcoming");
+      const $btnReload = document.getElementById("btnReload");
+      const $list = document.getElementById("list");
+      const $empty = document.getElementById("empty");
 
       let MaUV = null;
 
-      // Generate simple calendar
-      const daysInMonth = new Date(
-        new Date().getFullYear(),
-        new Date().getMonth() + 1,
-        0
-      ).getDate();
-      for (let i = 1; i <= daysInMonth; i++) {
-        const dayEl = document.createElement("div");
-        dayEl.classList.add("day");
-        dayEl.textContent = i;
-        dayEl.addEventListener("click", () => alert(`Chọn ngày ${i}`));
-        $calendar.appendChild(dayEl);
-      }
-
-      // Button to handle interview creation
-
       async function jget(u) {
-        const r = await fetch(u);
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
+        console.log("Fetching:", u);
+        const r = await fetch(u, { cache: "no-store" });
+        if (!r.ok) {
+          console.error("Fetch failed:", u, "Status:", r.status);
+          throw new Error("HTTP " + r.status);
+        }
+        const ct = (r.headers.get("content-type") || "").toLowerCase();
+        const txt = await r.text();
+        if (!ct.includes("application/json")) {
+          console.error("API returned non-JSON:\n", txt);
+          throw new Error("API không trả JSON hợp lệ");
+        }
+        try {
+          return JSON.parse(txt);
+        } catch {
+          console.error("API returned invalid JSON:\n", txt);
+          throw new Error("JSON parse failed");
+        }
       }
+
       async function jpost(u, data) {
+        console.log("Posting to:", u, "Data:", data);
         const r = await fetch(u, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        if (!r.ok) throw new Error("HTTP " + r.status);
+        if (!r.ok) {
+          console.error("Post failed:", u, "Status:", r.status);
+          throw new Error("HTTP " + r.status);
+        }
         return r.json();
       }
 
       async function loadProfileUV() {
-        const prof = await jget(
-          API_BASE +
+        try {
+          if (!auth?.MaTK) {
+            throw new Error("Không tìm thấy MaTK trong auth");
+          }
+          const url =
+            API_BASE +
             "API_show_Ungvien.php?MaTK=" +
-            encodeURIComponent(auth?.MaTK)
-        );
-        if (prof?.status === "success" && prof.data?.length) {
-          MaUV = prof.data[0].MaUV;
-          document.getElementById("oHoTen").textContent = prof.data[0].HoTen;
+            encodeURIComponent(auth.MaTK);
+          console.log("Fetching profile:", url);
+          const prof = await jget(url);
+          console.log("Profile response:", prof);
+          if (prof?.ok && prof.data) {
+            MaUV = Number(prof.data.MaUngVien || prof.data.MaUV);
+            if (!MaUV) {
+              throw new Error(
+                "Không tìm thấy MaUngVien hoặc MaUV trong dữ liệu"
+              );
+            }
+            console.log("MaUV:", MaUV);
+            document.getElementById("oHoTen").textContent =
+              prof.data.HoTen || "Ứng viên";
+          } else {
+            throw new Error(
+              `API trả về dữ liệu không hợp lệ: ${JSON.stringify(prof)}`
+            );
+          }
+        } catch (err) {
+          console.error("Lỗi tải thông tin ứng viên:", err);
+          showToast(`Lỗi tải thông tin cá nhân: ${err.message}`, "error");
         }
       }
 
@@ -286,10 +329,11 @@
       }
 
       function renderList(rows) {
+        console.log("Rendering list with rows:", rows);
         $list.innerHTML = "";
         if (!rows.length) {
           $empty.style.display = "block";
-          $empty.textContent = "Không có lịch";
+          $empty.textContent = "Không có lịch phỏng vấn";
           return;
         }
         $empty.style.display = "none";
@@ -297,44 +341,69 @@
           const li = document.createElement("li");
           li.className = "p-3 border rounded-xl mb-2 bg-white";
           li.innerHTML = `
-            <div class="flex justify-between"><div>#${x.MaLichPV} ${pill(
-            x.TrangThai
-          )}</div><div>${x.NgayGioPhongVan}</div></div>
+            <div class="flex justify-between">
+              <div>#${x.MaLichPV} ${pill(x.TrangThai)}</div>
+              <div>${new Date(x.NgayGioPhongVan).toLocaleString("vi-VN")}</div>
+            </div>
             <div class="text-sm">Nhà tuyển dụng: <b>${
               x.TenCongTy
             }</b> • Vị trí: <b>${x.ChucDanh}</b> (${x.DiaDiemLamViec})</div>
+            <div class="text-sm">Hình thức: <b>${
+              x.HinhThuc || "Chưa xác định"
+            }</b></div>
             ${x.GhiChu ? `<div class="text-sm">Ghi chú: ${x.GhiChu}</div>` : ""}
             <div class="mt-2 actions flex gap-2">
-              <button class="btn-ghost" data-cancel="${x.MaLichPV}">Hủy</button>
+              
             </div>`;
           $list.appendChild(li);
         });
-        $list
-          .querySelectorAll("[data-cancel]")
-          .forEach(
-            (btn) => (btn.onclick = () => setStatus(btn.dataset.cancel, "Huy"))
-          );
+        $list.querySelectorAll("[data-cancel]").forEach((btn) => {
+          btn.onclick = () => setStatus(btn.dataset.cancel, "Huy");
+        });
       }
 
       async function loadList() {
-        const qs = new URLSearchParams({ MaUV, limit: 500 });
+        if (!MaUV) {
+          console.error("MaUV is null");
+          showToast("Không xác định được ứng viên", "error");
+          return;
+        }
+        const qs = new URLSearchParams({ MaUngVien: MaUV, limit: 500 });
         if ($status.value !== "All") qs.set("status", $status.value);
         if ($upcoming.checked) qs.set("upcoming", "1");
         if ($q.value.trim()) qs.set("q", $q.value.trim());
-        const js = await jget(
-          API_BASE + "API_lpv_list_for_uv.php?" + qs.toString()
-        );
-        renderList(js?.items || []);
+        try {
+          const url = API_BASE + "API_lpv_list_for_uv.php?" + qs.toString();
+          console.log("Fetching list:", url);
+          const js = await jget(url);
+          console.log("List response:", js);
+          renderList(js?.items || []);
+        } catch (err) {
+          console.error("Lỗi tải danh sách lịch phỏng vấn:", err);
+          showToast(
+            "Lỗi tải danh sách lịch phỏng vấn: " + err.message,
+            "error"
+          );
+        }
       }
 
       async function setStatus(MaLichPV, TrangThai) {
-        const js = await jpost(API_BASE + "API_lpv_set_status.php", {
-          MaUV,
-          MaLichPV,
-          TrangThai,
-        });
-        if (js.ok) loadList();
-        else alert(js.error);
+        try {
+          const js = await jpost(API_BASE + "API_lpv_set_status.php", {
+            MaUngVien: MaUV,
+            MaLichPV,
+            TrangThai,
+          });
+          if (js.ok) {
+            showToast("Cập nhật trạng thái thành công", "success");
+            loadList();
+          } else {
+            throw new Error(js.error || "Cập nhật trạng thái thất bại");
+          }
+        } catch (err) {
+          console.error("Lỗi cập nhật trạng thái:", err);
+          showToast("Lỗi cập nhật trạng thái: " + err.message, "error");
+        }
       }
 
       $q.oninput =
@@ -345,8 +414,9 @@
 
       (async function init() {
         await loadProfileUV();
-        if (MaUV) loadList();
+        if (MaUV) await loadList();
       })();
     </script>
   </body>
 </html>
+```

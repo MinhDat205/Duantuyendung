@@ -2,213 +2,796 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <title>Chat - Ứng viên</title>
-    <link rel="icon" type="image/png" href="../assets/img/favicon.png" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Chat với nhà tuyển dụng | Ứng viên</title>
+
+    <!-- Guard: chỉ cho UngVien -->
+    <script>
+      (function () {
+        try {
+          const auth = JSON.parse(localStorage.getItem("auth") || "null");
+          if (!auth || !auth.ok || auth.LoaiTaiKhoan !== "UngVien") {
+            window.location.href = "../UI_SignUp_TD-UV.html?logged_out=1";
+          }
+        } catch {
+          window.location.href = "../UI_SignUp_TD-UV.html?logged_out=1";
+        }
+      })();
+    </script>
+
+    <!-- Fonts & Icons -->
     <link
-      href="../assets/css/argon-dashboard-tailwind.css?v=1.0.1"
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700"
       rel="stylesheet"
     />
-    <script
-      src="https://kit.fontawesome.com/42d5adcbca.js"
-      crossorigin="anonymous"
-    ></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      referrerpolicy="no-referrer"
+    />
+
+    <!-- Argon / Tailwind assets -->
+    <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
+    <link
+      href="../../assets/css/argon-dashboard-tailwind.css?v=1.0.1"
+      rel="stylesheet"
+    />
+
     <style>
-      .msg-bubble {
+      html,
+      body,
+      button,
+      input,
+      textarea,
+      select {
+        font-family: "Open Sans", ui-sans-serif, system-ui, -apple-system,
+          "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji",
+          "Segoe UI Emoji", "Segoe UI Symbol", sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      .form-input {
+        width: 100%;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.95rem;
+      }
+      .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(45deg, #111827, #334155);
+        color: #fff;
+        padding: 0.6rem 1rem;
+        border-radius: 0.75rem;
+        font-weight: 700;
+      }
+      .btn-ghost {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 0.5rem 0.85rem;
+      }
+      .btn-light {
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        padding: 0.45rem 0.8rem;
+        border-radius: 0.6rem;
+        font-weight: 700;
+        font-size: 0.875rem;
+      }
+      .btn-light[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        border: 2px solid rgba(255, 255, 255, 0.95);
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38),
+          0 10px 18px rgba(0, 0, 0, 0.25);
+        opacity: 0;
+        transition: opacity 0.25s ease;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+      .chat-list-item {
+        cursor: pointer;
+      }
+      .chat-list-item.active {
+        background: #f1f5f9;
+      }
+      .bubble {
         max-width: 75%;
         border-radius: 16px;
         padding: 8px 12px;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+      .bubble.mine {
+        background: #2563eb;
+        color: #fff;
+      }
+      .bubble.other {
+        background: #f1f5f9;
+        color: #000;
+        border: 1px solid #d1d5db;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
       }
     </style>
   </head>
-  <body class="bg-gray-50">
-    <div class="flex h-screen">
-      <!-- Sidebar -->
-      <aside class="w-1/3 bg-white shadow-md flex flex-col">
-        <div class="p-4 font-bold text-lg border-b">
-          Lời mời phỏng vấn của bạn
-        </div>
-        <div id="inviteList" class="flex-1 overflow-y-auto"></div>
-      </aside>
 
-      <!-- Chat window -->
-      <main class="flex-1 flex flex-col">
-        <div class="p-4 border-b flex justify-between items-center bg-white">
-          <div>
-            <h2 id="chatTitle" class="font-bold text-lg">Chọn tin để chat</h2>
-            <p id="jobInfo" class="text-sm text-gray-500"></p>
-          </div>
-          <a
-            href="../UI_SignUp_TD-UV.html"
-            class="text-sm text-blue-600 hover:underline"
-            >Đăng nhập / đổi tài khoản</a
-          >
-        </div>
-
-        <div
-          id="messages"
-          class="flex-1 p-4 overflow-y-auto space-y-2 bg-gray-100"
-        ></div>
-
-        <form id="composer" class="p-4 flex gap-2 bg-white border-t">
-          <input
-            id="msgInput"
-            type="text"
-            class="flex-1 border rounded px-3 py-2"
-            placeholder="Nhập tin nhắn..."
-          />
-          <button
-            class="px-4 py-2 bg-gradient-to-r from-zinc-800 to-zinc-700 text-white rounded"
-          >
-            Gửi
-          </button>
-        </form>
-      </main>
+  <body class="m-0 font-sans text-base antialiased bg-gray-50 text-slate-600">
+    <!-- Header bg -->
+    <div
+      class="absolute w-full top-0 min-h-75 bg-[url('https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/profile-layout-header.jpg')] bg-cover bg-center"
+    >
+      <span
+        class="absolute top-0 left-0 w-full h-full bg-blue-500 opacity-60"
+      ></span>
     </div>
 
-    <script type="module">
-      import { API_BASE } from "../assets/js/config.js";
+    <!-- Sidenav -->
+    <div id="sidenav-container" aria-label="Thanh điều hướng Ứng viên"></div>
+    <script>
+      (async function loadSidenav() {
+        try {
+          const res = await fetch("Sidenav_ungvien.html", {
+            cache: "no-store",
+          });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const html = await res.text();
+          const host = document.getElementById("sidenav-container");
+          host.innerHTML = html;
 
-      // Auth guard
-      const auth = JSON.parse(localStorage.getItem("auth") || "{}");
-      if (!auth?.ok || auth?.role !== "UngVien" || !auth?.MaUngVien) {
-        alert("Vui lòng đăng nhập bằng tài khoản Ứng viên");
-        window.location.href = "../UI_SignUp_TD-UV.html";
+          // Đánh dấu mục Chat là active
+          const chatLink = host.querySelector("a[href='UI_UV_Chat.html']");
+          if (chatLink) {
+            chatLink.classList.add("bg-gray-100", "text-blue-600");
+            chatLink.querySelector("i")?.classList.add("text-blue-600");
+          }
+
+          // Cập nhật sự kiện đăng xuất
+          const logoutBtn = host.querySelector("#btnLogout");
+          if (logoutBtn) {
+            logoutBtn.addEventListener("click", async (e) => {
+              e.preventDefault();
+              try {
+                localStorage.removeItem("auth");
+                sessionStorage.clear();
+              } catch {}
+              window.location.href = "../UI_SignUp_TD-UV.html?logged_out=1";
+            });
+          }
+        } catch (e) {
+          console.error("Không thể tải Sidenav_ungvien.html", e);
+          showToast("Lỗi tải menu điều hướng", "error");
+        }
+      })();
+
+      function showToast(msg, type = "success") {
+        const old = document.querySelector(".toast");
+        if (old) old.remove();
+        const el = document.createElement("div");
+        el.className = "toast";
+        let bg = "#16a34a",
+          icon = '<i class="fas fa-check-circle"></i>';
+        if (type === "error") {
+          bg = "#dc2626";
+          icon = '<i class="fas fa-times-circle"></i>';
+        } else if (type === "warning") {
+          bg = "#f59e0b";
+          icon = '<i class="fas fa-exclamation-triangle"></i>';
+        } else if (type === "info") {
+          bg = "#2563eb";
+          icon = '<i class="fas fa-info-circle"></i>';
+        }
+        el.style.backgroundColor = bg;
+        el.innerHTML = icon + " <span>" + msg + "</span>";
+        document.body.appendChild(el);
+        setTimeout(() => el.classList.add("show"), 10);
+        setTimeout(() => {
+          el.classList.remove("show");
+          setTimeout(() => el.remove(), 250);
+        }, 2600);
       }
+    </script>
 
-      const inviteList = document.getElementById("inviteList");
+    <!-- Main wrapper -->
+    <div
+      class="relative h-full max-h-screen transition-all duration-200 ease-in-out xl:ml-68"
+    >
+      <!-- Navbar overlay -->
+      <nav
+        class="absolute z-20 flex items-center justify-between w-full px-6 py-2 -mt-56 text-white"
+      >
+        <div class="flex items-center justify-between w-full px-6 py-1 mx-auto">
+          <div>
+            <ol class="flex flex-wrap pt-1 pl-2 pr-4 bg-transparent rounded-lg">
+              <li class="leading-normal text-sm opacity-75">
+                <a class="opacity-75" href="uv-home.html">Trang chủ</a>
+              </li>
+              <li
+                class="text-sm pl-2 capitalize leading-normal before:float-left before:pr-2 before:content-['/']"
+                aria-current="page"
+              >
+                Chat
+              </li>
+            </ol>
+            <h6 class="mb-2 ml-2 font-bold text-white">
+              Trao đổi với nhà tuyển dụng
+            </h6>
+          </div>
+          <div class="hidden sm:block text-sm">
+            <i class="fa fa-user mr-1"></i>
+            <span id="uvEmail" class="font-semibold">—</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Header card -->
+      <div class="relative w-full mx-auto mt-60">
+        <div
+          class="relative flex flex-col flex-auto min-w-0 p-4 mx-6 overflow-hidden break-words bg-white border-0 shadow-3xl rounded-2xl bg-clip-border"
+        >
+          <div class="flex flex-wrap -mx-3 items-center">
+            <div class="w-auto px-3 my-auto">
+              <div class="h-full">
+                <h5 class="mb-1 text-slate-800" id="oHoTen">Ứng viên</h5>
+                <p
+                  class="mb-0 font-semibold leading-normal text-sm text-slate-500"
+                >
+                  <i class="ni ni-email-83 mr-1"></i><span id="oEmail">—</span>
+                </p>
+              </div>
+            </div>
+            <div class="w-full px-3 mt-4 md:w-auto md:ml-auto md:mt-0">
+              <div class="flex items-center gap-2">
+                <div class="relative">
+                  <span
+                    class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                    ><i class="fas fa-search"></i
+                  ></span>
+                  <input
+                    id="searchInput"
+                    type="text"
+                    placeholder="Tìm theo chức danh, công ty..."
+                    class="pl-9 text-sm rounded-lg border border-gray-300 bg-white py-2 pr-3 text-gray-700 focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                <button id="btnReload" class="btn-ghost hover:bg-gray-50">
+                  <i class="fas fa-sync mr-1"></i>Tải lại
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="w-full p-6 mx-auto">
+        <div class="flex flex-wrap -mx-3">
+          <!-- List threads -->
+          <div class="w-full max-w-full px-3 lg:w-4/12">
+            <div
+              class="relative flex flex-col min-w-0 break-words bg-white border-0 shadow-xl rounded-2xl bg-clip-border"
+            >
+              <div class="rounded-t-2xl p-4 border-b">
+                <p class="mb-0 font-semibold">Cuộc trò chuyện được kết nối</p>
+              </div>
+              <div id="threadList" class="flex-auto p-0"></div>
+              <div id="emptyThreads" class="p-4 hidden">
+                <div class="p-4 rounded-xl border text-center text-slate-500">
+                  Chưa có cuộc trò chuyện. Hãy chờ nhà tuyển dụng mời phỏng vấn.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chat box -->
+          <div class="w-full max-w-full px-3 mt-6 lg:mt-0 lg:w-8/12">
+            <div
+              class="relative flex flex-col min-w-0 break-words bg-white border-0 shadow-xl rounded-2xl bg-clip-border h-[70vh]"
+            >
+              <div class="p-4 border-b flex items-center justify-between">
+                <div>
+                  <h6 id="chatTitle" class="font-semibold">
+                    Chọn cuộc trò chuyện
+                  </h6>
+                  <div id="jobInfo" class="text-sm text-slate-500"></div>
+                </div>
+                <div id="threadMeta" class="text-xs text-slate-400"></div>
+              </div>
+
+              <!-- Controller: Older / Newest -->
+              <div class="px-4 pt-3 flex items-center gap-2">
+                <button id="btnOlder" type="button" class="btn-light">
+                  <i class="fa fa-chevron-up mr-1"></i> Tin nhắn cũ hơn
+                </button>
+                <button id="btnNewest" type="button" class="btn-light">
+                  <i class="fa fa-bolt mr-1"></i> Mới nhất
+                </button>
+                <span id="rangeInfo" class="text-xs text-slate-500 ml-auto"
+                  >—</span
+                >
+              </div>
+
+              <div
+                id="messages"
+                class="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50"
+              ></div>
+
+              <form id="composer" class="p-4 border-t flex gap-2">
+                <input
+                  id="msgInput"
+                  type="text"
+                  class="form-input flex-1"
+                  placeholder="Nhập tin nhắn..."
+                  autocomplete="off"
+                />
+                <button id="btnSend" class="btn-primary" type="submit">
+                  <i class="fa fa-paper-plane"></i> Gửi
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <footer class="pt-4">
+          <div class="w-full px-6 mx-auto">
+            <div class="text-center text-sm text-slate-500">
+              ©
+              <script>
+                document.write(new Date().getFullYear());
+              </script>
+              Duantuyendung
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <!-- App -->
+    <script type="module">
+      import { API_BASE, BASE_URL } from "../../assets/js/config.js";
+
+      // ===== Auth & header =====
+      const auth = (() => {
+        try {
+          return JSON.parse(localStorage.getItem("auth") || "null");
+        } catch {
+          return null;
+        }
+      })();
+      const emailStr = auth?.email || auth?.Email || "—";
+      document.getElementById("uvEmail").textContent = emailStr;
+      document.getElementById("oEmail").textContent = emailStr;
+
+      // ===== Elements =====
+      const threadList = document.getElementById("threadList");
+      const emptyThreads = document.getElementById("emptyThreads");
       const messagesEl = document.getElementById("messages");
       const chatTitle = document.getElementById("chatTitle");
       const jobInfo = document.getElementById("jobInfo");
-      const msgInput = document.getElementById("msgInput");
+      const threadMeta = document.getElementById("threadMeta");
+      const searchInput = document.getElementById("searchInput");
+      const btnReload = document.getElementById("btnReload");
       const composer = document.getElementById("composer");
+      const msgInput = document.getElementById("msgInput");
+      const btnSend = document.getElementById("btnSend");
+      const btnOlder = document.getElementById("btnOlder");
+      const btnNewest = document.getElementById("btnNewest");
+      const rangeInfo = document.getElementById("rangeInfo");
 
+      // ===== Fetch helpers =====
+      async function parseMaybeJSON(res) {
+        const ct = (res.headers.get("content-type") || "").toLowerCase();
+        const txt = await res.text();
+        try {
+          if (!ct.includes("application/json")) throw new Error("not-json");
+          return JSON.parse(txt);
+        } catch (e) {
+          console.error("API returned non-JSON:\\n", txt);
+          throw new Error("API không trả JSON hợp lệ (xem console).");
+        }
+      }
+      async function jget(u) {
+        const res = await fetch(u, { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status + " @ " + u);
+        return parseMaybeJSON(res);
+      }
+      async function jpost(u, data) {
+        const res = await fetch(u, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status + " @ " + u);
+        return parseMaybeJSON(res);
+      }
+
+      // ===== State =====
+      let MaUngVien = auth?.MaUngVien || auth?.MaTK || null;
+      let threads = [];
+      let filteredThreads = [];
       let currentThread = null;
-      let lastTs = null;
 
-      const jget = async (u) => (await fetch(u)).json();
-      const jpost = async (u, d) =>
-        (
-          await fetch(u, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(d),
-          })
-        ).json();
+      const PAGE = 6;
+      let viewPage = 0; // 0 = newest page
+      let cachedLimit = PAGE;
+      let cachedMessages = []; // oldest->newest
+      let pollTimer = null;
+      let sending = false;
+      let olderEnded = false;
 
-      function inviteItem(row) {
-        const btn = document.createElement("button");
-        btn.className = "w-full text-left p-3 border-b hover:bg-gray-50";
-        btn.innerHTML = `
-        <div class="font-medium">${row.ChucDanh}</div>
-        <div class="text-sm text-gray-500">Mã tin #${row.MaTin} • ${
-          row.TenCongTy || ""
-        }</div>
-      `;
-        btn.onclick = async () => {
-          // tạo / lấy thread cho cặp UV-NTD-Tin (chỉ khi MoiPhongVan)
-          const init = await jpost(`${API_BASE}API_chat_init.php`, {
-            MaTin: row.MaTin,
-            MaUngVien: auth.MaUngVien,
-          });
-          if (!init?.ok) {
-            alert(init?.error || "Không thể mở chat");
-            return;
+      // dedupe helpers
+      let seen = new Set();
+      const keyFor = (m) =>
+        m?.MaMsg
+          ? `id:${m.MaMsg}`
+          : `ts:${m.CreatedAt}|${m.SenderType || ""}|${m.NoiDung || ""}`;
+      function seedSeenFrom(arr) {
+        seen = new Set();
+        for (const m of arr || []) seen.add(keyFor(m));
+      }
+      function mergeUnique(oldArr, newArr) {
+        const out = oldArr.slice();
+        for (const m of newArr || []) {
+          const k = keyFor(m);
+          if (!seen.has(k)) {
+            seen.add(k);
+            out.push(m);
           }
-          currentThread = init.thread;
-          renderHeader(init.job, init.nhatuyendung);
-          messagesEl.innerHTML = "";
-          lastTs = null;
-          const r = await jget(
-            `${API_BASE}API_chat_fetch.php?MaThread=${currentThread.MaThread}&limit=50`
-          );
-          if (r?.ok) (r.messages || []).forEach(pushMessage);
-        };
-        return btn;
+        }
+        return out;
       }
 
-      function renderHeader(job, ntd) {
-        chatTitle.textContent =
-          ntd?.TenCongTy || ntd?.Email || "Nhà tuyển dụng";
-        jobInfo.textContent = `Bài ứng tuyển: ${job.ChucDanh} · ${
-          job.DiaDiemLamViec || ""
-        }`;
-      }
-
-      function pushMessage(m) {
-        const mine = m.SenderType === "UngVien";
-        const row = document.createElement("div");
-        row.className = `flex ${mine ? "justify-end" : "justify-start"}`;
-        row.innerHTML = `
-        <div class="msg-bubble ${
-          mine ? "bg-zinc-700 text-white" : "bg-white"
-        } shadow">
-          <div class="text-sm whitespace-pre-wrap">${m.NoiDung}</div>
-          <div class="text-[11px] opacity-70 mt-1">${m.CreatedAt || ""}</div>
-        </div>`;
-        messagesEl.appendChild(row);
-        messagesEl.scrollTop = messagesEl.scrollHeight;
-        lastTs = m.CreatedAt;
-      }
-
-      async function loadInvites() {
-        // Dùng API_show_Ungtuyen.php của bạn, lọc MoiPhongVan cho chính ứng viên
-        const res = await jget(`${API_BASE}API_show_Ungtuyen.php`);
-        inviteList.innerHTML = "";
-        if (res?.status === "success") {
-          const items = (res.data || []).filter(
-            (x) =>
-              Number(x.MaUngVien) === Number(auth.MaUngVien) &&
-              x.TrangThai === "MoiPhongVan"
-          );
-          if (items.length === 0) {
-            inviteList.innerHTML = `<div class="p-4 text-sm text-gray-500">Chưa có lời mời phỏng vấn.</div>`;
-          } else {
-            items.forEach((x) => inviteList.appendChild(inviteItem(x)));
+      // ===== Profile =====
+      async function loadProfile() {
+        try {
+          const url =
+            API_BASE +
+            "API_show_Ungvien.php?MaTK=" +
+            encodeURIComponent(auth?.MaTK || auth?.userId || "");
+          const js = await jget(url);
+          const me =
+            js?.status === "success" && Array.isArray(js.data)
+              ? js.data[0]
+              : null;
+          if (me) {
+            MaUngVien = Number(me.MaUngVien);
+            document.getElementById("oHoTen").textContent =
+              me.HoTen || "Ứng viên";
           }
-        } else {
-          inviteList.innerHTML = `<div class="p-4 text-sm text-red-600">Không tải được danh sách ứng tuyển</div>`;
+        } catch (err) {
+          console.error("Lỗi tải thông tin ứng viên:", err);
+          showToast("Lỗi tải thông tin cá nhân", "error");
         }
       }
 
-      async function poll() {
-        if (!currentThread) {
-          setTimeout(poll, 1500);
+      // ===== Threads =====
+      function threadItemTemplate(th) {
+        const name = th.TenCongTy || "Nhà tuyển dụng";
+        const sub = [th.ChucDanh, th.DiaDiemLamViec]
+          .filter(Boolean)
+          .join(" • ");
+        const status =
+          th.TrangThai === "DangXet"
+            ? '<span class="badge bg-cyan-100 text-cyan-800">Đang xét</span>'
+            : th.TrangThai === "MoiPhongVan"
+            ? '<span class="badge bg-green-100 text-green-800">Mời phỏng vấn</span>'
+            : "";
+        return `
+          <div class="flex items-center justify-between">
+            <div class="truncate">
+              <div class="font-semibold text-slate-800 truncate">${name}</div>
+              <div class="text-xs text-slate-500 truncate">${sub}</div>
+              ${status ? `<div class="text-xs mt-1">${status}</div>` : ""}
+            </div>
+            <i class="fa fa-comments text-slate-400 ml-3"></i>
+          </div>
+        `;
+      }
+      function renderThreads() {
+        threadList.innerHTML = "";
+        const q = (searchInput.value || "").trim().toLowerCase();
+        filteredThreads = (threads || []).filter((t) => {
+          const a = (t.TenCongTy || "").toLowerCase(),
+            b = (t.ChucDanh || "").toLowerCase(),
+            c = (t.DiaDiemLamViec || "").toLowerCase();
+          return !q || a.includes(q) || b.includes(q) || c.includes(q);
+        });
+        if (!filteredThreads.length) {
+          emptyThreads.classList.remove("hidden");
           return;
         }
-        const url =
-          `${API_BASE}API_chat_fetch.php?MaThread=${currentThread.MaThread}` +
-          (lastTs ? `&since=${encodeURIComponent(lastTs)}` : "");
+        emptyThreads.classList.add("hidden");
+        filteredThreads.forEach((th) => {
+          const row = document.createElement("button");
+          row.type = "button";
+          row.className =
+            "chat-list-item w-full text-left p-3 border-b hover:bg-gray-50";
+          row.innerHTML = threadItemTemplate(th);
+          row.addEventListener("click", () => openThread(th, row));
+          threadList.appendChild(row);
+        });
+      }
+      function setActiveRow(row) {
+        threadList
+          .querySelectorAll(".chat-list-item")
+          .forEach((x) => x.classList.remove("active"));
+        row?.classList.add("active");
+      }
+      async function loadThreads() {
+        if (!MaUngVien) return;
+        const url = `${API_BASE}API_chat_list_threads.php?role=UngVien&MaUngVien=${encodeURIComponent(
+          MaUngVien
+        )}`;
         try {
-          const r = await jget(url);
-          if (r?.ok) (r.messages || []).forEach(pushMessage);
-        } catch (e) {}
-        setTimeout(poll, 1500);
+          const res = await jget(url);
+          threads = res?.ok ? res.threads || [] : [];
+          renderThreads();
+          const urlParams = new URLSearchParams(window.location.search);
+          const MaTin = urlParams.get("MaTin");
+          const MaUngTuyen = urlParams.get("MaUngTuyen");
+          if (MaTin && MaUngTuyen) {
+            const thread = threads.find(
+              (t) =>
+                String(t.MaTin) === String(MaTin) &&
+                String(t.MaUngTuyen) === String(MaUngTuyen)
+            );
+            if (thread) {
+              const row = Array.from(threadList.children).find(
+                (r, i) =>
+                  String(filteredThreads[i]?.MaThread) ===
+                  String(thread.MaThread)
+              );
+              if (row) {
+                openThread(thread, row);
+              } else {
+                showToast("Không tìm thấy luồng chat tương ứng", "error");
+              }
+            } else {
+              showToast("Luồng chat chưa được tạo, vui lòng thử lại", "error");
+            }
+          } else {
+            const savedThreadId = localStorage.getItem("currentThreadId");
+            if (savedThreadId) {
+              const savedThread = threads.find(
+                (t) => String(t.MaThread) === String(savedThreadId)
+              );
+              if (savedThread) {
+                const row = Array.from(threadList.children).find(
+                  (r, i) =>
+                    String(filteredThreads[i]?.MaThread) ===
+                    String(savedThreadId)
+                );
+                if (row) openThread(savedThread, row);
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Lỗi tải danh sách cuộc trò chuyện:", err);
+          showToast("Lỗi tải danh sách cuộc trò chuyện", "error");
+        }
       }
 
-      composer.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        if (!currentThread) return;
-        const text = msgInput.value.trim();
-        if (!text) return;
-        const r = await jpost(`${API_BASE}API_chat_send.php`, {
-          MaThread: currentThread.MaThread,
-          SenderType: "UngVien",
-          NoiDung: text,
-          MaTK: auth.MaTK || null,
-        });
-        if (r?.ok) {
-          pushMessage({
-            SenderType: "UngVien",
-            NoiDung: text,
-            CreatedAt: r.CreatedAt,
+      // ===== Messages =====
+      function formatTime(ts) {
+        try {
+          const d = new Date(String(ts).replace(" ", "T"));
+          return d.toLocaleTimeString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
           });
-          msgInput.value = "";
+        } catch {
+          return ts || "";
+        }
+      }
+      function renderOneMessage(m, position = "append") {
+        const mine = m.SenderType === "UngVien";
+        const wrap = document.createElement("div");
+        wrap.className = `flex ${mine ? "justify-end" : "justify-start"}`;
+        wrap.innerHTML = `
+          <div class="bubble ${mine ? "mine" : "other"} shadow">
+            <div class="text-sm font-medium whitespace-pre-wrap">${(
+              m.NoiDung || ""
+            )
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")}</div>
+            <div class="text-[11px] text-slate-500 mt-1">${formatTime(
+              m.CreatedAt
+            )}</div>
+          </div>`;
+        if (position === "prepend")
+          messagesEl.insertBefore(wrap, messagesEl.firstChild);
+        else messagesEl.appendChild(wrap);
+      }
+      function renderSlice(arrOldestToNewest, page) {
+        messagesEl.innerHTML = "";
+        const total = arrOldestToNewest.length;
+        const end = total - page * PAGE;
+        const start = Math.max(0, end - PAGE);
+        const slice = arrOldestToNewest.slice(start, end);
+        slice.forEach((m) => renderOneMessage(m, "append"));
+        rangeInfo.textContent = `${start + 1}–${Math.min(
+          end,
+          total
+        )} / ${total}`;
+      }
+      async function fetchNewestChunk(limit) {
+        const r = await jget(
+          `${API_BASE}API_chat_fetch.php?MaThread=${currentThread.MaThread}&limit=${limit}`
+        );
+        return Array.isArray(r?.messages) ? r.messages : [];
+      }
+
+      async function openThread(th, rowEl) {
+        currentThread = th;
+        localStorage.setItem("currentThreadId", th.MaThread);
+        setActiveRow(rowEl);
+        chatTitle.textContent = th.TenCongTy || "Nhà tuyển dụng";
+        jobInfo.textContent = `Tin tuyển dụng: ${th.ChucDanh || ""} · ${
+          th.DiaDiemLamViec || ""
+        }`;
+        threadMeta.textContent = `MaTin #${th.MaTin} • MaNTD #${th.MaNTD}`;
+
+        viewPage = 0;
+        cachedLimit = PAGE;
+        olderEnded = false;
+        const arr = await fetchNewestChunk(cachedLimit);
+        seedSeenFrom(arr);
+        cachedMessages = arr.slice();
+        renderSlice(cachedMessages, viewPage);
+        startPolling();
+      }
+
+      // ===== Older / Newest =====
+      btnNewest.addEventListener("click", async () => {
+        if (!currentThread) return;
+        stopPolling();
+        viewPage = 0;
+        cachedLimit = PAGE;
+        olderEnded = false;
+        const arr = await fetchNewestChunk(cachedLimit);
+        seedSeenFrom(arr);
+        cachedMessages = arr.slice();
+        renderSlice(cachedMessages, viewPage);
+        startPolling();
+      });
+
+      btnOlder.addEventListener("click", async () => {
+        if (!currentThread || olderEnded) return;
+        btnOlder.disabled = true;
+        btnOlder.innerHTML =
+          '<i class="fa fa-spinner fa-spin mr-1"></i> Đang tải...';
+        try {
+          const before = cachedMessages.length;
+          const end = before - viewPage * PAGE;
+          const start = Math.max(0, end - PAGE);
+          if (start === 0) {
+            cachedLimit += PAGE;
+            const arr = await fetchNewestChunk(cachedLimit);
+            seedSeenFrom(arr);
+            cachedMessages = arr.slice();
+            const after = cachedMessages.length;
+            if (after > before) {
+              viewPage += 1;
+              renderSlice(cachedMessages, viewPage);
+            } else {
+              olderEnded = true;
+              showToast("Đã hết tin nhắn cũ hơn.", "info");
+            }
+          } else {
+            viewPage += 1;
+            renderSlice(cachedMessages, viewPage);
+          }
+        } catch {
+          showToast("Lỗi tải tin nhắn cũ hơn", "error");
+        } finally {
+          btnOlder.disabled = olderEnded ? true : false;
+          btnOlder.innerHTML =
+            '<i class="fa fa-chevron-up mr-1"></i> Tin nhắn cũ hơn';
         }
       });
 
+      // ===== Poll newest =====
+      function startPolling() {
+        stopPolling();
+        pollTimer = setInterval(doPoll, 1500);
+      }
+      function stopPolling() {
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = null;
+      }
+      async function doPoll() {
+        try {
+          if (!currentThread || viewPage !== 0) return;
+          const last = cachedMessages[cachedMessages.length - 1];
+          const since = last?.CreatedAt
+            ? `&since=${encodeURIComponent(last.CreatedAt)}`
+            : "";
+          const r = await jget(
+            `${API_BASE}API_chat_fetch.php?MaThread=${currentThread.MaThread}${since}&limit=${PAGE}`
+          );
+          const arr = Array.isArray(r?.messages) ? r.messages : [];
+          if (arr.length) {
+            const merged = mergeUnique(cachedMessages, arr);
+            cachedMessages = merged.slice(-cachedLimit);
+            renderSlice(cachedMessages, 0);
+          }
+        } catch {}
+      }
+
+      // ===== Send message =====
+      composer.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!currentThread || sending) return;
+        const text = msgInput.value.trim();
+        if (!text) return;
+        sending = true;
+        btnSend.disabled = true;
+        try {
+          const r = await jpost(`${API_BASE}API_chat_send.php`, {
+            MaThread: currentThread.MaThread,
+            SenderType: "UngVien",
+            NoiDung: text,
+            MaTK: auth?.MaTK || auth?.userId || null,
+          });
+          if (r?.ok) {
+            viewPage = 0;
+            cachedLimit = PAGE;
+            olderEnded = false;
+            const arr = await fetchNewestChunk(cachedLimit);
+            seedSeenFrom(arr);
+            cachedMessages = arr.slice();
+            renderSlice(cachedMessages, 0);
+            startPolling();
+            msgInput.value = "";
+            // Gửi thông báo cho nhà tuyển dụng
+            await jpost(`${API_BASE}API_create_notification.php`, {
+              MaNguoiNhan: currentThread.MaNTD,
+              LoaiThongBao: "TinNhan",
+              NoiDung: `Bạn có tin nhắn mới từ ứng viên trong luồng chat #${currentThread.MaThread}.`,
+            });
+          } else {
+            showToast(r?.error || "Gửi tin nhắn thất bại!", "error");
+          }
+        } catch (err) {
+          showToast(err.message || "Lỗi kết nối khi gửi!", "error");
+        } finally {
+          sending = false;
+          btnSend.disabled = false;
+        }
+      });
+
+      // ===== Events =====
+      searchInput.addEventListener("input", renderThreads);
+      btnReload.addEventListener("click", loadThreads);
+
+      // ===== Init =====
       (async function init() {
-        await loadInvites();
-        poll();
+        await loadProfile();
+        await loadThreads();
       })();
     </script>
   </body>
