@@ -1,3 +1,4 @@
+<!-- Sidenav_nhatuyendung.html -->
 <aside
   class="fixed inset-y-0 block w-full p-0 my-4 overflow-y-auto bg-white shadow-xl xl:ml-6 max-w-64 rounded-2xl xl:left-0 xl:translate-x-0 z-50"
 >
@@ -101,6 +102,43 @@
         </a>
       </li>
 
+      <!-- Thông báo -->
+      <li class="mt-0.5 w-full">
+        <a
+          id="tdNotifLink"
+          class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
+          href="td-notifications.html"
+          data-nav
+        >
+          <span class="relative mr-2 inline-flex">
+            <!-- Bell (SVG, chắc chắn hiển thị) -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              class="h-5 w-5 text-blue-500"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M14.857 17.082A4.5 4.5 0 0 1 12 18a4.5 4.5 0 0 1-2.857-.918M5.5 10.5a6.5 6.5 0 1 1 13 0c0 2.863.943 3.806 1.5 4.5H4c.557-.694 1.5-1.637 1.5-4.5Z"
+              />
+            </svg>
+            <span
+              id="tdNotificationDot"
+              class="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full hidden"
+            ></span>
+          </span>
+          <span>Thông báo</span>
+          <span
+            id="tdNotificationBadge"
+            class="ml-auto hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-500 text-white"
+          ></span>
+        </a>
+      </li>
+
       <!-- Đăng xuất -->
       <li class="mt-0.5 w-full">
         <button
@@ -117,12 +155,11 @@
 
 <script>
   (function () {
-    // ===== ĐỊNH NGHĨA =====
     const API_LOGOUT = "/Duantuyendung/interface/API/API_logout_User.php";
     const LOGIN_PAGE =
       "/Duantuyendung/interface/build/pages/UI_SignUp_TD-UV.html?logged_out=1";
 
-    // Đánh dấu "điều hướng trong app" khi bấm menu để không auto-logout lúc chuyển trang
+    // đánh dấu điều hướng trong app
     document.querySelectorAll("a[data-nav]").forEach((a) => {
       a.addEventListener("click", () => {
         try {
@@ -131,7 +168,6 @@
       });
     });
 
-    // Tiện ích xoá auth phía client
     function clearClientAuth() {
       try {
         localStorage.removeItem("auth");
@@ -143,49 +179,92 @@
         sessionStorage.removeItem("skipCloseLogoutOnce");
       } catch (_) {}
     }
-
-    // Phát tín hiệu logout tới các tab khác
     function broadcastForceLogout() {
       try {
         localStorage.setItem("forceLogout", String(Date.now()));
       } catch {}
     }
-
-    // Gọi server logout bằng beacon (không chặn đóng tab/điều hướng)
     function serverLogout() {
       try {
         const fd = new FormData();
         fd.append("reason", "manual_click");
-        if (navigator.sendBeacon) {
-          navigator.sendBeacon(API_LOGOUT, fd);
-        } else {
+        if (navigator.sendBeacon) navigator.sendBeacon(API_LOGOUT, fd);
+        else
           fetch(API_LOGOUT, {
             method: "POST",
             body: fd,
             keepalive: true,
           }).catch(() => {});
-        }
       } catch (_) {}
     }
-
-    // Đăng xuất hoàn chỉnh
     function doLogout() {
       clearClientAuth();
       broadcastForceLogout();
       serverLogout();
-      // Điều hướng về trang login
       window.location.href = LOGIN_PAGE;
     }
 
-    // Gán sự kiện nút Đăng xuất
     const btn = document.getElementById("btnLogout");
-    if (btn) {
+    if (btn)
       btn.addEventListener("click", (e) => {
         e.preventDefault();
         btn.disabled = true;
         btn.style.opacity = "0.6";
         doLogout();
       });
+
+    // ===== Notifications =====
+    async function loadNotificationCount() {
+      try {
+        const auth = localStorage.getItem("auth");
+        if (!auth) return;
+        const user = JSON.parse(auth);
+
+        const resp = await fetch(
+          "/Duantuyendung/interface/API/API_get_notifications.php",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ MaTK: user.MaTK }),
+          }
+        );
+        const result = await resp.json();
+
+        const count = Number(result?.data?.unread_count || 0);
+        const dot = document.getElementById("tdNotificationDot");
+        const badge = document.getElementById("tdNotificationBadge");
+
+        if (count > 0) {
+          dot && dot.classList.remove("hidden");
+          if (badge) {
+            badge.textContent = count > 99 ? "99+" : String(count);
+            badge.classList.remove("hidden");
+            badge.setAttribute("aria-label", `Có ${count} thông báo chưa đọc`);
+            badge.setAttribute("title", `${count} thông báo chưa đọc`);
+          }
+        } else {
+          dot && dot.classList.add("hidden");
+          if (badge) {
+            badge.classList.add("hidden");
+            badge.textContent = "";
+            badge.removeAttribute("aria-label");
+            badge.removeAttribute("title");
+          }
+        }
+      } catch (e) {
+        console.error("TD notifications error:", e);
+      }
     }
+
+    document.getElementById("tdNotifLink")?.addEventListener("click", () => {
+      document.getElementById("tdNotificationDot")?.classList.add("hidden");
+      const b = document.getElementById("tdNotificationBadge");
+      if (b) {
+        b.classList.add("hidden");
+        b.textContent = "";
+      }
+    });
+
+    loadNotificationCount();
   })();
 </script>

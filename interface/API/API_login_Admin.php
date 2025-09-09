@@ -8,7 +8,9 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-header('Access-Control-Allow-Origin: *');
+// Chỉ cho phép domain localhost
+header('Access-Control-Allow-Origin: http://localhost:8888');
+header('Access-Control-Allow-Credentials: true'); // Cho phép gửi cookie
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }

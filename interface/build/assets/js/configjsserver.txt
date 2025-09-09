@@ -1,0 +1,92 @@
+// interface/build/assets/js/config.js
+// Cấu hình chung cho toàn bộ frontend
+
+/* ================= Env detection ================= */
+const HOST = window.location.hostname;
+const IS_LOCAL = HOST === "localhost" || HOST === "127.0.0.1" || HOST === "";
+const DEFAULT_ORIGIN = IS_LOCAL
+  ? "http://localhost:8888"
+  : "https://nhom4.itimit.id.vn";
+
+// Dự án đặt trong thư mục /Duantuyendung/
+export const ORIGIN = window.location.origin || DEFAULT_ORIGIN;
+const PROJECT_SLUG = "/Duantuyendung/";
+
+/* ================= Base URLs ================= */
+export const BASE_URL = `${ORIGIN}${PROJECT_SLUG}`;
+export const API_BASE = `${BASE_URL}interface/API/`;
+
+/* ================= Endpoints chuẩn ================= */
+export const API_ENDPOINTS = {
+  // Auth
+  LOGIN: "API_login_Admin.php",
+  LOGOUT: "API_logout_Admin.php",
+  ME: "API_me.php", // (tạo nếu chưa có để check session)
+
+  // Danh mục nghề (Admin)
+  DMN_LIST: "API_show_Danhmucnghe.php",
+  DMN_UPDATE: "API_update_Danhmucnghe.php",
+
+  // Ứng viên
+  SHOW_UNGVIEN: "API_show_Ungvien.php",
+  SHOW_UNGVIEN_BY_UV: "API_show_Ungtuyen_byUV.php",
+  SHOW_UNGVIEN_ALL: "API_show_Ungtuyen.php",
+
+  // Tin tuyển dụng
+  SHOW_TINTUYENDUNG: "API_show_TinTuyenDung.php",
+
+  // Nhà tuyển dụng
+  SHOW_NHATUYENDUNG: "API_show_Nhatuyendung.php",
+
+  // Quản lý tài khoản
+  SHOW_TAIKHOAN: "API_show_Taikhoan.php",
+};
+
+/* ================= Helpers ================= */
+export function getApiUrl(endpoint) {
+  return API_BASE + String(endpoint).replace(/^\/+/, "");
+}
+
+export function getPageUrl(path) {
+  return BASE_URL + String(path).replace(/^\/+/, "");
+}
+
+/**
+ * Wrapper fetch mặc định:
+ * - credentials: include (để cookie session đi kèm)
+ * - Content-Type: application/json
+ * - cache: no-store
+ * Trả về data JSON; ném Error nếu HTTP !ok hoặc data.ok === false
+ */
+export async function apiFetch(endpoint, options = {}) {
+  const url = getApiUrl(endpoint);
+  const res = await fetch(url, {
+    method: options.method || "GET",
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined,
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  let data = null;
+  try {
+    data = await res.json();
+  } catch (_) {
+    // API không trả JSON hợp lệ
+  }
+
+  if (!res.ok || (data && data.ok === false)) {
+    const msg =
+      (data && (data.error || data.message)) ||
+      `HTTP ${res.status} ${res.statusText}`;
+    const err = new Error(msg);
+    err.status = res.status;
+    err.payload = data;
+    throw err;
+  }
+
+  return data ?? { ok: true };
+}

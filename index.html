@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Trang Giới Thiệu - Hệ Thống Tuyển Dụng</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+    />
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: "Poppins", sans-serif;
+        overflow: hidden;
+      }
+
+      /* Slideshow background */
+      .slideshow {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+      }
+
+      .slideshow img {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        animation: slideShow 24s infinite;
+      }
+
+      .slideshow img:nth-child(1) {
+        animation-delay: 0s;
+      }
+      .slideshow img:nth-child(2) {
+        animation-delay: 6s;
+      }
+      .slideshow img:nth-child(3) {
+        animation-delay: 12s;
+      }
+      .slideshow img:nth-child(4) {
+        animation-delay: 18s;
+      }
+
+      @keyframes slideShow {
+        0% {
+          opacity: 0;
+        }
+        8% {
+          opacity: 1;
+        }
+        25% {
+          opacity: 1;
+        }
+        33% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+
+      /* Card nội dung */
+      .card {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 1rem;
+        padding: 2rem;
+        max-width: 700px;
+        margin: auto;
+        text-align: left;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+      }
+
+      h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-align: center;
+        color: #166534;
+      }
+
+      h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-top: 1rem;
+        color: #15803d;
+      }
+
+      p,
+      li {
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 0.5rem;
+        color: #374151;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: #16a34a;
+        color: white;
+        border-radius: 9999px;
+        font-weight: 600;
+        transition: background 0.3s;
+        text-align: center;
+        margin-top: 1.5rem;
+      }
+      .btn:hover {
+        background: #15803d;
+      }
+    </style>
+  </head>
+  <body class="flex items-center justify-center min-h-screen">
+    <!-- Slideshow background -->
+    <div class="slideshow">
+      <img src="interface/build/assets/img/index1.jpg" alt="background 1" />
+      <img src="interface/build/assets/img/index2.jpg" alt="background 2" />
+      <img src="interface/build/assets/img/index3.jpg" alt="background 3" />
+      <img src="interface/build/assets/img/index4.jpg" alt="background 4" />
+    </div>
+
+    <!-- Nội dung -->
+    <div class="card">
+      <h1>Chào mừng bạn đến với hệ thống tuyển dụng trực tuyến của Nhóm 4</h1>
+      <p>Hệ thống của chúng tôi ra đời để:</p>
+      <ul class="list-disc ml-6">
+        <li>
+          Giúp ứng viên tiếp cận nhanh hàng trăm cơ hội việc làm, nộp hồ sơ mọi
+          lúc, mọi nơi.
+        </li>
+        <li>
+          Hỗ trợ nhà tuyển dụng đăng tin, quản lý hồ sơ và kết nối trực tiếp với
+          ứng viên.
+        </li>
+        <li>
+          Tích hợp các chức năng chat, đặt lịch phỏng vấn, theo dõi tiến trình
+          tuyển dụng.
+        </li>
+      </ul>
+
+      <h2>🎯 Mục tiêu hệ thống</h2>
+      <p>
+        <strong>Đối với ứng viên:</strong> Tạo hồ sơ CV trực tuyến, tìm kiếm &
+        ứng tuyển việc làm, chat với nhà tuyển dụng, quản lý lịch phỏng vấn.
+      </p>
+      <p>
+        <strong>Đối với nhà tuyển dụng:</strong> Đăng tin tuyển dụng, quản lý hồ
+        sơ ứng viên, trao đổi trực tiếp và tổ chức phỏng vấn hiệu quả.
+      </p>
+
+      <div class="text-center">
+        <a href="interface/build/pages/UI_SignUp_TD-UV.html" class="btn"
+          >Đăng nhập hoặc Tạo tài khoản</a
+        >
+      </div>
+    </div>
+  </body>
+</html>

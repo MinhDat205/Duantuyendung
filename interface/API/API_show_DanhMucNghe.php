@@ -1,34 +1,68 @@
 <?php
-// interface/API/API_show_DanhMucNghe.php
+// interface/API/API_show_Danhmucnghe.php
 require_once __DIR__ . '/config.php';
+require_method('GET');
 
-// CORS & JSON
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit; }
+$conn  = db();
+$id    = inparam(['id']);
+$q     = inparam(['q'], '');
+$page  = max(1, (int) inparam(['page'], 1));
+$size  = max(1, min(100, (int) inparam(['pageSize'], 20)));
+$offset = ($page - 1) * $size;
 
-try {
-  $sql = "SELECT MaDanhMuc, TenDanhMuc FROM DanhMucNghe ORDER BY TenDanhMuc ASC";
-  $rs  = $conn->query($sql);
-
-  if (!$rs) {
-    http_response_code(500);
-    echo json_encode(['ok'=>false,'error'=>'Query failed','detail'=>$conn->error], JSON_UNESCAPED_UNICODE);
-    exit;
-  }
-
-  $data = [];
-  while ($row = $rs->fetch_assoc()) {
-    $data[] = $row;
-  }
-
-  echo json_encode(['ok'=>true, 'data'=>$data], JSON_UNESCAPED_UNICODE);
-} catch (Throwable $e) {
-  http_response_code(500);
-  echo json_encode(['ok'=>false,'error'=>'Lỗi lấy danh mục','detail'=>$e->getMessage()], JSON_UNESCAPED_UNICODE);
-} finally {
-  if (isset($rs) && $rs instanceof mysqli_result) { $rs->free(); }
-  if (isset($conn) && $conn instanceof mysqli) { $conn->close(); }
+if (!empty($id)) {
+  $stmt = $conn->prepare("SELECT MaDanhMuc, TenDanhMuc FROM DanhMucNghe WHERE MaDanhMuc = ?");
+  $stmt->bind_param("i", $id);
+  $stmt->execute();
+  $row = $stmt->get_result()->fetch_assoc();
+  $stmt->close();
+  if (!$row) json_out(['ok'=>false,'error'=>'Không tìm thấy danh mục'], 404);
+  json_out(['ok'=>true,'data'=>$row]);
 }
+
+if ($q !== '') {
+  $like = "%{$q}%";
+  $stmt = $conn->prepare("SELECT COUNT(*) total FROM DanhMucNghe WHERE TenDanhMuc LIKE ?");
+  $stmt->bind_param("s", $like);
+  $stmt->execute();
+  $total = (int) $stmt->get_result()->fetch_assoc()['total'];
+  $stmt->close();
+
+  $stmt = $conn->prepare("
+    SELECT MaDanhMuc, TenDanhMuc
+    FROM DanhMucNghe
+    WHERE TenDanhMuc LIKE ?
+    ORDER BY TenDanhMuc ASC
+    LIMIT ? OFFSET ?
+  ");
+  $stmt->bind_param("sii", $like, $size, $offset);
+  $stmt->execute();
+  $items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+  $stmt->close();
+} else {
+  $total = (int) $conn->query("SELECT COUNT(*) total FROM DanhMucNghe")->fetch_assoc()['total'];
+  $stmt = $conn->prepare("
+    SELECT MaDanhMuc, TenDanhMuc
+    FROM DanhMucNghe
+    ORDER BY TenDanhMuc ASC
+    LIMIT ? OFFSET ?
+  ");
+  $stmt->bind_param("ii", $size, $offset);
+  $stmt->execute();
+  $items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+  $stmt->close();
+}
+
+json_out([
+  'ok' => true,
+  'data' => [
+    'items' => $items,
+    'paging' => [
+      'page' => $page,
+      'pageSize' => $size,
+      'total' => $total,
+      'totalPages' => (int)ceil($total / $size),
+      'query' => $q
+    ]
+  ]
+]);

@@ -7,6 +7,7 @@
     <a
       class="block px-8 py-6 m-0 text-sm whitespace-nowrap text-slate-700"
       href="uv-home.html"
+      data-nav
     >
       <img
         src="../../assets/img/logo-ct.png"
@@ -31,6 +32,7 @@
         <a
           class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
           href="uv-home.html"
+          data-nav
         >
           <i class="ni ni-tv-2 mr-2 text-blue-500"></i>
           <span>Trang chủ</span>
@@ -42,6 +44,7 @@
         <a
           class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
           href="uv-profile.html"
+          data-nav
         >
           <i class="ni ni-single-02 mr-2 text-emerald-500"></i>
           <span>Thông tin cá nhân</span>
@@ -53,6 +56,7 @@
         <a
           class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
           href="uv-my-applications.html"
+          data-nav
         >
           <i class="ni ni-briefcase-24 mr-2 text-orange-500"></i>
           <span>Tin đã ứng tuyển</span>
@@ -60,11 +64,11 @@
       </li>
 
       <!-- Lịch phỏng vấn -->
-
       <li class="mt-0.5 w-full">
         <a
           class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
           href="UI_UV_Lichphongvan.html"
+          data-nav
         >
           <i class="ni ni-calendar-grid-58 mr-2 text-indigo-500"></i>
           <span>Lịch phỏng vấn</span>
@@ -72,21 +76,58 @@
       </li>
 
       <!-- Chat -->
-
       <li class="mt-0.5 w-full">
         <a
           class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
           href="UI_UV_Chat.html"
+          data-nav
         >
           <i class="ni ni-chat-round mr-2 text-purple-500"></i>
           <span>Chat</span>
         </a>
       </li>
 
+      <!-- Thông báo -->
+      <li class="mt-0.5 w-full">
+        <a
+          id="uvNotifLink"
+          class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg"
+          href="uv-notifications.html"
+          data-nav
+        >
+          <span class="relative mr-2 inline-flex">
+            <!-- Bell SVG -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              class="h-5 w-5 text-blue-500"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M14.857 17.082A4.5 4.5 0 0 1 12 18a4.5 4.5 0 0 1-2.857-.918M5.5 10.5a6.5 6.5 0 1 1 13 0c0 2.863.943 3.806 1.5 4.5H4c.557-.694 1.5-1.637 1.5-4.5Z"
+              />
+            </svg>
+            <span
+              id="uvNotificationDot"
+              class="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full hidden"
+            ></span>
+          </span>
+          <span>Thông báo</span>
+          <span
+            id="uvNotificationBadge"
+            class="ml-auto hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-500 text-white"
+          ></span>
+        </a>
+      </li>
+
       <!-- Đăng xuất -->
       <li class="mt-0.5 w-full">
         <button
-          id="btnLogout"
+          id="uvBtnLogout"
           class="w-[calc(100%-1rem)] ml-2 py-2.5 text-left text-sm flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg cursor-pointer"
         >
           <i class="ni ni-button-power mr-2 text-red-600"></i>
@@ -102,26 +143,85 @@
     const LOGIN_PAGE =
       "/Duantuyendung/interface/build/pages/UI_SignUp_TD-UV.html?logged_out=1";
 
-    const btn = document.getElementById("btnLogout");
-    if (!btn) return;
+    // điều hướng trong app
+    document.querySelectorAll("a[data-nav]").forEach((a) => {
+      a.addEventListener("click", () => {
+        try {
+          sessionStorage.setItem("navInApp", "1");
+        } catch {}
+      });
+    });
 
-    btn.addEventListener("click", async (e) => {
-      e.preventDefault();
-
-      // Trạng thái đang xử lý
-      btn.disabled = true;
-      btn.style.opacity = "0.6";
-
-      try {
-        // Xoá client state
+    // logout
+    const btn = document.getElementById("uvBtnLogout");
+    if (btn) {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        btn.disabled = true;
+        btn.style.opacity = "0.6";
         try {
           localStorage.removeItem("auth");
+          localStorage.removeItem("td_logged_in");
+          localStorage.removeItem("uv_logged_in");
+          localStorage.removeItem("user_email");
+          localStorage.removeItem("auth_token");
         } catch (_) {}
-      } catch (_) {
-        // Bất kể thành công hay lỗi vẫn chuyển hướng
-      } finally {
         window.location.href = LOGIN_PAGE;
+      });
+    }
+
+    // notifications
+    async function loadNotificationCount() {
+      try {
+        const auth = localStorage.getItem("auth");
+        if (!auth) return;
+        const user = JSON.parse(auth);
+
+        const resp = await fetch(
+          "/Duantuyendung/interface/API/API_get_notifications.php",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ MaTK: user.MaTK }),
+          }
+        );
+        const result = await resp.json();
+
+        const count = Number(result?.data?.unread_count || 0);
+        const dot = document.getElementById("uvNotificationDot");
+        const badge = document.getElementById("uvNotificationBadge");
+
+        if (count > 0) {
+          dot && dot.classList.remove("hidden");
+          if (badge) {
+            badge.textContent = count > 99 ? "99+" : String(count);
+            badge.classList.remove("hidden");
+            badge.setAttribute("aria-label", `Có ${count} thông báo chưa đọc`);
+            badge.setAttribute("title", `${count} thông báo chưa đọc`);
+          }
+        } else {
+          dot && dot.classList.add("hidden");
+          if (badge) {
+            badge.classList.add("hidden");
+            badge.textContent = "";
+            badge.removeAttribute("aria-label");
+            badge.removeAttribute("title");
+          }
+        }
+      } catch (e) {
+        console.error("UV notifications error:", e);
+      }
+    }
+
+    document.getElementById("uvNotifLink")?.addEventListener("click", () => {
+      document.getElementById("uvNotificationDot")?.classList.add("hidden");
+      const b = document.getElementById("uvNotificationBadge");
+      if (b) {
+        b.classList.add("hidden");
+        b.textContent = "";
       }
     });
+
+    loadNotificationCount();
   })();
 </script>

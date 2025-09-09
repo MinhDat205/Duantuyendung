@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Quản lý Danh mục nghề | Admin</title>
+
+    <!-- Guard: chỉ cho admin đã đăng nhập -->
+    <script>
+      (function () {
+        if (localStorage.getItem("admin_logged_in") !== "true") {
+          window.location.href = "UI_DangNhap_Admin.html";
+        }
+      })();
+    </script>
+
+    <!-- Fonts & Icons -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700"
+      rel="stylesheet"
+    />
+    <script
+      src="https://kit.fontawesome.com/42d5adcbca.js"
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- Argon/Tailwind CSS -->
+    <link href="../../assets/css/nucleo-icons.css" rel="stylesheet" />
+    <link href="../../assets/css/nucleo-svg.css" rel="stylesheet" />
+    <link
+      href="../../assets/css/argon-dashboard-tailwind.css?v=1.0.1"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* Nền mờ cho main */
+      main {
+        background: url("../../assets/img/Trangchu.jpg") no-repeat center center;
+        background-size: cover;
+        position: relative;
+      }
+      main::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.7);
+        z-index: 0;
+        border-radius: 0.75rem;
+      }
+      main > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Làm nổi bật nút chính */
+      .action-buttons {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+        padding: 0.5rem;
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .action-buttons button {
+        display: inline-block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        z-index: 10;
+      }
+      #btnOpenCreate {
+        background-color: #10b981;
+        color: #ffffff;
+      }
+      #btnOpenCreate:hover {
+        background-color: #047857;
+        border-color: #10b981;
+        transform: translateY(-2px);
+      }
+      #btnDeleteSelected {
+        background-color: #ef4444;
+        color: #ffffff;
+      }
+      #btnDeleteSelected:hover {
+        background-color: #dc2626;
+        border-color: #ef4444;
+        transform: translateY(-2px);
+      }
+
+      /* Làm nổi bật nút Lưu trong modal */
+      .modal .px-5.py-4.border-t button#btnSave {
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        background-color: #10b981;
+        color: #ffffff !important;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+        opacity: 1 !important;
+        filter: none !important; /* Loại bỏ hiệu ứng mờ */
+      }
+      .modal .px-5.py-4.border-t button#btnSave:hover {
+        background-color: #047857;
+        border-color: #10b981;
+        transform: translateY(-2px);
+      }
+      .modal .px-5.py-4.border-t button {
+        margin-left: 0.5rem;
+      }
+
+      /* Modal */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+      }
+      .modal {
+        width: 100%;
+        max-width: 520px;
+        background: #fff;
+        border-radius: 0.75rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+      }
+      .modal.show,
+      .modal-backdrop.show {
+        display: flex;
+      }
+
+      /* Simple toast */
+      #toast {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        z-index: 60;
+        display: none;
+        min-width: 260px;
+      }
+      #toast.show {
+        display: block;
+        animation: fadein 0.2s ease, fadeout 0.2s ease 2.6s forwards;
+      }
+      @keyframes fadein {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes fadeout {
+        to {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+      }
+    </style>
+  </head>
+
+  <body class="m-0 font-sans text-base antialiased bg-gray-50 text-slate-600">
+    <!-- Placeholder Sidenav -->
+    <div
+      id="sidenav-container"
+      role="complementary"
+      aria-label="Thanh điều hướng quản trị"
+    ></div>
+
+    <script>
+      (async function loadSidenav() {
+        try {
+          const res = await fetch("Sidenav_admin.html", { cache: "no-store" });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const html = await res.text();
+          const host = document.getElementById("sidenav-container");
+          host.innerHTML = html;
+
+          // Gắn listener Đăng xuất từ trang cha (script bên trong Sidenav không auto chạy)
+          const logoutBtn = host.querySelector("#btnLogout");
+          if (logoutBtn) {
+            logoutBtn.addEventListener("click", function (e) {
+              e.preventDefault();
+              try {
+                localStorage.removeItem("admin_logged_in");
+                localStorage.removeItem("admin_email");
+              } catch {}
+              window.location.href = "../../../API/API_logout_Admin.php";
+            });
+          }
+        } catch (e) {
+          console.error("Không thể tải Sidenav_admin.html", e);
+        }
+      })();
+    </script>
+
+    <main
+      class="relative h-full min-h-screen transition-all duration-200 ease-in-out md:ml-64 xl:ml-68 rounded-xl overflow-hidden"
+    >
+      <!-- Navbar -->
+      <nav
+        class="mx-6 mt-4 px-6 py-3 bg-white/80 backdrop-blur-md rounded-2xl shadow-md"
+      >
+        <div class="flex items-center justify-between">
+          <h6 class="font-bold">Quản lý Danh mục nghề</h6>
+          <div class="text-sm text-slate-700">
+            Xin chào, <span id="adminEmail">admin</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Content -->
+      <div class="w-full px-6 py-6 mx-auto">
+        <div class="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-6">
+          <!-- Action Buttons (Thêm và Xóa) - Đặt trên cùng và làm nổi bật -->
+          <div class="action-buttons">
+            <button
+              id="btnOpenCreate"
+              class="px-4 py-2 bg-emerald-600 text-white rounded-lg shadow hover:bg-emerald-700"
+            >
+              <i class="fa fa-plus mr-2"></i> Thêm danh mục
+            </button>
+            <button
+              id="btnDeleteSelected"
+              class="px-4 py-2 bg-rose-600 text-white rounded-lg shadow hover:bg-rose-700"
+            >
+              <i class="fa fa-trash mr-2"></i> Xóa đã chọn
+            </button>
+          </div>
+
+          <!-- Search and Filter -->
+          <div class="flex items-center gap-2 mt-4">
+            <input
+              id="txtSearch"
+              type="text"
+              placeholder="Tìm theo tên danh mục..."
+              class="px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-400 bg-white/70"
+            />
+            <button
+              id="btnSearch"
+              class="px-4 py-2 bg-slate-700 text-white rounded-lg shadow hover:bg-slate-800"
+            >
+              <i class="fa fa-search mr-2"></i> Tìm
+            </button>
+            <button
+              id="btnReset"
+              class="px-3 py-2 border rounded-lg bg-white hover:bg-slate-50"
+            >
+              <i class="fa fa-rotate mr-1"></i> Reset
+            </button>
+          </div>
+
+          <!-- Table -->
+          <div
+            class="overflow-x-auto rounded-xl border border-slate-200 bg-white mt-4"
+          >
+            <table class="min-w-full">
+              <thead class="bg-emerald-600 text-white">
+                <tr>
+                  <th class="px-4 py-3 text-left w-12">
+                    <input type="checkbox" id="chkAll" />
+                  </th>
+                  <th class="px-4 py-3 text-left">Mã danh mục</th>
+                  <th class="px-4 py-3 text-left">Tên danh mục</th>
+                  <th class="px-4 py-3 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+
+          <!-- Paging -->
+          <div class="flex items-center justify-between mt-4">
+            <div class="text-sm text-slate-600">
+              <span id="lblSummary">0 mục</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                id="btnPrev"
+                class="px-3 py-2 border rounded-lg bg-white hover:bg-slate-50"
+              >
+                &laquo; Trước
+              </button>
+              <span id="lblPage" class="text-sm font-semibold"></span>
+              <button
+                id="btnNext"
+                class="px-3 py-2 border rounded-lg bg-white hover:bg-slate-50"
+              >
+                Sau &raquo;
+              </button>
+              <select
+                id="selPageSize"
+                class="px-2 py-2 border rounded-lg bg-white"
+              >
+                <option value="10">10 / trang</option>
+                <option value="20" selected>20 / trang</option>
+                <option value="50">50 / trang</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal: Create/Update -->
+    <div id="backdrop" class="modal-backdrop">
+      <div class="modal">
+        <div class="px-5 py-4 border-b">
+          <h5 id="modalTitle" class="font-bold">Thêm danh mục</h5>
+        </div>
+        <div class="p-5">
+          <input type="hidden" id="hidId" />
+          <label class="block text-sm mb-1">Tên danh mục</label>
+          <input
+            id="txtTen"
+            type="text"
+            class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-400"
+            placeholder="VD: CNTT - Lập trình"
+          />
+          <p id="errTen" class="text-rose-600 text-sm mt-1 hidden">
+            Vui lòng nhập tên danh mục
+          </p>
+        </div>
+        <div class="px-5 py-4 border-t flex items-center justify-end gap-2">
+          <button
+            id="btnClose"
+            class="px-3 py-2 border rounded-lg bg-white hover:bg-slate-50"
+          >
+            Hủy
+          </button>
+          <button
+            id="btnSave"
+            class="px-4 py-2 bg-emerald-600 text-white rounded-lg shadow hover:bg-emerald-700"
+          >
+            Lưu
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="bg-slate-900 text-white rounded-lg shadow px-4 py-3">
+      <span id="toastMsg">Đã lưu</span>
+    </div>
+
+    <script>
+      // ====== CONFIG ======
+      const API_BASE = "/Duantuyendung/interface/API";
+      const API_SHOW = API_BASE + "/API_show_Danhmucnghe.php";
+      const API_UPDATE = API_BASE + "/API_update_Danhmucnghe.php";
+
+      // ====== STATE ======
+      let state = {
+        q: "",
+        page: 1,
+        pageSize: 20,
+        total: 0,
+        totalPages: 0,
+        items: [],
+        selected: new Set(),
+      };
+
+      // ====== ELEMENTS ======
+      const adminEmailEl = document.getElementById("adminEmail");
+      adminEmailEl.textContent = localStorage.getItem("admin_email") || "admin";
+
+      const tbody = document.getElementById("tbody");
+      const lblSummary = document.getElementById("lblSummary");
+      const lblPage = document.getElementById("lblPage");
+      const btnPrev = document.getElementById("btnPrev");
+      const btnNext = document.getElementById("btnNext");
+      const selPageSize = document.getElementById("selPageSize");
+      const btnOpenCreate = document.getElementById("btnOpenCreate");
+      const btnDeleteSelected = document.getElementById("btnDeleteSelected");
+      const txtSearch = document.getElementById("txtSearch");
+      const btnSearch = document.getElementById("btnSearch");
+      const btnReset = document.getElementById("btnReset");
+      const chkAll = document.getElementById("chkAll");
+
+      // Modal
+      const backdrop = document.getElementById("backdrop");
+      const modalTitle = document.getElementById("modalTitle");
+      const hidId = document.getElementById("hidId");
+      const txtTen = document.getElementById("txtTen");
+      const errTen = document.getElementById("errTen");
+      const btnClose = document.getElementById("btnClose");
+      const btnSave = document.getElementById("btnSave");
+
+      const toast = document.getElementById("toast");
+      const toastMsg = document.getElementById("toastMsg");
+
+      function showToast(msg, ok = true) {
+        toastMsg.textContent = msg;
+        toast.className =
+          "bg-" +
+          (ok ? "emerald" : "rose") +
+          "-600 text-white rounded-lg shadow px-4 py-3";
+        toast.id = "toast";
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2800);
+      }
+
+      // ====== API CALLS ======
+      async function loadData() {
+        const url = new URL(API_SHOW, window.location.origin);
+        if (state.q) url.searchParams.set("q", state.q);
+        url.searchParams.set("page", state.page);
+        url.searchParams.set("pageSize", state.pageSize);
+
+        try {
+          const res = await fetch(url.toString(), {
+            cache: "no-store",
+            credentials: "include",
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const js = await res.json();
+          if (!js.ok) throw new Error(js.error || "Lỗi tải dữ liệu");
+
+          const data = js.data?.items
+            ? js.data
+            : {
+                items: js.data || [],
+                paging: { total: js.data?.length || 0, totalPages: 1 },
+              };
+
+          state.items = data.items || [];
+          state.total = data.paging.total || 0;
+          state.totalPages = data.paging.totalPages || 1;
+
+          renderTable();
+          renderPaging();
+        } catch (e) {
+          showToast(e.message || "Lỗi tải dữ liệu", false);
+        }
+      }
+
+      async function createItem(ten) {
+        const res = await fetch(API_UPDATE, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ TenDanhMuc: ten }),
+          credentials: "include", // Gửi cookie session
+        });
+        const js = await res.json();
+        if (!js.ok) throw new Error(js.error || "Thêm thất bại");
+        return js;
+      }
+
+      async function updateItem(id, ten) {
+        const res = await fetch(API_UPDATE, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ MaDanhMuc: id, TenDanhMuc: ten }),
+          credentials: "include", // Gửi cookie session
+        });
+        const js = await res.json();
+        if (!js.ok) throw new Error(js.error || "Cập nhật thất bại");
+        return js;
+      }
+
+      async function deleteItems(ids) {
+        const res = await fetch(API_UPDATE, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            ids.length > 1 ? { ids } : { MaDanhMuc: ids[0] }
+          ),
+          credentials: "include", // Gửi cookie session
+        });
+        const js = await res.json();
+        if (!js.ok) throw new Error(js.error || "Xóa thất bại");
+        return js;
+      }
+
+      // ====== RENDER ======
+      function renderTable() {
+        state.selected.clear();
+        chkAll.checked = false;
+
+        if (!state.items || state.items.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-slate-500">Không có dữ liệu</td></tr>`;
+          lblSummary.textContent = `0 mục`;
+          return;
+        }
+
+        tbody.innerHTML = state.items
+          .map(
+            (it) => `
+          <tr class="hover:bg-slate-50">
+            <td class="px-4 py-3">
+              <input type="checkbox" class="row-chk" data-id="${
+                it.MaDanhMuc
+              }" />
+            </td>
+            <td class="px-4 py-3">${it.MaDanhMuc}</td>
+            <td class="px-4 py-3">${escapeHtml(it.TenDanhMuc)}</td>
+            <td class="px-4 py-3 text-right">
+              <button class="px-3 py-1.5 text-sm rounded-lg bg-amber-500 text-white hover:bg-amber-600 mr-2"
+                      data-action="edit" data-id="${
+                        it.MaDanhMuc
+                      }" data-ten="${escapeHtml(it.TenDanhMuc)}">
+                <i class="fa fa-pen"></i> Sửa
+              </button>
+              <button class="px-3 py-1.5 text-sm rounded-lg bg-rose-600 text-white hover:bg-rose-700"
+                      data-action="del" data-id="${it.MaDanhMuc}">
+                <i class="fa fa-trash"></i> Xóa
+              </button>
+            </td>
+          </tr>
+        `
+          )
+          .join("");
+
+        tbody.querySelectorAll(".row-chk").forEach((chk) => {
+          chk.addEventListener("change", (e) => {
+            const id = Number(e.target.dataset.id);
+            if (e.target.checked) state.selected.add(id);
+            else state.selected.delete(id);
+          });
+        });
+
+        tbody.querySelectorAll("[data-action]").forEach((btn) => {
+          btn.addEventListener("click", onRowAction);
+        });
+
+        lblSummary.textContent = `${state.total} mục`;
+      }
+
+      function renderPaging() {
+        lblPage.textContent = `Trang ${state.page}/${Math.max(
+          1,
+          state.totalPages
+        )}`;
+        btnPrev.disabled = state.page <= 1;
+        btnNext.disabled = state.page >= state.totalPages;
+      }
+
+      // ====== EVENTS ======
+      btnPrev.addEventListener("click", () => {
+        if (state.page > 1) {
+          state.page--;
+          loadData();
+        }
+      });
+      btnNext.addEventListener("click", () => {
+        if (state.page < state.totalPages) {
+          state.page++;
+          loadData();
+        }
+      });
+      selPageSize.addEventListener("change", () => {
+        state.pageSize = Number(selPageSize.value || 20);
+        state.page = 1;
+        loadData();
+      });
+
+      btnSearch.addEventListener("click", () => {
+        state.q = txtSearch.value.trim();
+        state.page = 1;
+        loadData();
+      });
+      txtSearch.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") btnSearch.click();
+      });
+      btnReset.addEventListener("click", () => {
+        txtSearch.value = "";
+        state.q = "";
+        state.page = 1;
+        loadData();
+      });
+
+      chkAll.addEventListener("change", (e) => {
+        const on = e.target.checked;
+        state.selected.clear();
+        tbody.querySelectorAll(".row-chk").forEach((c) => {
+          c.checked = on;
+          if (on) state.selected.add(Number(c.dataset.id));
+        });
+      });
+
+      btnOpenCreate.addEventListener("click", () => openModal());
+      btnClose.addEventListener("click", closeModal);
+      backdrop.addEventListener("click", (e) => {
+        if (e.target === backdrop) closeModal();
+      });
+
+      btnSave.addEventListener("click", async () => {
+        const id = Number(hidId.value || 0);
+        const ten = txtTen.value.trim();
+        if (!ten) {
+          errTen.classList.remove("hidden");
+          txtTen.focus();
+          return;
+        }
+        errTen.classList.add("hidden");
+
+        try {
+          if (id > 0) {
+            await updateItem(id, ten);
+            showToast("Cập nhật thành công");
+          } else {
+            await createItem(ten);
+            showToast("Thêm danh mục thành công");
+          }
+          closeModal();
+          await loadData();
+        } catch (e) {
+          showToast(e.message || "Lưu thất bại", false);
+        }
+      });
+
+      btnDeleteSelected.addEventListener("click", async () => {
+        if (state.selected.size === 0) {
+          showToast("Chưa chọn danh mục nào", false);
+          return;
+        }
+        if (!confirm(`Bạn chắc chắn muốn xóa ${state.selected.size} danh mục?`))
+          return;
+        try {
+          await deleteItems(Array.from(state.selected));
+          showToast("Đã xóa danh mục đã chọn");
+          state.page = 1;
+          await loadData();
+        } catch (e) {
+          showToast(e.message || "Xóa thất bại", false);
+        }
+      });
+
+      function onRowAction(e) {
+        const btn = e.currentTarget;
+        const action = btn.dataset.action;
+        const id = Number(btn.dataset.id);
+        if (action === "edit") {
+          openModal({ id, ten: btn.dataset.ten || "" });
+        } else if (action === "del") {
+          if (!confirm("Xóa danh mục này?")) return;
+          deleteItems([id])
+            .then(() => {
+              showToast("Đã xóa");
+              state.page = 1;
+              return loadData();
+            })
+            .catch((err) => showToast(err.message || "Xóa thất bại", false));
+        }
+      }
+
+      // ====== MODAL HELPERS ======
+      function openModal(data) {
+        modalTitle.textContent =
+          data && data.id ? "Cập nhật danh mục" : "Thêm danh mục";
+        hidId.value = data && data.id ? data.id : "";
+        txtTen.value = data && data.ten ? data.ten : "";
+        errTen.classList.add("hidden");
+        backdrop.classList.add("show");
+        setTimeout(() => txtTen.focus(), 50);
+      }
+      function closeModal() {
+        backdrop.classList.remove("show");
+      }
+
+      // ====== UTIL ======
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      // ====== INIT ======
+      (function init() {
+        selPageSize.value = String(state.pageSize);
+        loadData();
+      })();
+    </script>
+  </body>
+</html>

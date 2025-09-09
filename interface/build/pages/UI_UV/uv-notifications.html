@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông báo - Ứng viên</title>
+    
+    <!-- Fonts & Icons -->
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700"
+      rel="stylesheet"
+    />
+    <script
+      src="https://kit.fontawesome.com/42d5adcbca.js"
+      crossorigin="anonymous"
+    ></script>
+    
+    <link rel="stylesheet" href="../../assets/css/argon-dashboard-tailwind.min.css">
+    <link rel="stylesheet" href="../../assets/css/nucleo-icons.css">
+    <style>
+        body {
+            font-family: "Open Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        }
+        .notification-item {
+            transition: all 0.3s ease;
+        }
+        .notification-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .notification-unread {
+            background-color: #f8fafc;
+            border-left: 4px solid #3b82f6;
+        }
+        .notification-read {
+            background-color: #ffffff;
+            opacity: 0.8;
+        }
+        .notification-type-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+        }
+        .type-UngTuyen { background-color: #dbeafe; color: #1e40af; }
+        .type-TinTuyenDung { background-color: #dcfce7; color: #166534; }
+        .type-TinNhan { background-color: #fef3c7; color: #92400e; }
+        .type-PhongVan { background-color: #fce7f3; color: #be185d; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Sidenav -->
+    <div id="sidenav-container"></div>
+
+    <!-- Main content -->
+    <main class="ease-soft-in-out xl:ml-68.5 relative h-full max-h-screen rounded-xl transition-all duration-200" style="margin-left: 280px;">
+        <!-- Navbar -->
+        <nav class="relative flex flex-wrap items-center justify-between px-0 py-2 mx-6 transition-all shadow-soft-xl rounded-2xl bg-white/80 backdrop-blur-2xl backdrop-saturate-200 lg:flex-nowrap lg:justify-start">
+            <div class="flex items-center justify-between w-full px-4 py-1 mx-auto flex-wrap-inherit">
+                <nav>
+                    <ol class="flex flex-wrap pt-1 mr-12 bg-transparent rounded-lg sm:mr-16">
+                        <li class="text-sm">
+                            <a class="opacity-50" href="uv-home.html">Trang chủ</a>
+                        </li>
+                        <li class="text-sm pl-2 capitalize before:content-['/'] before:pr-2">
+                            Thông báo
+                        </li>
+                    </ol>
+                    <h6 class="mb-0 font-bold capitalize">Thông báo</h6>
+                </nav>
+                
+                <div class="flex items-center mt-2 grow sm:mt-0 sm:mr-6 md:mr-0 lg:flex lg:basis-auto">
+                    <div class="flex items-center md:ml-auto md:pr-4">
+                        <div class="relative flex flex-wrap items-stretch w-full transition-all rounded-lg ease-soft">
+                            <span class="text-sm ease-soft leading-5.6 absolute z-50 -ml-px flex items-center whitespace-nowrap rounded-lg rounded-tr-none rounded-br-none border border-r-0 border-transparent bg-transparent py-2.8 pl-2.8 text-slate-500">
+                                <i class="ni ni-zoom-split-in"></i>
+                            </span>
+                            <input type="text" id="searchInput" class="pl-9 text-sm focus:shadow-soft-primary-outline ease-soft w-1/100 leading-5.6 relative -ml-px block min-w-0 flex-auto rounded-lg rounded-tr-none rounded-br-none border border-l-0 border-r-0 border-t-0 border-b-0 border-transparent bg-white bg-clip-padding py-2.8 pr-3 text-slate-500 transition-all placeholder:text-slate-500 focus:border-slate-500 focus:outline-none focus:transition-shadow" placeholder="Tìm kiếm thông báo..." />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Content -->
+        <div class="w-full px-6 py-6 mx-auto">
+            <!-- Header -->
+            <div class="flex flex-wrap -mx-3">
+                <div class="flex-none w-full max-w-full px-3">
+                    <div class="relative flex flex-col min-w-0 mb-6 break-words bg-white border-0 border-transparent border-solid shadow-soft-xl rounded-2xl bg-clip-border">
+                        <div class="p-6 pb-0 mb-0 bg-white border-b-0 border-b-solid rounded-t-2xl border-b-transparent">
+                            <div class="flex items-center justify-between">
+                                <h6 class="mb-0">Thông báo của bạn</h6>
+                                <div class="flex items-center space-x-2">
+                                    <button id="markAllReadBtn" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                                        Đánh dấu tất cả đã đọc
+                                    </button>
+                                    <button id="refreshBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                                        <i class="ni ni-refresh"></i> Làm mới
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Stats -->
+                        <div class="p-6">
+                            <div class="flex justify-center">
+                                <div class="px-6 py-3 bg-orange-50 rounded-lg">
+                                    <div class="text-center">
+                                        <div id="unreadNotifications" class="text-2xl font-bold text-orange-600">0</div>
+                                        <div class="text-sm text-orange-500">Thông báo chưa đọc</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications List -->
+            <div class="flex flex-wrap -mx-3">
+                <div class="flex-none w-full max-w-full px-3">
+                    <div class="relative flex flex-col min-w-0 mb-6 break-words bg-white border-0 border-transparent border-solid shadow-soft-xl rounded-2xl bg-clip-border">
+                        <div class="p-6 pb-0 mb-0 bg-white border-b-0 border-b-solid rounded-t-2xl border-b-transparent">
+                            <h6 class="mb-0">Danh sách thông báo</h6>
+                        </div>
+                        <div class="flex-auto p-6">
+                            <!-- Loading -->
+                            <div id="loadingSpinner" class="flex items-center justify-center py-8">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                <span class="ml-2 text-gray-600">Đang tải...</span>
+                            </div>
+
+                            <!-- Empty state -->
+                            <div id="emptyState" class="hidden text-center py-8">
+                                <i class="ni ni-notification-83 text-6xl text-gray-300 mb-4"></i>
+                                <h6 class="text-gray-500 mb-2">Chưa có thông báo nào</h6>
+                                <p class="text-gray-400">Thông báo sẽ xuất hiện ở đây khi có hoạt động mới</p>
+                            </div>
+
+                            <!-- Notifications container -->
+                            <div id="notificationsContainer" class="space-y-4">
+                                <!-- Notifications will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="../../assets/js/argon-dashboard-tailwind.min.js"></script>
+    <script>
+        // Load sidenav
+        document.getElementById('sidenav-container').innerHTML = `
+            <div class="fixed inset-y-0 block w-full p-0 my-4 overflow-y-auto bg-white shadow-xl xl:ml-6 max-w-64 rounded-2xl xl:left-0 xl:translate-x-0 z-50">
+                <div class="h-19">
+                    <a class="block px-8 py-6 m-0 text-sm whitespace-nowrap text-slate-700" href="uv-home.html">
+                        <img src="../../assets/img/logo-ct.png" class="inline h-full max-w-full max-h-8" alt="logo" />
+                        <span class="ml-1 font-semibold">Ứng viên</span>
+                    </a>
+                </div>
+                <hr class="h-px mt-0 bg-transparent bg-gradient-to-r from-transparent via-black/20 to-transparent" />
+                <div class="items-center block w-auto max-h-screen overflow-auto h-sidenav grow basis-full">
+                    <ul class="flex flex-col pl-0 mb-0">
+                        <li class="mt-0.5 w-full">
+                            <a class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg" href="uv-home.html">
+                                <i class="ni ni-tv-2 mr-2 text-blue-500"></i>
+                                <span>Trang chủ</span>
+                            </a>
+                        </li>
+                        <li class="mt-0.5 w-full">
+                            <a class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg" href="uv-profile.html">
+                                <i class="ni ni-single-02 mr-2 text-emerald-500"></i>
+                                <span>Thông tin cá nhân</span>
+                            </a>
+                        </li>
+                        <li class="mt-0.5 w-full">
+                            <a class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg" href="uv-my-applications.html">
+                                <i class="ni ni-briefcase-24 mr-2 text-orange-500"></i>
+                                <span>Tin đã ứng tuyển</span>
+                            </a>
+                        </li>
+                        <li class="mt-0.5 w-full">
+                            <a class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg" href="UI_UV_Lichphongvan.html">
+                                <i class="ni ni-calendar-grid-58 mr-2 text-indigo-500"></i>
+                                <span>Lịch phỏng vấn</span>
+                            </a>
+                        </li>
+                        <li class="mt-0.5 w-full">
+                            <a class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg" href="UI_UV_Chat.html">
+                                <i class="ni ni-chat-round mr-2 text-purple-500"></i>
+                                <span>Chat</span>
+                            </a>
+                        </li>
+                        <li class="mt-0.5 w-full">
+                            <a class="py-2.7 text-sm mx-2 flex items-center whitespace-nowrap px-4 text-slate-700 bg-blue-50 text-blue-600 rounded-lg" href="uv-notifications.html">
+                                <i class="ni ni-notification-83 mr-2 text-blue-600"></i>
+                                <span>Thông báo</span>
+                                <span id="notificationDot" class="ml-auto w-2 h-2 bg-red-500 rounded-full hidden"></span>
+                            </a>
+                        </li>
+                        <li class="mt-0.5 w-full">
+                            <button id="btnLogout" class="w-[calc(100%-1rem)] ml-2 py-2.5 text-left text-sm flex items-center whitespace-nowrap px-4 text-slate-700 hover:bg-gray-100 rounded-lg cursor-pointer">
+                                <i class="ni ni-button-power mr-2 text-red-600"></i>
+                                <span>Đăng xuất</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        `;
+
+        // Notification management
+        class NotificationManager {
+            constructor() {
+                this.currentUser = this.getCurrentUser();
+                this.notifications = [];
+                this.init();
+            }
+
+            getCurrentUser() {
+                try {
+                    const auth = localStorage.getItem('auth');
+                    return auth ? JSON.parse(auth) : null;
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            async init() {
+                if (!this.currentUser) {
+                    window.location.href = '/Duantuyendung/interface/build/pages/UI_SignUp_TD-UV.html';
+                    return;
+                }
+
+                this.bindEvents();
+                await this.loadNotifications();
+            }
+
+            bindEvents() {
+                document.getElementById('refreshBtn').addEventListener('click', () => {
+                    this.loadNotifications();
+                });
+
+                document.getElementById('markAllReadBtn').addEventListener('click', () => {
+                    this.markAllAsRead();
+                });
+
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    this.filterNotifications(e.target.value);
+                });
+
+                // Logout
+                document.getElementById('btnLogout').addEventListener('click', () => {
+                    localStorage.removeItem('auth');
+                    window.location.href = '/Duantuyendung/interface/build/pages/UI_SignUp_TD-UV.html?logged_out=1';
+                });
+            }
+
+            async loadNotifications() {
+                try {
+                    this.showLoading(true);
+                    
+                    const response = await fetch('/Duantuyendung/interface/API/API_get_notifications.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            MaTK: this.currentUser.MaTK
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.ok) {
+                        this.notifications = result.data.notifications;
+                        this.renderNotifications();
+                        this.updateStats();
+                    } else {
+                        this.showError('Không thể tải thông báo: ' + result.error);
+                    }
+                } catch (error) {
+                    this.showError('Lỗi kết nối: ' + error.message);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            renderNotifications() {
+                const container = document.getElementById('notificationsContainer');
+                const emptyState = document.getElementById('emptyState');
+                
+                if (this.notifications.length === 0) {
+                    container.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+                
+                container.innerHTML = this.notifications.map(notification => `
+                    <div class="notification-item ${notification.DaXem ? 'notification-read' : 'notification-unread'} p-4 rounded-lg border border-gray-200 cursor-pointer" 
+                         onclick="notificationManager.markAsRead(${notification.MaTB})">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="notification-type-badge type-${notification.LoaiThongBao}">
+                                        ${this.getTypeLabel(notification.LoaiThongBao)}
+                                    </span>
+                                    ${!notification.DaXem ? '<span class="w-2 h-2 bg-blue-500 rounded-full"></span>' : ''}
+                                </div>
+                                <p class="text-gray-800 mb-2">${notification.NoiDung}</p>
+                                <p class="text-sm text-gray-500">${this.formatDate(notification.NgayTao)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            getTypeLabel(type) {
+                const labels = {
+                    'UngTuyen': 'Ứng tuyển',
+                    'TinTuyenDung': 'Tin tuyển dụng',
+                    'TinNhan': 'Tin nhắn',
+                    'PhongVan': 'Phỏng vấn'
+                };
+                return labels[type] || type;
+            }
+
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diff = now - date;
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+
+                if (minutes < 1) return 'Vừa xong';
+                if (minutes < 60) return `${minutes} phút trước`;
+                if (hours < 24) return `${hours} giờ trước`;
+                if (days < 7) return `${days} ngày trước`;
+                
+                return date.toLocaleDateString('vi-VN');
+            }
+
+            updateStats() {
+                const unread = this.notifications.filter(n => !n.DaXem).length;
+                document.getElementById('unreadNotifications').textContent = unread;
+                
+                // Cập nhật chấm đỏ trên sidebar
+                const dot = document.getElementById('notificationDot');
+                if (dot) {
+                    if (unread > 0) {
+                        dot.classList.remove('hidden');
+                    } else {
+                        dot.classList.add('hidden');
+                    }
+                }
+            }
+
+            async markAsRead(notificationId) {
+                try {
+                    const response = await fetch('/Duantuyendung/interface/API/API_mark_notification_read.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            MaTB: notificationId,
+                            MaTK: this.currentUser.MaTK
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.ok) {
+                        // Update local data
+                        const notification = this.notifications.find(n => n.MaTB === notificationId);
+                        if (notification) {
+                            notification.DaXem = 1;
+                            this.renderNotifications();
+                            this.updateStats();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error marking notification as read:', error);
+                }
+            }
+
+            async markAllAsRead() {
+                try {
+                    const response = await fetch('/Duantuyendung/interface/API/API_mark_all_notifications_read.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            MaTK: this.currentUser.MaTK
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.ok) {
+                        // Update local data
+                        this.notifications.forEach(n => n.DaXem = 1);
+                        this.renderNotifications();
+                        this.updateStats();
+                        
+                        // Show success message
+                        this.showSuccess(result.message);
+                    }
+                } catch (error) {
+                    this.showError('Lỗi khi đánh dấu tất cả đã đọc: ' + error.message);
+                }
+            }
+
+            filterNotifications(searchTerm) {
+                const filtered = this.notifications.filter(notification => 
+                    notification.NoiDung.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    this.getTypeLabel(notification.LoaiThongBao).toLowerCase().includes(searchTerm.toLowerCase())
+                );
+
+                const container = document.getElementById('notificationsContainer');
+                const emptyState = document.getElementById('emptyState');
+                
+                if (filtered.length === 0 && searchTerm) {
+                    container.innerHTML = '<div class="text-center py-8 text-gray-500">Không tìm thấy thông báo nào</div>';
+                    emptyState.classList.add('hidden');
+                } else {
+                    this.renderNotifications();
+                }
+            }
+
+            showLoading(show) {
+                const spinner = document.getElementById('loadingSpinner');
+                if (show) {
+                    spinner.classList.remove('hidden');
+                } else {
+                    spinner.classList.add('hidden');
+                }
+            }
+
+            showError(message) {
+                alert('Lỗi: ' + message);
+            }
+
+            showSuccess(message) {
+                alert('Thành công: ' + message);
+            }
+        }
+
+        // Initialize
+        const notificationManager = new NotificationManager();
+    </script>
+</body>
+</html>
